@@ -1,0 +1,31 @@
+.wrapper {
+  display: flex;
+  gap: 2px;
+  justify-content: center;
+  align-items: center;
+}
+
+.key {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  border: 1px solid black;
+  color: var(--text);
+  border-radius: 5px;
+  background-color: grey;
+  padding: 5px;
+
+  box-shadow: #222 1px 1px 5px 1px;
+
+  min-width: 15px;
+  height: 15px;
+
+  font-size: small;
+  align-content: center;
+}
+
+.key.small {
+  min-width: 5px;
+  height: 5px;
+}

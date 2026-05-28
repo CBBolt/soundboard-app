@@ -1,0 +1,15 @@
+.editor {
+  height: 0;
+  opacity: 0;
+  visibility: hidden;
+
+  transition:
+    height 0.3s ease,
+    opacity 0.3s ease;
+}
+
+.editor.show {
+  height: 250px;
+  opacity: 1;
+  visibility: visible;
+}
