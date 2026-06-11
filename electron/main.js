@@ -9,10 +9,13 @@ import {
 
 import fs from "fs";
 import path from "path";
+import os from "os";
 
-import { exec, execFile } from "child_process";
+import { spawn, exec, execFile } from "child_process";
 
 import { fileURLToPath, pathToFileURL } from "url";
+
+import ytdl from "@distube/ytdl-core";
 
 // ======================================================
 // PATHS
@@ -30,6 +33,43 @@ const jsonPath = path.join(userDataPath, "sounds.json");
 
 const settingsPath = path.join(userDataPath, "settings.json");
 
+const bridge = spawn("resources/voicemeeter-bridge.exe", [], {
+  stdio: "pipe",
+});
+
+bridge.stderr.on("data", (data) => {
+  console.log("Rust:", data.toString());
+});
+
+let buffer = "";
+let queue = [];
+
+bridge.stdout.on("data", (chunk) => {
+  console.log(chunk.toString());
+
+  buffer += chunk.toString();
+
+  let lines = buffer.split("\n");
+  buffer = lines.pop();
+
+  for (const line of lines) {
+    if (!line.trim()) continue;
+
+    let msg;
+    try {
+      msg = JSON.parse(line);
+    } catch (e) {
+      console.error("Bad JSON:", line);
+      continue;
+    }
+
+    if (queue.length > 0) {
+      const { resolve } = queue.shift();
+      resolve(msg);
+    }
+  }
+});
+
 // ======================================================
 // APP SETUP
 // ======================================================
@@ -42,9 +82,12 @@ app.whenReady().then(async () => {
 
   registerIpcHandlers();
 
-  globalShortcut.register("Shift+Esc", () => {
-    mainWindow.webContents.send("play-sound", "STOP_ALL");
-  });
+  const voicemeterPath =
+    "C:\\Program Files (x86)\\VB\\Voicemeeter\\voicemeeter.exe";
+
+  if (fs.existsSync(voicemeterPath)) {
+    execFile(voicemeterPath);
+  }
 
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) {
@@ -56,6 +99,13 @@ app.whenReady().then(async () => {
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") {
     globalShortcut.unregisterAll();
+
+    bridge.stdin.write(
+      JSON.stringify({
+        cmd: "logout",
+      }) + "\n",
+    );
+
     app.quit();
   }
 });
@@ -77,7 +127,6 @@ function createWindow() {
 
       contextIsolation: true,
       nodeIntegration: false,
-      webSecurity: true,
     },
   });
 
@@ -141,6 +190,32 @@ function registerIpcHandlers() {
     exec("control mmsys.cpl");
   });
 
+  ipcMain.handle("open-voicemeeter", async () => {
+    execFile("C:\\Program Files (x86)\\VB\\Voicemeeter\\voicemeeter.exe");
+  });
+
+  ipcMain.handle("vm-command", async (_, command) => {
+    if (!bridge) {
+      throw new Error("VM not running");
+    }
+
+    return new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        reject(new Error("VM command timeout"));
+      }, 5000);
+
+      queue.push({
+        resolve: (data) => {
+          clearTimeout(timeout);
+          resolve(data);
+        },
+        reject,
+      });
+
+      bridge.stdin.write(JSON.stringify(command) + "\n");
+    });
+  });
+
   // ============================================
   // FILE PICKER
   // ============================================
@@ -184,6 +259,33 @@ function registerIpcHandlers() {
       fileName: `recording-${Date.now()}.wav`,
       metadata,
     });
+  });
+
+  // ============================================
+  // YOUTUBE AUDIO DOWNLOAD
+  // ============================================
+
+  ipcMain.handle("add-youtube-audio", async (_, url) => {
+    const outputTemplate = path.join(soundsPath, "%(title)s-%(id)s.%(ext)s");
+
+    const meta = await getYoutubeMetadata(url);
+
+    console.log(meta);
+
+    const filePath = await downloadYoutube(url, outputTemplate);
+
+    const sound = saveSoundFile({
+      sourcePath: filePath,
+      fileName: path.basename(filePath),
+      originalName: path.basename(filePath),
+      deleteSource: true,
+      metadata: {
+        duration: meta.duration,
+        url,
+      },
+    });
+
+    return sound;
   });
 
   // ============================================
@@ -315,6 +417,7 @@ function registerIpcHandlers() {
 
 const defaultSettings = {
   baseColor: "#ffffff",
+  stopHotkey: { key: "esc", shift: true },
 };
 
 function ensureStorage() {
@@ -380,6 +483,7 @@ function saveSoundFile({
   fileName,
   originalName = fileName,
   metadata = undefined,
+  deleteSource = false,
 }) {
   const uniqueFileName = makeUniqueFileName(fileName);
 
@@ -391,6 +495,15 @@ function saveSoundFile({
 
   if (sourcePath) {
     fs.copyFileSync(sourcePath, destination);
+
+    // Delete original if requested
+    if (deleteSource) {
+      try {
+        fs.unlinkSync(sourcePath);
+      } catch (err) {
+        console.warn("Failed to delete original file:", sourcePath, err);
+      }
+    }
   } else if (buffer) {
     fs.writeFileSync(destination, Buffer.from(buffer));
   } else {
@@ -416,6 +529,103 @@ function saveSoundFile({
   writeSounds(sounds);
 
   return sound;
+}
+
+function downloadYoutube(url, outputTemplate) {
+  const ytDlpPath = getYtDlpPath();
+
+  return new Promise((resolve, reject) => {
+    const proc = spawn(ytDlpPath, [
+      "-f",
+      "bestaudio",
+      "-o",
+      outputTemplate,
+      "--newline",
+      "--progress",
+      "--progress-template",
+      "%(progress._percent_str)s",
+      "--print",
+      "after_move:filepath",
+      url,
+    ]);
+
+    let finalPath = "";
+
+    proc.stdout.on("data", (data) => {
+      const lines = data
+        .toString()
+        .split("\n")
+        .map((l) => l.trim())
+        .filter(Boolean);
+
+      for (const line of lines) {
+        if (line.endsWith("%")) {
+          // This is a progress update
+          const percent = parseFloat(line.replace("%", ""));
+          if (!Number.isNaN(percent)) {
+            mainWindow.webContents.send("youtube-download-progress", percent);
+          }
+        } else {
+          // This is the actual final path
+          finalPath = line;
+        }
+      }
+    });
+
+    proc.stderr.on("data", (data) => {
+      // Optional: log warnings
+      console.warn(data.toString());
+    });
+
+    proc.on("close", async (code) => {
+      if (code !== 0) return reject(new Error("yt-dlp failed"));
+
+      mainWindow.webContents.send("youtube-download-progress", 100);
+
+      if (!finalPath || !fs.existsSync(finalPath)) {
+        return reject(new Error("Final file not found"));
+      }
+
+      await new Promise((r) => setTimeout(r, 1000));
+
+      resolve(finalPath);
+    });
+  });
+}
+
+function getYoutubeMetadata(url) {
+  const ytDlpPath = getYtDlpPath();
+
+  return new Promise((resolve, reject) => {
+    const proc = spawn(ytDlpPath, [
+      "--no-download",
+      "--print",
+      "%(duration)s",
+      "--print",
+      "%(title)s",
+      url,
+    ]);
+
+    let output = "";
+
+    proc.stdout.on("data", (data) => {
+      output += data.toString();
+    });
+
+    proc.on("close", (code) => {
+      if (code !== 0) return reject(new Error("yt-dlp metadata failed"));
+
+      const [durationStr, title] = output
+        .split("\n")
+        .map((s) => s.trim())
+        .filter(Boolean);
+
+      resolve({
+        duration: Number(durationStr),
+        title,
+      });
+    });
+  });
 }
 
 // ======================================================
@@ -485,5 +695,23 @@ function registerHotkey(hotkey, soundId) {
     console.error("Failed to register hotkey:", key, err);
 
     return false;
+  }
+}
+
+function getYtDlpPath() {
+  const base = path.join(app.getAppPath(), "resources", "yt-dlp");
+
+  switch (os.platform()) {
+    case "win32":
+      return path.join(base, "win", "yt-dlp.exe");
+
+    case "darwin":
+      return path.join(base, "mac", "yt-dlp");
+
+    case "linux":
+      return path.join(base, "linux", "yt-dlp");
+
+    default:
+      throw new Error("Unsupported platform");
   }
 }

@@ -1,12 +1,43 @@
 export {};
 
 declare global {
+  type VBCommand = {
+    cmd:
+      | "get_float"
+      | "get_string"
+      | "set_float"
+      | "set_string"
+      | "input_devices"
+      | "output_devices";
+    param?: string;
+    value?: number;
+    string_value?: string;
+  };
+
+  type VBCommandResponse = {
+    success: boolean;
+    message: string;
+    float_value?: number;
+    string_value?: string;
+  };
+
+  type VBDetected = {
+    voicemeeter: boolean;
+    vbCable: boolean;
+  };
+
   type VBDevice = {
     FriendlyName: string;
   };
 
+  type AudioDevice = {
+    label: string;
+    id: string;
+  };
+
   type Settings = {
     baseColor: string;
+    stopHotkey: Hotkey;
   };
 
   type Hotkey = {
@@ -47,20 +78,25 @@ declare global {
       renameSound: ({ id: string, newName: string }) => void;
       updateSound: (data: Sound) => void;
       getSoundPath: (name: string) => Promise<string>;
-      onPlaySound: (callback: (soundId: string) => void) => void;
       saveRecording: (buffer: ArrayBuffer, metadata: object) => void;
+      saveYoutubeLink: (link: string) => void;
+
+      onPlaySound: (callback: (soundId: string) => void) => void;
+      onYoutubeProgress: (callback: (percent: number) => void) => void;
 
       // Settings
       readSettings: () => Settings;
       updateSettings: (data: Partial<Settings>) => void;
 
       // Hotkeys
-      registerHotkey: (hotkey: Hotkey, soundId: number) => void;
+      registerHotkey: (hotkey: Hotkey, soundId: string) => void;
       unregisterHotkeys: () => void;
 
       // VB Audio
       detectVBAudio: () => Promise<VBDevice[]>;
-      disableVBAudio: () => unknown;
+      disableVBAudio: () => void;
+      openVoicemeeter: () => void;
+      setVMCommand: (command: VBCommand) => VBCommandResponse;
     };
   }
 }

@@ -26,6 +26,7 @@ export class WaveformEditor {
   private onChange?: (settings: WaveformSettings) => void;
 
   private HIT = 8;
+  private HANDLESIZE = 6;
 
   private hover: DragTarget = null;
   private drag: DragTarget = null;
@@ -221,7 +222,7 @@ export class WaveformEditor {
         case "end":
           this.settings.endTime = Math.max(
             time,
-            this.settings.startTime + 0.01,
+            this.settings.startTime + this.HANDLESIZE * 0.05,
           );
           break;
 
@@ -285,7 +286,7 @@ export class WaveformEditor {
   // -----------------------------------
 
   private drawHandle(x: number, y: number, color: string) {
-    const size = 6;
+    const size = this.HANDLESIZE;
 
     this.ctx.beginPath();
 

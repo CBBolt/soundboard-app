@@ -264,3 +264,8 @@ button:active,
   border-radius: 5px;
   padding: 5px;
 }
+
+.panel.warning {
+  border: 2px solid #ecdd00;
+  background-color: #b1a500;
+}

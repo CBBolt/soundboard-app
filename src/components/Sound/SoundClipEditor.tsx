@@ -42,7 +42,7 @@ export default function SoundClipEditor({
   const [settings, setSettings] = useState({
     startTime: sound.startTime ?? 0,
     endTime: sound.endTime ?? 0,
-    gain: sound.gain ?? 1,
+    gain: sound.gain ?? 0.5,
     fadeIn: sound.fadeIn ?? 0,
     fadeOut: sound.fadeOut ?? 0,
   });
@@ -283,39 +283,44 @@ export default function SoundClipEditor({
         </div>
       </div>
       <div className="seperator" />
-      <div
-        className="flex-gap"
-        style={{
-          alignItems: "stretch",
-          width: "100%",
-          overflowX: "auto",
-          overflowY: "visible",
-        }}
-      >
-        <canvas
-          ref={canvasRef}
-          width={300}
-          height={20}
-          style={{
-            flex: 1,
-            background: "#111",
-            touchAction: "none",
-            borderRadius: 8,
-          }}
-        />
 
-        <VolumeSlider
-          value={gain}
-          orientation="vertical"
-          height={140}
-          onChange={(val) =>
-            setSettings((p) => ({
-              ...p,
-              gain: val,
-            }))
-          }
-        />
-      </div>
+      {!audioBufferRef.current ? (
+        <span>Loading...</span>
+      ) : (
+        <div
+          className="flex-gap"
+          style={{
+            width: "100%",
+            alignItems: "center",
+            overflowX: "auto",
+            overflowY: "visible",
+          }}
+        >
+          <canvas
+            ref={canvasRef}
+            width={300}
+            height={100}
+            style={{
+              flex: 1,
+              background: "#111",
+              touchAction: "none",
+              borderRadius: 8,
+            }}
+          />
+
+          <VolumeSlider
+            value={gain}
+            orientation="vertical"
+            height={140}
+            onChange={(val) =>
+              setSettings((p) => ({
+                ...p,
+                gain: val,
+              }))
+            }
+          />
+        </div>
+      )}
     </div>
   );
 }

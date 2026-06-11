@@ -13,6 +13,7 @@ type VolumeSliderProps = {
   height?: number;
 
   showValue?: boolean;
+  percentage?: boolean;
 };
 
 export default function VolumeSlider({
@@ -28,15 +29,18 @@ export default function VolumeSlider({
   height = 28,
 
   showValue = true,
+  percentage = true,
 }: VolumeSliderProps) {
   const isVertical = orientation === "vertical";
 
   // -----------------------------
-  // Normalize value (0 → 1)
+  // Normalize incoming value → 0..1
   // -----------------------------
-  const clamped = Math.min(1, Math.max(0, (value - min) / (max - min)));
+  const normalized = percentage
+    ? Math.min(1, Math.max(0, value)) // already 0–1
+    : Math.min(1, Math.max(0, (value - min) / (max - min)));
 
-  const percent = clamped * 100;
+  const percent = normalized * 100;
 
   // -----------------------------
   // Pointer handling
@@ -49,17 +53,22 @@ export default function VolumeSlider({
       const rect = el.getBoundingClientRect();
 
       const update = (clientX: number, clientY: number) => {
-        let nextPercent = 0;
+        let next = 0;
 
         if (isVertical) {
           const y = rect.bottom - clientY;
-          nextPercent = Math.min(1, Math.max(0, y / rect.height));
+          next = Math.min(1, Math.max(0, y / rect.height));
         } else {
           const x = clientX - rect.left;
-          nextPercent = Math.min(1, Math.max(0, x / rect.width));
+          next = Math.min(1, Math.max(0, x / rect.width));
         }
 
-        onChange(min + nextPercent * (max - min));
+        // -----------------------------
+        // Output conversion
+        // -----------------------------
+        const outValue = percentage ? next : min + next * (max - min);
+
+        onChange(outValue);
       };
 
       update(e.clientX, e.clientY);
@@ -68,7 +77,6 @@ export default function VolumeSlider({
 
       const up = () => {
         el.releasePointerCapture(e.pointerId);
-
         window.removeEventListener("pointermove", move);
         window.removeEventListener("pointerup", up);
       };
@@ -76,7 +84,7 @@ export default function VolumeSlider({
       window.addEventListener("pointermove", move);
       window.addEventListener("pointerup", up);
     },
-    [isVertical, min, max, onChange],
+    [isVertical, min, max, onChange, percentage],
   );
 
   // -----------------------------
@@ -95,7 +103,6 @@ export default function VolumeSlider({
       : "linear-gradient(to right, #ff3b3b 0%, #ffcc00 40%, #00ff88 100%)",
 
     boxShadow: "inset 0 0 4px rgba(0,0,0,0.6)",
-
     cursor: isVertical ? "ns-resize" : "ew-resize",
   };
 
@@ -117,8 +124,12 @@ export default function VolumeSlider({
   };
 
   // -----------------------------
-  // Render
+  // Display value
   // -----------------------------
+  const displayValue = percentage
+    ? `${(normalized * 100).toFixed(0)}%`
+    : `${value.toFixed(1)} DB`;
+
   return (
     <div
       style={{
@@ -134,7 +145,7 @@ export default function VolumeSlider({
 
       {showValue && (
         <span style={{ minWidth: 50, textAlign: "center" }}>
-          {(clamped * 100).toFixed(0)}%
+          {displayValue}
         </span>
       )}
     </div>

@@ -6,12 +6,10 @@ import PlusIcon from "../../icons/PlusIcon";
 import GearIcon from "../../icons/GearIcon";
 import SquareIcon from "../../icons/SquareIcon";
 import RefreshIcon from "../../icons/RefreshIcon";
+import WarningIcon from "../../icons/WarningIcon";
 
 type Props = {
-  VBDetected: {
-    voicemeter: boolean;
-    vbCable: boolean;
-  };
+  VBDetected: VBDetected;
   show: boolean;
   onClose: () => void;
 };
@@ -24,10 +22,6 @@ export default function InstructionModal({ VBDetected, show, onClose }: Props) {
       case "START":
         return (
           <div>
-            <div className="panel">
-              {VBDetected.vbCable && <div>VB Cable Installed!</div>}
-              {VBDetected.voicemeter && <div>VoiceMeeter Installed!</div>}
-            </div>
             <p>
               VoiceMeeter and VB Cable are intended to be used with this
               soundboard. Follow the below steps to get started:
@@ -39,9 +33,9 @@ export default function InstructionModal({ VBDetected, show, onClose }: Props) {
                   <li>
                     <a
                       target="_blank"
-                      href="https://vb-audio.com/Voicemeeter/banana.htm"
+                      href="https://vb-audio.com/Voicemeeter/index.htm"
                     >
-                      VoiceMeeter Banana
+                      VoiceMeeter
                     </a>
                   </li>
                   <li>
@@ -99,134 +93,149 @@ export default function InstructionModal({ VBDetected, show, onClose }: Props) {
       case "VOICE":
         return (
           <div>
-            <p>
-              Now with VoiceMeeter and VB Cable setup, this is how VoiceMeeter
-              should be setup:
-            </p>
-            <div
-              style={{
-                display: "grid",
-                justifyItems: "center",
-              }}
-            >
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(4, 1fr)",
-                  gridTemplateRows: "1fr 1fr",
-                  justifyItems: "center",
-                  gap: 10,
-                  padding: 10,
-                  color: "white",
-                  background: "#222",
-                  border: "1px solid #333",
-                  height: 200,
-                  width: "85%",
-                }}
-              >
-                <div>
-                  Soundboard
-                  <div style={{ fontSize: "small" }}>Cable Output</div>
+            {!VBDetected.voicemeeter ? (
+              <div className="panel warning">
+                <div className="flex-gap">
+                  <WarningIcon className="icon stroke fill" />
+                  <span>Voice Meeter needs to be installed first!</span>
                 </div>
-                <div>Mic</div>
-                <div>
-                  Virtual Out
-                  <div style={{ fontSize: "small" }}>VoiceMeeter Out A1</div>
-                </div>
-                <div>Hardware Out</div>
-                <div>
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "center",
-                      background: "tomato",
-                      border: "1px solid white",
-                      borderRadius: 5,
-                      height: 30,
-                      width: 30,
-                    }}
-                  >
-                    A
-                  </div>
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "center",
-                      background: "#5597d9",
-                      border: "1px solid white",
-                      borderRadius: 5,
-                      height: 30,
-                      width: 30,
-                    }}
-                  >
-                    B
-                  </div>
-                </div>
-                <div>
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "center",
-                      background: "tomato",
-                      border: "1px solid white",
-                      borderRadius: 5,
-                      height: 30,
-                      width: 30,
-                    }}
-                  >
-                    A
-                  </div>
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "center",
-                      background: "#5597d9",
-                      border: "1px solid white",
-                      borderRadius: 5,
-                      height: 30,
-                      width: 30,
-                    }}
-                  >
-                    B
-                  </div>
-                </div>
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "center",
-                    background: "tomato",
-                    border: "1px solid white",
-                    borderRadius: 5,
-                    height: 30,
-                    width: 30,
-                  }}
-                >
-                  A
-                </div>
+              </div>
+            ) : (
+              <>
+                <p>
+                  Now with VoiceMeeter and VB Cable installed, let's get
+                  VoiceMeeter setup:{" "}
+                  <button onClick={() => window.electronAPI.openVoicemeeter()}>
+                    Open VoiceMeeter
+                  </button>
+                </p>
+
+                <div className="seperator" />
+
+                <p>
+                  Now when opening Voice Meeter you should see something similar
+                  to the below:
+                </p>
 
                 <div
                   style={{
-                    display: "flex",
-                    justifyContent: "center",
-                    background: "#5597d9",
-                    border: "1px solid white",
-                    borderRadius: 5,
-                    height: 30,
-                    width: 30,
+                    display: "grid",
+                    justifyItems: "center",
                   }}
                 >
-                  B
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "repeat(4, 1fr)",
+                      gridTemplateRows: "1fr 1fr",
+                      justifyItems: "center",
+                      gap: 10,
+                      padding: 10,
+                      color: "white",
+                      background: "#222",
+                      border: "1px solid #333",
+                      height: 200,
+                      width: "85%",
+                    }}
+                  >
+                    <div>Stereo Input 1</div>
+                    <div>Stereo Input 2</div>
+                    <div>Virtual Input</div>
+                    <div>Hardware Out</div>
+                    <div>
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "center",
+                          background: "tomato",
+                          border: "1px solid white",
+                          borderRadius: 5,
+                          height: 30,
+                          width: 30,
+                        }}
+                      >
+                        B
+                      </div>
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "center",
+                          background: "#5597d9",
+                          border: "1px solid white",
+                          borderRadius: 5,
+                          height: 30,
+                          width: 30,
+                        }}
+                      >
+                        B
+                      </div>
+                    </div>
+                    <div>
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "center",
+                          background: "tomato",
+                          border: "1px solid white",
+                          borderRadius: 5,
+                          height: 30,
+                          width: 30,
+                        }}
+                      >
+                        A
+                      </div>
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "center",
+                          background: "#5597d9",
+                          border: "1px solid white",
+                          borderRadius: 5,
+                          height: 30,
+                          width: 30,
+                        }}
+                      >
+                        B
+                      </div>
+                    </div>
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "center",
+                        background: "#5597d9",
+                        border: "1px solid white",
+                        borderRadius: 5,
+                        height: 30,
+                        width: 30,
+                      }}
+                    >
+                      B
+                    </div>
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "center",
+                        background: "tomato",
+                        border: "1px solid white",
+                        borderRadius: 5,
+                        height: 30,
+                        width: 30,
+                      }}
+                    >
+                      A
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
-            <p>
-              Notice that both soundboard and mic have both A and B channels
-              whereas Virtual / Hardware Out only have A and B respectively. You
-              can use this to either hear yourself in VoiceMeeter (B) or just
-              have it go to the Virtual Output (A). There are also Gain (Volume)
-              sliders you can use to increase volume and mute the channels if
-              needed
-            </p>
+                <p>
+                  Notice that both soundboard and mic have both A and B channels
+                  whereas Virtual / Hardware Out only have A and B respectively.
+                  You can use this to either hear yourself in VoiceMeeter (B) or
+                  just have it go to the Virtual Output (A). There are also Gain
+                  (Volume) sliders you can use to increase volume and mute the
+                  channels if needed
+                </p>
+              </>
+            )}
           </div>
         );
       case "HOWTO":
@@ -314,9 +323,14 @@ export default function InstructionModal({ VBDetected, show, onClose }: Props) {
           </button>
         </div>
 
+        <div className="panel">
+          {VBDetected.vbCable && <div>VB Cable Installed!</div>}
+          {VBDetected.voicemeeter && <div>VoiceMeeter Installed!</div>}
+        </div>
+
         <div className="seperator" />
 
-        <div style={{ textAlign: "left", maxHeight: 500, overflowY: "auto" }}>
+        <div style={{ textAlign: "left", maxHeight: 400, overflowY: "auto" }}>
           {renderInstructions()}
         </div>
       </div>

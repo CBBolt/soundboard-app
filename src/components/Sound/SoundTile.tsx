@@ -2,9 +2,9 @@ import { getContrastTextColor } from "../../lib/helpers";
 
 import PencilIcon from "../../icons/PencilIcon";
 import TrashIcon from "../../icons/TrashIcon";
-import HotkeyComponent from "../HotkeyComponent";
 
 import styles from "../../styles/SoundTile.module.css";
+import HotkeyComponent from "../Hotkey/HotkeyComponent";
 
 type Props = {
   sound: Sound;
@@ -36,7 +36,7 @@ export default function SoundTile({
           top: 0,
           left: 0,
           width: "100%",
-          height: `${(1 - (sound.gain ?? 1)) * 100}%`,
+          height: `${(1 - (sound.gain ?? 0.5)) * 100}%`,
           opacity: 0.5,
           background: "black",
           transition: "height 100ms linear",
@@ -61,7 +61,11 @@ export default function SoundTile({
           zIndex: 2,
         }}
       >
-        <div className={styles["scroll-text"]}>{sound.name}</div>
+        <div
+          className={`${sound.name.length > 10 ? styles["scroll-text"] : ""}`}
+        >
+          {sound.name}
+        </div>
         {sound.hotkey && (
           <HotkeyComponent hotkey={sound.hotkey} compact={true} />
         )}

@@ -41,3 +41,40 @@ export const getAudioDuration = (file: Blob | File) =>
       reject(new Error("Failed to load audio metadata"));
     };
   });
+
+export function fuzzyMatchDevices(
+  vmDevices: string[],
+  mediaDevices: MediaDeviceInfo[],
+) {
+  const normalize = (s: string) =>
+    s.toLowerCase().replace(/[()]/g, "").replace(/\s+/g, " ").trim();
+
+  return vmDevices.map((vmLabel) => {
+    const normalizedVm = normalize(vmLabel);
+
+    let bestMatch = null;
+    let bestScore = 0;
+
+    for (const mediaDevice of mediaDevices) {
+      const normalizedMedia = normalize(mediaDevice.label);
+
+      let score = 0;
+
+      if (normalizedMedia.includes(normalizedVm)) {
+        score = normalizedVm.length;
+      } else if (normalizedVm.includes(normalizedMedia)) {
+        score = normalizedMedia.length;
+      }
+
+      if (score > bestScore) {
+        bestScore = score;
+        bestMatch = mediaDevice;
+      }
+    }
+
+    return {
+      label: vmLabel,
+      id: bestMatch?.deviceId ?? "ERROR",
+    };
+  });
+}

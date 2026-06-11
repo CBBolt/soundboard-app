@@ -4,25 +4,29 @@ import GearIcon from "../icons/GearIcon";
 import PlusIcon from "../icons/PlusIcon";
 import QuestionIcon from "../icons/QuestionIcon";
 import SquareIcon from "../icons/SquareIcon";
-import HotkeyComponent from "./HotkeyComponent";
+import HotkeyComponent from "./Hotkey/HotkeyComponent";
 import HoverDropdown from "./HoverDropdown";
 
 type Props = {
-  VBDetected: { vbCable: boolean; voicemeter: boolean };
+  settings: Settings | undefined;
+  VBDetected: VBDetected;
   addSound: () => void;
   startRecord: () => void;
   stopAll: () => void;
   instructions: () => void;
-  settings: () => void;
+  showSettings: () => void;
+  youtube: () => void;
 };
 
 export default function ActionsBar({
+  settings,
   VBDetected,
   addSound,
   startRecord,
   stopAll,
   instructions,
-  settings,
+  showSettings,
+  youtube,
 }: Props) {
   return (
     <div
@@ -65,6 +69,16 @@ export default function ActionsBar({
               button: true,
               onClick: startRecord,
             },
+            {
+              label: (
+                <div className="flex-gap">
+                  <CircleIcon className="icon sml fill" />
+                  <span>From YouTube</span>
+                </div>
+              ),
+              button: true,
+              onClick: youtube,
+            },
           ]}
         />
         <HoverDropdown
@@ -87,7 +101,7 @@ export default function ActionsBar({
                   <div className="flex-gap">
                     <div
                       style={{
-                        background: VBDetected.voicemeter ? "lime" : "red",
+                        background: VBDetected.voicemeeter ? "lime" : "red",
                         borderRadius: "100%",
                         height: "5px",
                         width: "5px",
@@ -105,14 +119,14 @@ export default function ActionsBar({
             },
           ]}
         />
-        <button onClick={settings}>
+        <button onClick={showSettings}>
           <GearIcon className="icon stroke" />
         </button>
         <button onClick={stopAll}>
           <div className="flex-gap">
             <SquareIcon className="icon fill" />
             <span>All</span>
-            <HotkeyComponent hotkey={{ key: "Esc", shift: true }} />
+            {settings && <HotkeyComponent hotkey={settings.stopHotkey} />}
           </div>
         </button>
       </div>

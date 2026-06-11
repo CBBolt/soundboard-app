@@ -7,43 +7,40 @@ import SaveIcon from "../../icons/SaveIcon";
 import RefreshIcon from "../../icons/RefreshIcon";
 import MicIcon from "../../icons/MicIcon";
 
+type RecorderConfig = {
+  recording: boolean;
+  playing: boolean;
+  devices: MediaDeviceInfo[];
+  selectedDevice: string;
+  recordedBlob: Blob | null;
+  recordedDuration: number;
+  recordedMimeType: string;
+};
+
 export default function Recorder({
   onSave,
 }: {
   onSave: (blob: Blob, duration: number, mimeType: string) => void;
 }) {
-  const [recording, setRecording] = useState(false);
-
-  const [playing, setPlaying] = useState(false);
-
-  const [devices, setDevices] = useState<MediaDeviceInfo[]>([]);
-
-  const [selectedDevice, setSelectedDevice] = useState("");
-
-  const [recordedBlob, setRecordedBlob] = useState<Blob | null>(null);
-
-  const [recordedDuration, setRecordedDuration] = useState(0);
-
-  const [recordedMimeType, setRecordedMimeType] = useState("");
+  const [config, setConfig] = useState<RecorderConfig>({
+    recording: false,
+    playing: false,
+    devices: [],
+    selectedDevice: "",
+    recordedBlob: null,
+    recordedDuration: 0,
+    recordedMimeType: "",
+  });
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-
   const streamRef = useRef<MediaStream | null>(null);
-
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-
   const recordingStartedAtRef = useRef<number | null>(null);
-
   const audioCtxRef = useRef<AudioContext | null>(null);
-
   const analyserRef = useRef<AnalyserNode | null>(null);
-
   const animationRef = useRef<number | null>(null);
-
   const playbackRef = useRef<HTMLAudioElement | null>(null);
-
   const chunksRef = useRef<Blob[]>([]);
-
   const waveformRef = useRef<number[]>([]);
 
   const MAX_POINTS = 300;
@@ -73,12 +70,12 @@ export default function Recorder({
 
       const audioInputs = allDevices.filter((d) => d.kind === "audioinput");
 
-      setDevices(audioInputs);
-
-      setSelectedDevice((prev) => {
-        if (prev) return prev;
-
-        return audioInputs[0]?.deviceId ?? "";
+      setConfig((prev) => {
+        return {
+          ...prev,
+          devices: audioInputs,
+          selectedDevice: audioInputs[0]?.deviceId ?? "",
+        };
       });
     } catch (err) {
       console.error("Failed loading devices:", err);
@@ -189,13 +186,16 @@ export default function Recorder({
       waveformRef.current = [];
       chunksRef.current = [];
 
-      setRecordedBlob(null);
+      setConfig((prev) => ({
+        ...prev,
+        recordedBlob: null,
+      }));
 
       const stream = await navigator.mediaDevices.getUserMedia({
-        audio: selectedDevice
+        audio: config.selectedDevice
           ? {
               deviceId: {
-                exact: selectedDevice,
+                exact: config.selectedDevice,
               },
 
               echoCancellation: false,
@@ -253,11 +253,12 @@ export default function Recorder({
         const duration =
           startedAt != null ? (performance.now() - startedAt) / 1000 : 0;
 
-        setRecordedBlob(blob);
-
-        setRecordedDuration(duration);
-
-        setRecordedMimeType(mimeType);
+        setConfig((prev) => ({
+          ...prev,
+          recordedBlob: blob,
+          recordedDuration: duration,
+          recordedMimeType: mimeType,
+        }));
 
         recordingStartedAtRef.current = null;
 
@@ -268,7 +269,10 @@ export default function Recorder({
 
       recorder.start(250);
 
-      setRecording(true);
+      setConfig((prev) => ({
+        ...prev,
+        recording: true,
+      }));
     } catch (err) {
       console.error("Recording failed:", err);
 
@@ -281,7 +285,10 @@ export default function Recorder({
   // --------------------------------------------------
 
   const stopRecording = async () => {
-    setRecording(false);
+    setConfig((prev) => ({
+      ...prev,
+      recording: false,
+    }));
 
     const recorder = mediaRecorderRef.current;
 
@@ -297,18 +304,21 @@ export default function Recorder({
   // --------------------------------------------------
 
   const playRecording = async () => {
-    if (!recordedBlob) return;
+    if (!config.recordedBlob) return;
 
     stopPlayback();
 
-    const url = URL.createObjectURL(recordedBlob);
+    const url = URL.createObjectURL(config.recordedBlob);
 
     const audio = new Audio(url);
 
     playbackRef.current = audio;
 
     audio.onended = () => {
-      setPlaying(false);
+      setConfig((prev) => ({
+        ...prev,
+        playing: false,
+      }));
 
       URL.revokeObjectURL(url);
 
@@ -317,7 +327,10 @@ export default function Recorder({
 
     await audio.play();
 
-    setPlaying(true);
+    setConfig((prev) => ({
+      ...prev,
+      playing: true,
+    }));
   };
 
   const stopPlayback = () => {
@@ -331,7 +344,10 @@ export default function Recorder({
 
     playbackRef.current = null;
 
-    setPlaying(false);
+    setConfig((prev) => ({
+      ...prev,
+      playing: false,
+    }));
   };
 
   // --------------------------------------------------
@@ -339,9 +355,13 @@ export default function Recorder({
   // --------------------------------------------------
 
   const saveRecording = () => {
-    if (!recordedBlob) return;
+    if (!config.recordedBlob) return;
 
-    onSave(recordedBlob, recordedDuration, recordedMimeType);
+    onSave(
+      config.recordedBlob,
+      config.recordedDuration,
+      config.recordedMimeType,
+    );
   };
 
   // --------------------------------------------------
@@ -372,12 +392,17 @@ export default function Recorder({
         <MicIcon className="icon fill" />
 
         <select
-          value={selectedDevice}
-          onChange={(e) => setSelectedDevice(e.target.value)}
+          value={config.selectedDevice}
+          onChange={(e) =>
+            setConfig((prev) => ({
+              ...prev,
+              selectedDevice: e.target.value,
+            }))
+          }
         >
           <option value="">Default microphone</option>
 
-          {devices.map((d) => (
+          {config.devices.map((d) => (
             <option key={d.deviceId} value={d.deviceId}>
               {d.label || `Microphone ${d.deviceId.slice(0, 5)}`}
             </option>
@@ -388,9 +413,11 @@ export default function Recorder({
 
         <div
           className="icon-btn"
-          onClick={() => (!recording ? startRecording() : stopRecording())}
+          onClick={() =>
+            !config.recording ? startRecording() : stopRecording()
+          }
         >
-          {!recording ? (
+          {!config.recording ? (
             <div className="flex-gap">
               <CircleIcon className="icon fill" />
               Record
@@ -415,13 +442,15 @@ export default function Recorder({
         }}
       />
 
-      {recordedBlob && (
+      {config.recordedBlob && (
         <div className="flex-gap">
           <>
             <button
-              onClick={() => (!playing ? playRecording() : stopPlayback())}
+              onClick={() =>
+                !config.playing ? playRecording() : stopPlayback()
+              }
             >
-              {playing ? (
+              {config.playing ? (
                 <div className="flex-gap">
                   <SquareIcon className="icon fill" />
                   Stop

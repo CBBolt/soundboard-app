@@ -16,6 +16,17 @@ contextBridge.exposeInMainWorld("electronAPI", {
   updateSound: (updated) => ipcRenderer.invoke("update-sound", updated),
   saveRecording: (buffer, metadata) =>
     ipcRenderer.invoke("save-recording", buffer, metadata),
+  saveYoutubeLink: (link) => ipcRenderer.invoke("add-youtube-audio", link),
+
+  onYoutubeProgress: (callback) => {
+    const handler = (_, soundId) => callback(soundId);
+
+    ipcRenderer.on("youtube-download-progress", handler);
+
+    return () => {
+      ipcRenderer.removeListener("youtube-download-progress", handler);
+    };
+  },
 
   onPlaySound: (callback) => {
     const handler = (_, soundId) => callback(soundId);
@@ -36,6 +47,8 @@ contextBridge.exposeInMainWorld("electronAPI", {
 
   detectVBAudio: () => ipcRenderer.invoke("detect-vb-audio"),
   disableVBAudio: () => ipcRenderer.invoke("disable-vb-audio"),
+  openVoicemeeter: () => ipcRenderer.invoke("open-voicemeeter"),
+  setVMCommand: (command) => ipcRenderer.invoke("vm-command", command),
 
   // Settings
   readSettings: () => ipcRenderer.invoke("get-settings"),

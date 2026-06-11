@@ -1,15 +1,14 @@
-import { useEffect, useState } from "react";
-import { hotkeysEqual } from "../../lib/hotkey";
+import { useState } from "react";
+
 import SoundClipEditor from "./SoundClipEditor";
 
 import SaveIcon from "../../icons/SaveIcon";
 import HotkeyIcon from "../../icons/HotkeyIcon";
 import Modal from "../Modal/Modal";
-import WarningIcon from "../../icons/WarningIcon";
-import HotkeyComponent from "../HotkeyComponent";
 import MusicNoteIcon from "../../icons/MusicNoteIcon";
 import QuestionIcon from "../../icons/QuestionIcon";
-import TrashIcon from "../../icons/TrashIcon";
+import HotkeyListenerModal from "../Modal/HotkeyListenerModal";
+import HotkeyWrapper from "../Hotkey/HotkeyWrapper";
 
 type Props = {
   sound: Sound;
@@ -20,6 +19,14 @@ type Props = {
   onSave: (data: Sound) => void;
 };
 
+type SoundSettings = {
+  settings: Sound;
+  listeningForHotkey: boolean;
+  removeHotkey: boolean;
+  editSound: boolean;
+  helper: boolean;
+};
+
 export default function SoundEditor({
   sound,
   blob,
@@ -28,74 +35,36 @@ export default function SoundEditor({
   stopSound,
   onSave,
 }: Props) {
-  const [settings, setSettings] = useState(sound);
+  const [config, setConfig] = useState<SoundSettings>({
+    settings: sound,
+    listeningForHotkey: false,
+    removeHotkey: false,
+    editSound: false,
+    helper: false,
+  });
 
-  const { name, hotkey, color } = settings;
-
-  const [listeningForHotkey, setListeningForHotkey] = useState(false);
-  const [curEditHotkey, setCurEditHotkey] = useState<Hotkey | null>(null);
-  const [hotkeyWarning, setHotkeyWarning] = useState(false);
-  const [removeHotkey, setRemoveHotkey] = useState(false);
-  const [editSound, setEditSound] = useState(false);
-  const [helper, setHelper] = useState(false);
-
-  useEffect(() => {
-    if (!listeningForHotkey) return;
-
-    window.electronAPI.unregisterHotkeys();
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      e.preventDefault();
-
-      const newHotkey: Hotkey = {
-        key: e.key.toLowerCase(),
-        ctrl: e.ctrlKey,
-        shift: e.shiftKey,
-        alt: e.altKey,
-        meta: e.metaKey,
-      };
-
-      // prevent modifier-only bindings
-      if (
-        newHotkey.key === "control" ||
-        newHotkey.key === "shift" ||
-        newHotkey.key === "alt" ||
-        newHotkey.key === "meta"
-      ) {
-        return;
-      }
-
-      const hotkeyExists = allHotkeys.some((h) => hotkeysEqual(h, newHotkey));
-
-      setHotkeyWarning(hotkeyExists);
-
-      setCurEditHotkey(newHotkey);
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [listeningForHotkey, allHotkeys]);
+  const { name, hotkey, color } = config.settings;
 
   const handleSave = async () => {
-    onSave({ ...settings });
+    onSave({ ...config.settings });
   };
 
   const update =
-    (key: keyof typeof settings) =>
+    (key: keyof typeof config.settings) =>
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const { type, value, checked } = e.target;
 
-      setSettings((prev) => ({
+      setConfig((prev) => ({
         ...prev,
-        [key]:
-          type === "checkbox"
-            ? checked
-            : type === "number" || type === "range"
-              ? Number(value)
-              : value,
+        settings: {
+          ...prev.settings,
+          [key]:
+            type === "checkbox"
+              ? checked
+              : type === "number" || type === "range"
+                ? Number(value)
+                : value,
+        },
       }));
     };
 
@@ -125,41 +94,20 @@ export default function SoundEditor({
           />
         </label>
 
-        <div
-          className="wrapper"
-          style={{
-            display: "flex",
-            gap: "10px",
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
-        >
-          {hotkey?.key ? (
-            <HotkeyComponent hotkey={hotkey} />
-          ) : (
-            <span>No hotkey assigned</span>
-          )}
-          <div
-            style={{
-              display: "flex",
-              gap: "10px",
-            }}
-          >
-            <div
-              className="icon-btn"
-              onClick={() => setListeningForHotkey(true)}
-            >
-              <HotkeyIcon className="icon fill" />
-            </div>
-            {hotkey && (
-              <div className="icon-btn" onClick={() => setRemoveHotkey(true)}>
-                <TrashIcon className="icon stroke" />
-              </div>
-            )}
-          </div>
-        </div>
+        <HotkeyWrapper
+          hotkey={config.settings.hotkey}
+          onListen={() =>
+            setConfig((prev) => ({ ...prev, listeningForHotkey: true }))
+          }
+          onRemove={() =>
+            setConfig((prev) => ({ ...prev, removeHotkey: true }))
+          }
+        />
 
-        <Modal isOpen={helper} onClose={() => setHelper(false)}>
+        <Modal
+          isOpen={config.helper}
+          onClose={() => setConfig((prev) => ({ ...prev, helper: false }))}
+        >
           <div
             className="flex-gap"
             style={{ position: "absolute", top: 20, left: 10 }}
@@ -179,90 +127,45 @@ export default function SoundEditor({
           </div>
         </Modal>
 
-        <Modal isOpen={removeHotkey} onClose={() => setRemoveHotkey(false)}>
-          <div style={{ display: "grid", justifyItems: "center" }}>
-            <span>Are you sure you want to clear the hotkey?</span>
-            <button
-              onClick={() => {
-                setSettings((p) => ({ ...p, hotkey: undefined }));
-                setRemoveHotkey(false);
-              }}
-            >
-              Confirm
-            </button>
-          </div>
-          <div
-            className="flex-gap"
-            style={{ position: "absolute", top: 15, left: 15 }}
-          >
-            <TrashIcon className="icon stroke" />
-            <h2>Clear Hotkey</h2>
-          </div>
-        </Modal>
-
-        <Modal
-          isOpen={listeningForHotkey}
-          onClose={() => {
-            setListeningForHotkey(false);
-            setCurEditHotkey(null);
-            setHotkeyWarning(false);
-          }}
-        >
-          <div style={{ display: "grid", gap: 20, justifyItems: "center" }}>
-            <span>Listening...</span>
-
-            <div className="seperator" />
-
-            <div className="panel">
-              <i>
-                Note: Hotkeys can cause issues if only single key. Also will
-                conflict with other default hotkeys
-              </i>
-            </div>
-
-            {hotkeyWarning && (
-              <div className="flex-gap">
-                <WarningIcon
-                  className="icon"
-                  style={{ stroke: "yellow", fill: "yellow" }}
-                />
-                <span style={{ color: "yellow" }}>Hotkey Already In Use</span>
-              </div>
-            )}
-
-            {curEditHotkey && (
-              <div
-                style={{ display: "grid", gap: 20, justifyContent: "center" }}
-              >
-                <HotkeyComponent hotkey={curEditHotkey} />
-                <button
-                  onClick={() => {
-                    setSettings((p) => ({ ...p, hotkey: curEditHotkey }));
-                    setListeningForHotkey(false);
-                    setCurEditHotkey(null);
-                    setHotkeyWarning(false);
-                  }}
-                >
-                  <div className="flex-gap">
-                    <SaveIcon className="icon fill" />
-                    Assign Hotkey
-                  </div>
-                </button>
-              </div>
-            )}
-          </div>
-        </Modal>
+        <HotkeyListenerModal
+          allHotkeys={allHotkeys}
+          remove={config.removeHotkey}
+          listening={config.listeningForHotkey}
+          onSave={(hotkey) =>
+            setConfig((prev) => ({
+              ...prev,
+              settings: { ...prev.settings, hotkey },
+            }))
+          }
+          onSaveClose={() =>
+            setConfig((prev) => ({ ...prev, listeningForHotkey: false }))
+          }
+          onRemove={() =>
+            setConfig((prev) => ({
+              ...prev,
+              settings: { ...prev.settings, hotkey: undefined },
+            }))
+          }
+          onRemoveClose={() =>
+            setConfig((prev) => ({ ...prev, removeHotkey: false }))
+          }
+        />
       </div>
 
       <div className="seperator" />
 
       <SoundClipEditor
-        show={editSound}
+        show={config.editSound}
         blob={blob}
         sound={sound}
         playSound={playSound}
         stopSound={stopSound}
-        onChange={(data) => setSettings((p) => ({ ...p, ...data }))}
+        onChange={(data) =>
+          setConfig((prev) => ({
+            ...prev,
+            settings: { ...prev.settings, ...data },
+          }))
+        }
       />
 
       <div
@@ -275,14 +178,22 @@ export default function SoundEditor({
           marginTop: "10px",
         }}
       >
-        <div className="icon-btn" onClick={async () => setHelper(true)}>
+        <div
+          className="icon-btn"
+          onClick={() => setConfig((prev) => ({ ...prev, helper: true }))}
+        >
           <QuestionIcon className="icon fill" />
         </div>
-        <div className="icon-btn" onClick={() => setEditSound(!editSound)}>
+        <div
+          className="icon-btn"
+          onClick={() =>
+            setConfig((prev) => ({ ...prev, editSound: !prev.editSound }))
+          }
+        >
           <MusicNoteIcon
             className="icon fill"
             style={{
-              fill: editSound
+              fill: config.editSound
                 ? "oklch(from var(--base-color) calc(l * 0.5) c h)"
                 : "",
             }}
@@ -292,7 +203,8 @@ export default function SoundEditor({
           className="icon-btn"
           onClick={async () => {
             await handleSave();
-            if (hotkey) window.electronAPI.registerHotkey(hotkey, sound.id);
+            if (hotkey)
+              window.electronAPI.registerHotkey(hotkey, sound.id.toString());
           }}
         >
           <SaveIcon className="icon fill" />

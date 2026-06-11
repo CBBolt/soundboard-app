@@ -3,30 +3,47 @@ import { useState } from "react";
 import GearIcon from "../../icons/GearIcon";
 import Modal from "./Modal";
 import SaveIcon from "../../icons/SaveIcon";
+import HotkeyWrapper from "../Hotkey/HotkeyWrapper";
+import HotkeyListenerModal from "./HotkeyListenerModal";
 
 type Props = {
+  allHotkeys: Hotkey[];
   show: boolean;
   settings: Settings;
   onClose: () => void;
   onSave: (data: Partial<Settings>) => void;
 };
 
+type SettingsType = {
+  settings: Settings;
+  listeningForHotkey: boolean;
+  removeHotkey: boolean;
+};
+
 export default function SettingsModal({
+  allHotkeys,
   settings,
   show,
   onClose,
   onSave,
 }: Props) {
-  const [localSettings, setLocalSettings] = useState(settings);
+  const [config, setConfig] = useState<SettingsType>({
+    settings,
+    listeningForHotkey: false,
+    removeHotkey: false,
+  });
 
   const update =
     (key: keyof typeof settings) =>
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const { value } = e.target;
 
-      setLocalSettings((prev) => ({
+      setConfig((prev) => ({
         ...prev,
-        [key]: value,
+        settings: {
+          ...prev.settings,
+          [key]: value,
+        },
       }));
     };
 
@@ -44,7 +61,7 @@ export default function SettingsModal({
         <div
           className="icon-btn"
           style={{ position: "absolute", top: 10, right: 50 }}
-          onClick={() => onSave(localSettings)}
+          onClick={() => onSave(config.settings)}
         >
           <SaveIcon className="icon fill" />
         </div>
@@ -53,11 +70,55 @@ export default function SettingsModal({
           <span>Base Color:</span>
           <input
             type="color"
-            value={localSettings.baseColor}
+            value={config.settings.baseColor}
             onChange={update("baseColor")}
             style={{ height: 50 }}
           />
         </div>
+        <div className="flex-gap">
+          <span>Stop All Hotkey:</span>
+          <HotkeyWrapper
+            hotkey={config.settings.stopHotkey}
+            onListen={() =>
+              setConfig((prev) => ({
+                ...prev,
+                listeningForHotkey: true,
+              }))
+            }
+            onRemove={() =>
+              setConfig((prev) => ({
+                ...prev,
+                removeHotkey: true,
+              }))
+            }
+          />
+        </div>
+        <HotkeyListenerModal
+          allHotkeys={allHotkeys}
+          remove={config.removeHotkey}
+          listening={config.listeningForHotkey}
+          onSave={(hotkey) =>
+            setConfig((prev) => ({
+              ...prev,
+              settings: { ...prev.settings, stopHotkey: hotkey as Hotkey },
+            }))
+          }
+          onSaveClose={() =>
+            setConfig((prev) => ({ ...prev, listeningForHotkey: false }))
+          }
+          onRemove={() =>
+            setConfig((prev) => ({
+              ...prev,
+              settings: {
+                ...prev.settings,
+                stopHotkey: { key: "esc", shift: true } as Hotkey,
+              },
+            }))
+          }
+          onRemoveClose={() =>
+            setConfig((prev) => ({ ...prev, removeHotkey: false }))
+          }
+        />
       </>
     </Modal>
   );

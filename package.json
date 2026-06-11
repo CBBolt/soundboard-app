@@ -9,10 +9,10 @@
     "build": "vite build",
     "electron:dev": "cross-env VITE_DEV_SERVER_URL=http://localhost:5173 electron .",
     "build:renderer": "vite build",
-    "dist": "npm run build:renderer && electron-builder",
-    "start": "electron ."
+    "dist": "npm run build:renderer && electron-builder"
   },
   "dependencies": {
+    "@distube/ytdl-core": "^4.16.12",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
     "tone": "^15.1.22",
@@ -26,7 +26,7 @@
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.1",
-    "concurrently": "^9.2.1",
+    "concurrently": "^10.0.3",
     "cross-env": "^10.1.0",
     "electron": "^42.0.1",
     "electron-builder": "^26.8.1",
@@ -50,6 +50,12 @@
     ],
     "directories": {
       "output": "release"
-    }
+    },
+    "extraResources": [
+      {
+        "from": "resources/yt-dlp",
+        "to": "yt-dlp"
+      }
+    ]
   }
 }
