@@ -8,7 +8,7 @@ import HotkeyComponent from "../Hotkey/HotkeyComponent";
 
 type Props = {
   sound: Sound;
-  playSound: (sound: Sound, options: Partial<Sound>) => void;
+  playSound: (sound: Sound) => void;
   editSound: (sound: Sound) => void;
   deleteSound: (id: number) => void;
 };
@@ -28,7 +28,7 @@ export default function SoundTile({
         backgroundColor: sound.color ?? "white",
         color: text,
       }}
-      onClick={() => playSound(sound, { ...sound })}
+      onClick={() => playSound(sound)}
     >
       <div
         style={{

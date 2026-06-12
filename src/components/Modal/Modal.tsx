@@ -2,6 +2,7 @@ type Props = {
   isOpen: boolean;
   onClose: () => void;
   children: React.ReactNode;
+  header?: React.ReactNode;
   lockedCondition?: boolean;
 };
 
@@ -11,6 +12,7 @@ export default function Modal({
   isOpen,
   onClose,
   lockedCondition,
+  header,
   children,
 }: Props) {
   if (!isOpen) return null;
@@ -37,6 +39,18 @@ export default function Modal({
         >
           ×
         </button>
+
+        {header && (
+          <>
+            <div
+              className="flex-gap"
+              style={{ position: "absolute", top: 10, left: 10 }}
+            >
+              {header}
+            </div>
+            <div className="seperator" />
+          </>
+        )}
 
         {children}
       </div>

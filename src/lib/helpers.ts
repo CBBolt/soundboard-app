@@ -78,3 +78,47 @@ export function fuzzyMatchDevices(
     };
   });
 }
+
+export async function getDevices() {
+  const api = window.electronAPI;
+  let vmInputs: AudioDevice[] = [];
+  let vmOutputs: AudioDevice[] = [];
+
+  try {
+    const devices = await navigator.mediaDevices.enumerateDevices();
+
+    const outputs = devices.filter((d) => d.kind === "audiooutput");
+
+    const vmOutputDevices = await api.setVMCommand({
+      cmd: "output_devices",
+    });
+
+    if (!vmOutputDevices.success) {
+      throw new Error("Failure getting VM Output Devices");
+    }
+
+    vmOutputs = fuzzyMatchDevices(
+      vmOutputDevices.string_value!.split(", "),
+      outputs,
+    );
+
+    const inputs = devices.filter((d) => d.kind === "audioinput");
+
+    const vmInputDevices = await api.setVMCommand({
+      cmd: "input_devices",
+    });
+
+    if (!vmInputDevices.success) {
+      throw new Error("Failure getting VM Input Devices");
+    }
+
+    vmInputs = fuzzyMatchDevices(
+      vmInputDevices.string_value!.split(", "),
+      inputs,
+    );
+  } catch (err) {
+    console.error("Failed loading devices", err);
+  }
+
+  return { inputs: vmInputs, outputs: vmOutputs };
+}

@@ -6,6 +6,7 @@ import WarningIcon from "../../icons/WarningIcon";
 import SaveIcon from "../../icons/SaveIcon";
 import { hotkeysEqual } from "../../lib/hotkey";
 import HotkeyComponent from "../Hotkey/HotkeyComponent";
+import HotkeyIcon from "../../icons/HotkeyIcon";
 
 type Props = {
   allHotkeys: Hotkey[];
@@ -71,7 +72,16 @@ export default function HotkeyListenerModal({
 
   return (
     <>
-      <Modal isOpen={remove} onClose={onRemoveClose}>
+      <Modal
+        isOpen={remove}
+        onClose={onRemoveClose}
+        header={
+          <>
+            <TrashIcon className="icon stroke" />
+            <h2>Clear Hotkey</h2>
+          </>
+        }
+      >
         <div style={{ display: "grid", justifyItems: "center" }}>
           <span>Are you sure you want to clear the hotkey?</span>
           <button
@@ -83,13 +93,6 @@ export default function HotkeyListenerModal({
             Confirm
           </button>
         </div>
-        <div
-          className="flex-gap"
-          style={{ position: "absolute", top: 15, left: 15 }}
-        >
-          <TrashIcon className="icon stroke" />
-          <h2>Clear Hotkey</h2>
-        </div>
       </Modal>
 
       <Modal
@@ -99,6 +102,12 @@ export default function HotkeyListenerModal({
           setCurEditHotkey(null);
           setHotkeyWarning(false);
         }}
+        header={
+          <>
+            <HotkeyIcon className="icon fill" />
+            <span>Assign Hotkey</span>
+          </>
+        }
       >
         <div style={{ display: "grid", gap: 20, justifyItems: "center" }}>
           <span>Listening...</span>

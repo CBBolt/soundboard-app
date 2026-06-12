@@ -1,41 +1,59 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import GearIcon from "../../icons/GearIcon";
 import Modal from "./Modal";
 import SaveIcon from "../../icons/SaveIcon";
 import HotkeyWrapper from "../Hotkey/HotkeyWrapper";
 import HotkeyListenerModal from "./HotkeyListenerModal";
+import MicIcon from "../../icons/MicIcon";
+import VMDeviceDriverSelector from "../VoiceMeeter/VMDeviceDriverSelector";
+import SpeakerIcon from "../../icons/SpeakerIcon";
+import VMDeviceSelector from "../VoiceMeeter/VMDeviceSelector";
 
 type Props = {
   allHotkeys: Hotkey[];
+  inputDevices: AudioDevice[];
+  outputDevices: AudioDevice[];
   show: boolean;
-  settings: Settings;
   onClose: () => void;
   onSave: (data: Partial<Settings>) => void;
+  loadSettings: () => Settings;
 };
 
 type SettingsType = {
-  settings: Settings;
+  settings: Settings | null;
   listeningForHotkey: boolean;
   removeHotkey: boolean;
 };
 
 export default function SettingsModal({
   allHotkeys,
-  settings,
+  inputDevices,
+  outputDevices,
   show,
+  loadSettings,
   onClose,
   onSave,
 }: Props) {
   const [config, setConfig] = useState<SettingsType>({
-    settings,
+    settings: null,
     listeningForHotkey: false,
     removeHotkey: false,
   });
 
+  useEffect(() => {
+    const getSettings = async () => {
+      const settings = await loadSettings();
+      setConfig((prev) => ({ ...prev, settings }));
+    };
+
+    getSettings();
+  }, [show]);
+
   const update =
-    (key: keyof typeof settings) =>
-    (e: React.ChangeEvent<HTMLInputElement>) => {
+    (key: keyof Settings) => (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (!config.settings) return;
+
       const { value } = e.target;
 
       setConfig((prev) => ({
@@ -43,25 +61,28 @@ export default function SettingsModal({
         settings: {
           ...prev.settings,
           [key]: value,
-        },
+        } as Settings,
       }));
     };
 
+  if (!config.settings) return;
+
   return (
-    <Modal isOpen={show} onClose={onClose}>
-      <>
-        <div
-          className="flex-gap"
-          style={{ position: "absolute", top: 10, left: 10 }}
-        >
+    <Modal
+      isOpen={show}
+      onClose={onClose}
+      header={
+        <>
           <GearIcon className="icon stroke" />
           <h2>Settings</h2>
-        </div>
-
+        </>
+      }
+    >
+      <>
         <div
           className="icon-btn"
           style={{ position: "absolute", top: 10, right: 50 }}
-          onClick={() => onSave(config.settings)}
+          onClick={() => onSave(config.settings!)}
         >
           <SaveIcon className="icon fill" />
         </div>
@@ -93,6 +114,67 @@ export default function SettingsModal({
             }
           />
         </div>
+        <div className="flex-gap">
+          <span>Default Mic:</span>
+          <div className="flex-gap">
+            <MicIcon className="icon fill" />
+            <VMDeviceDriverSelector
+              currentDevice={config.settings.defaultInputDevice}
+              devices={inputDevices}
+              onChange={(device) => {
+                setConfig((prev) => ({
+                  ...prev,
+                  settings: {
+                    ...prev.settings,
+                    defaultInputDevice: device,
+                  } as Settings,
+                }));
+              }}
+            />
+          </div>
+        </div>
+
+        <div className="flex-gap">
+          <span>Default Output:</span>
+          <div className="flex-gap">
+            <SpeakerIcon className="icon fill" />
+            <VMDeviceDriverSelector
+              currentDevice={config.settings.defaultOutputDevice}
+              devices={outputDevices}
+              onChange={(device) => {
+                setConfig((prev) => ({
+                  ...prev,
+                  settings: {
+                    ...prev.settings,
+                    defaultOutputDevice: device,
+                  } as Settings,
+                }));
+              }}
+            />
+          </div>
+        </div>
+
+        <div className="flex-gap">
+          <span>Default Local Output:</span>
+          <div className="flex-gap">
+            <SpeakerIcon className="icon fill" />
+            <VMDeviceSelector
+              currentDevice={config.settings.defaultLocalOutputDevice}
+              devices={outputDevices}
+              onChange={(value: string) => {
+                setConfig((prev) => ({
+                  ...prev,
+                  settings: {
+                    ...prev.settings,
+                    defaultLocalOutputDevice:
+                      value ?? config.settings?.defaultLocalOutputDevice,
+                  } as Settings,
+                }));
+              }}
+            />
+          </div>
+        </div>
+
         <HotkeyListenerModal
           allHotkeys={allHotkeys}
           remove={config.removeHotkey}
@@ -100,7 +182,10 @@ export default function SettingsModal({
           onSave={(hotkey) =>
             setConfig((prev) => ({
               ...prev,
-              settings: { ...prev.settings, stopHotkey: hotkey as Hotkey },
+              settings: {
+                ...prev.settings,
+                stopHotkey: hotkey as Hotkey,
+              } as Settings,
             }))
           }
           onSaveClose={() =>
@@ -112,7 +197,7 @@ export default function SettingsModal({
               settings: {
                 ...prev.settings,
                 stopHotkey: { key: "esc", shift: true } as Hotkey,
-              },
+              } as Settings,
             }))
           }
           onRemoveClose={() =>

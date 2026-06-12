@@ -23,13 +23,16 @@ export default function YoutubeLinkModal({
   }, [progress]);
 
   return (
-    <Modal isOpen={show} onClose={onClose} lockedCondition={loading}>
-      <div
-        className="flex-gap"
-        style={{ position: "absolute", top: 10, left: 10 }}
-      >
-        <h2>Youtube Link</h2>
-      </div>
+    <Modal
+      isOpen={show}
+      onClose={onClose}
+      lockedCondition={loading}
+      header={
+        <>
+          <h2>Add Youtube Link</h2>
+        </>
+      }
+    >
       <div
         className="icon-btn"
         style={{ position: "absolute", top: 10, right: 50 }}

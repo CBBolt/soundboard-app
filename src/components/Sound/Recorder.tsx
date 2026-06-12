@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import SquareIcon from "../../icons/SquareIcon";
 import CircleIcon from "../../icons/CircleIcon";
@@ -7,10 +7,17 @@ import SaveIcon from "../../icons/SaveIcon";
 import RefreshIcon from "../../icons/RefreshIcon";
 import MicIcon from "../../icons/MicIcon";
 
+type RecorderProps = {
+  devices: AudioDevice[];
+  defaultInputDevice: string;
+  onSave: (blob: Blob, duration: number, mimeType: string) => void;
+  loadDevices: () => void;
+};
+
 type RecorderConfig = {
   recording: boolean;
   playing: boolean;
-  devices: MediaDeviceInfo[];
+  devices: AudioDevice[];
   selectedDevice: string;
   recordedBlob: Blob | null;
   recordedDuration: number;
@@ -18,15 +25,17 @@ type RecorderConfig = {
 };
 
 export default function Recorder({
+  defaultInputDevice,
+  devices,
+
+  loadDevices,
   onSave,
-}: {
-  onSave: (blob: Blob, duration: number, mimeType: string) => void;
-}) {
+}: RecorderProps) {
   const [config, setConfig] = useState<RecorderConfig>({
     recording: false,
     playing: false,
-    devices: [],
-    selectedDevice: "",
+    devices,
+    selectedDevice: defaultInputDevice,
     recordedBlob: null,
     recordedDuration: 0,
     recordedMimeType: "",
@@ -45,52 +54,6 @@ export default function Recorder({
 
   const MAX_POINTS = 300;
   const VISUAL_GAIN = 5;
-
-  // --------------------------------------------------
-  // Permissions
-  // --------------------------------------------------
-
-  const ensurePermissions = async () => {
-    const stream = await navigator.mediaDevices.getUserMedia({
-      audio: true,
-    });
-
-    stream.getTracks().forEach((t) => t.stop());
-  };
-
-  // --------------------------------------------------
-  // Device Loading
-  // --------------------------------------------------
-
-  const loadDevices = useCallback(async () => {
-    try {
-      await ensurePermissions();
-
-      const allDevices = await navigator.mediaDevices.enumerateDevices();
-
-      const audioInputs = allDevices.filter((d) => d.kind === "audioinput");
-
-      setConfig((prev) => {
-        return {
-          ...prev,
-          devices: audioInputs,
-          selectedDevice: audioInputs[0]?.deviceId ?? "",
-        };
-      });
-    } catch (err) {
-      console.error("Failed loading devices:", err);
-    }
-  }, []);
-
-  useEffect(() => {
-    loadDevices();
-
-    navigator.mediaDevices.addEventListener("devicechange", loadDevices);
-
-    return () => {
-      navigator.mediaDevices.removeEventListener("devicechange", loadDevices);
-    };
-  }, [loadDevices]);
 
   // --------------------------------------------------
   // Waveform Drawing
@@ -403,8 +366,8 @@ export default function Recorder({
           <option value="">Default microphone</option>
 
           {config.devices.map((d) => (
-            <option key={d.deviceId} value={d.deviceId}>
-              {d.label || `Microphone ${d.deviceId.slice(0, 5)}`}
+            <option key={d.id} value={d.id}>
+              {d.label || `Microphone ${d.id.slice(0, 5)}`}
             </option>
           ))}
         </select>

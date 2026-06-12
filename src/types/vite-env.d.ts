@@ -35,9 +35,18 @@ declare global {
     id: string;
   };
 
+  type VMAudioDevice = {
+    id: string;
+    name: string;
+    driver: "WDM" | "MME";
+  };
+
   type Settings = {
     baseColor: string;
     stopHotkey: Hotkey;
+    defaultInputDevice: VMAudioDevice;
+    defaultOutputDevice: VMAudioDevice;
+    defaultLocalOutputDevice: string;
   };
 
   type Hotkey = {
@@ -96,7 +105,7 @@ declare global {
       detectVBAudio: () => Promise<VBDevice[]>;
       disableVBAudio: () => void;
       openVoicemeeter: () => void;
-      setVMCommand: (command: VBCommand) => VBCommandResponse;
+      setVMCommand: (command: VBCommand) => Promise<VBCommandResponse>;
     };
   }
 }

@@ -278,14 +278,16 @@ export default function InstructionModal({ VBDetected, show, onClose }: Props) {
   };
 
   return (
-    <Modal isOpen={show} onClose={onClose}>
-      <div
-        className="flex-gap"
-        style={{ position: "absolute", top: 15, left: 15 }}
-      >
-        <QuestionIcon className="icon stroke" />
-        <h2>Setup</h2>
-      </div>
+    <Modal
+      isOpen={show}
+      onClose={onClose}
+      header={
+        <>
+          <QuestionIcon className="icon fill" />
+          <h2>Setup</h2>
+        </>
+      }
+    >
       <div>
         <div className="flex-gap">
           <button

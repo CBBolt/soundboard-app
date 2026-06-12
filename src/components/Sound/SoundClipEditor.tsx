@@ -12,7 +12,7 @@ type Props = {
   show: boolean;
   blob: Blob;
   sound: Sound;
-  playSound: (sound: Sound, options: Partial<Sound>) => void;
+  playSound: (sound: Sound) => void;
   stopSound: () => void;
   onChange: (data: Partial<Sound>) => void;
 };
@@ -163,14 +163,16 @@ export default function SoundClipEditor({
 
   return (
     <div className={`wrapper ${styles.editor} ${show ? styles.show : ""}`}>
-      <Modal isOpen={helper} onClose={() => setHelper(false)}>
-        <div
-          className="flex-gap"
-          style={{ position: "absolute", top: 20, left: 10 }}
-        >
-          <QuestionIcon className="icon fill" />
-          <h2>Sound Editor</h2>
-        </div>
+      <Modal
+        isOpen={helper}
+        onClose={() => setHelper(false)}
+        header={
+          <>
+            <QuestionIcon className="icon fill" />
+            <h2>Sound Editor</h2>
+          </>
+        }
+      >
         <div
           style={{
             background: "#222",
@@ -271,7 +273,7 @@ export default function SoundClipEditor({
             </div>
             <div
               className="icon-btn"
-              onClick={() => playSound(sound, settings)}
+              onClick={() => playSound({ ...sound, ...settings })}
             >
               <TriangeIcon className="icon sml fill" />
             </div>

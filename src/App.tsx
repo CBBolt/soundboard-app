@@ -1,11 +1,12 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useEventBus } from "./contexts/GlobalEventContext";
 import {
-  clampVolume,
-  fuzzyMatchDevices,
   getAudioDuration,
   getContrastTextColor,
+  getDevices,
 } from "./lib/helpers";
+
+import { audioEngine } from "./audio/AudioEngine";
 
 import Recorder from "./components/Sound/Recorder";
 import SoundEditor from "./components/Sound/SoundEditor";
@@ -33,8 +34,6 @@ TODO:
  - Ability to organize sounds (labels, reorder, multiple boards?)
  - Settings (Add default devices (if available) on startup to voicemeeter)
 
-
-
 CLEANUP:
 
  - Waveform ability to zoom in and out clip (time range)
@@ -45,6 +44,7 @@ CLEANUP:
 */
 
 type AppConfig = {
+  loading: boolean;
   sounds: Sound[];
   settings: Settings | undefined;
   editingSound: Sound | null;
@@ -59,13 +59,14 @@ type AppConfig = {
   VBDetected: VBDetected;
   outputDevices: AudioDevice[];
   localOutputDevice: string;
-  vmOutputDevice: string;
+  vmOutputDevice: VMAudioDevice;
   inputDevices: AudioDevice[];
-  selectedInputDevice: string;
+  selectedInputDevice: VMAudioDevice;
 };
 
 function App() {
   const [config, setConfig] = useState<AppConfig>({
+    loading: true,
     sounds: [],
     settings: undefined,
     editingSound: null,
@@ -80,99 +81,15 @@ function App() {
     VBDetected: { voicemeeter: false, vbCable: false },
     outputDevices: [],
     localOutputDevice: "",
-    vmOutputDevice: "",
+    vmOutputDevice: { id: "", name: "", driver: "WDM" },
     inputDevices: [],
-    selectedInputDevice: "",
+    selectedInputDevice: { id: "", name: "", driver: "WDM" },
   });
 
   const bus = useEventBus();
   const api = window.electronAPI;
 
-  const currentOutputDeviceRef = useRef(config.localOutputDevice);
-  const activePlayersRef = useRef<Set<HTMLAudioElement>>(new Set());
-
-  // const audioContextRef = useRef<AudioContext>(new AudioContext());
-
-  // function getAudioContext() {
-  //   if (!audioContextRef.current) {
-  //     audioContextRef.current = new AudioContext();
-  //   }
-
-  //   return audioContextRef.current;
-  // }
-
-  async function safeSetSink(audio: HTMLAudioElement, deviceId: string) {
-    if (!("setSinkId" in audio)) return;
-
-    try {
-      await audio.setSinkId(deviceId);
-    } catch (err) {
-      console.warn("Sink failed, falling back to default output", err);
-    }
-  }
-
   // #region Loaders
-
-  const loadDevices = async () => {
-    try {
-      const devices = await navigator.mediaDevices.enumerateDevices();
-
-      const outputs = devices.filter((d) => d.kind === "audiooutput");
-
-      const vmOutputDevices = await api.setVMCommand({
-        cmd: "output_devices",
-      });
-
-      if (!vmOutputDevices.success) {
-        console.error("Failure getting VM Output Devices");
-        return;
-      }
-
-      const mappedOutputs = fuzzyMatchDevices(
-        vmOutputDevices.string_value!.split(", "),
-        outputs,
-      );
-
-      const inputs = devices.filter((d) => d.kind === "audioinput");
-
-      const vmInputDevices = await api.setVMCommand({
-        cmd: "input_devices",
-      });
-
-      if (!vmInputDevices.success) {
-        console.error("Failure getting VM Input Devices");
-        return;
-      }
-
-      const mappedInputs = fuzzyMatchDevices(
-        vmInputDevices.string_value!.split(", "),
-        inputs,
-      );
-
-      setConfig((prev) => ({
-        ...prev,
-        outputDevices: mappedOutputs,
-        inputDevices: mappedInputs,
-      }));
-
-      if (outputs.length > 0 && !config.localOutputDevice) {
-        setConfig((prev) => ({
-          ...prev,
-          localOutputDevice: outputs[0].deviceId,
-          vmOutputDevice: outputs[0].deviceId,
-        }));
-      }
-
-      if (inputs.length > 0 && !config.selectedInputDevice) {
-        setConfig((prev) => ({
-          ...prev,
-          selectedInputDevice: inputs[0].deviceId,
-        }));
-      }
-    } catch (err) {
-      console.error("Failed loading devices", err);
-    }
-  };
 
   const detectVBAudio = async () => {
     const vb = await api.detectVBAudio();
@@ -197,6 +114,58 @@ function App() {
     });
   };
 
+  const getVMConfig = async () => {
+    const inputA = await api.setVMCommand({
+      cmd: "get_float",
+      param: "Strip[1].A1",
+    });
+    const inputGain = await api.setVMCommand({
+      cmd: "get_float",
+      param: "Strip[1].Gain",
+    });
+    const inputMute = await api.setVMCommand({
+      cmd: "get_float",
+      param: "Strip[1].Mute",
+    });
+
+    const soundboardA = await api.setVMCommand({
+      cmd: "get_float",
+      param: "Strip[0].A1",
+    });
+    const soundboardGain = await api.setVMCommand({
+      cmd: "get_float",
+      param: "Strip[0].Gain",
+    });
+    const soundboardMute = await api.setVMCommand({
+      cmd: "get_float",
+      param: "Strip[0].Mute",
+    });
+
+    const outputGain = await api.setVMCommand({
+      cmd: "get_float",
+      param: "Bus[0].Gain",
+    });
+
+    const outputMute = await api.setVMCommand({
+      cmd: "get_float",
+      param: "Bus[0].Mute",
+    });
+
+    return {
+      input: {
+        a: inputA.float_value,
+        gain: inputGain.float_value,
+        mute: inputMute.float_value,
+      },
+      soundboard: {
+        a: soundboardA.float_value,
+        gain: soundboardGain.float_value,
+        mute: soundboardMute.float_value,
+      },
+      output: { gain: outputGain.float_value, mute: outputMute.float_value },
+    };
+  };
+
   // Load saved sounds
   const loadSounds = async () => {
     const savedSounds = await api.getSounds();
@@ -204,6 +173,16 @@ function App() {
     setConfig((prev) => ({
       ...prev,
       sounds: savedSounds,
+    }));
+  };
+
+  const loadDevices = async () => {
+    const { inputs, outputs } = await getDevices();
+
+    setConfig((prev) => ({
+      ...prev,
+      outputDevices: outputs,
+      inputDevices: inputs,
     }));
   };
 
@@ -223,36 +202,65 @@ function App() {
     }));
   };
 
+  const initialize = async () => {
+    const { inputs, outputs } = await getDevices();
+
+    const settings = await api.readSettings();
+
+    // Settings - Colors
+
+    const color = settings.baseColor;
+
+    const text = getContrastTextColor(color);
+
+    document.documentElement.style.setProperty("--base-color", color);
+    document.documentElement.style.setProperty("--text", text);
+
+    if (settings.defaultInputDevice) {
+      await api.setVMCommand({
+        cmd: "set_string",
+        param: `Strip[1].Device.${settings.defaultInputDevice.driver}`,
+        string_value: settings.defaultInputDevice.name,
+      });
+    }
+
+    if (settings.defaultOutputDevice) {
+      await api.setVMCommand({
+        cmd: "set_string",
+        param: `Bus[0].Device.${settings.defaultOutputDevice.driver}`,
+        string_value: settings.defaultOutputDevice.name,
+      });
+    }
+
+    const localOutputDevice =
+      settings.defaultLocalOutputDevice ?? outputs[0].id;
+
+    const vmOutputDevice = settings.defaultOutputDevice ?? {
+      name: outputs[0].label,
+      id: outputs[0].id,
+      driver: "WDM",
+    };
+
+    const selectedInputDevice = settings.defaultInputDevice ?? {
+      name: inputs[0].label,
+      id: inputs[0].id,
+      driver: "WDM",
+    };
+
+    setConfig((prev) => ({
+      ...prev,
+      settings,
+      outputDevices: outputs,
+      inputDevices: inputs,
+      localOutputDevice,
+      vmOutputDevice,
+      selectedInputDevice,
+    }));
+  };
+
   // #endregion
 
   // #region Audio
-
-  const rebindAudio = async (audio: HTMLAudioElement, deviceId: string) => {
-    if (!activePlayersRef.current.has(audio)) return;
-
-    const wasPlaying = !audio.paused;
-
-    try {
-      if (wasPlaying) audio.pause();
-
-      await new Promise(requestAnimationFrame); // tiny stability delay
-
-      if ("setSinkId" in audio) {
-        await audio.setSinkId(deviceId);
-      }
-
-      if (wasPlaying) await audio.play();
-    } catch (err) {
-      console.warn("Rebind failed", err);
-    }
-  };
-
-  const applyOutputDeviceToAll = async (deviceId: string) => {
-    for (const audio of activePlayersRef.current) {
-      await rebindAudio(audio, deviceId);
-      await new Promise(requestAnimationFrame);
-    }
-  };
 
   const addSound = async () => {
     const filePath = await api.pickAudioFile();
@@ -272,190 +280,6 @@ function App() {
 
     await loadSounds();
   };
-
-  const stopAllSounds = () => {
-    for (const audio of activePlayersRef.current) {
-      try {
-        audio.pause();
-        audio.currentTime = 0;
-      } catch (err) {
-        console.warn("Failed stopping audio", err);
-      }
-    }
-
-    activePlayersRef.current.clear();
-  };
-
-  async function playSound(sound: Sound, options?: Partial<Sound>) {
-    const playback = {
-      startTime: 0,
-      gain: 0.5,
-      fadeIn: 0,
-      fadeOut: 0,
-      ...sound,
-      ...options,
-    };
-
-    const { startTime, endTime, gain, fadeIn, fadeOut } = playback;
-
-    let cleanupTimeout: number | undefined;
-
-    let fadeInInterval: number | undefined;
-    let fadeOutInterval: number | undefined;
-    let fadeOutTimeout: number | undefined;
-
-    const safeClear = () => {
-      if (cleanupTimeout) clearTimeout(cleanupTimeout);
-      if (fadeOutTimeout) clearTimeout(fadeOutTimeout);
-      if (fadeInInterval) clearInterval(fadeInInterval);
-      if (fadeOutInterval) clearInterval(fadeOutInterval);
-    };
-
-    try {
-      // -----------------------------------
-      // Load file
-      // -----------------------------------
-      const filePath = await api.getSoundPath(sound.fileName);
-      const buffer = await api.readSound(filePath);
-
-      const blob = new Blob([buffer as BlobPart], { type: "audio/*" });
-      const url = URL.createObjectURL(blob);
-
-      // -----------------------------------
-      // Audio element
-      // -----------------------------------
-      const audio = new Audio();
-      audio.preload = "auto";
-      audio.src = url;
-
-      await new Promise<void>((resolve, reject) => {
-        audio.onloadedmetadata = () => resolve();
-        audio.onerror = () => reject(new Error("Failed loading audio"));
-      });
-
-      // -----------------------------------
-      // Device routing
-      // -----------------------------------
-      const deviceId = currentOutputDeviceRef.current;
-
-      if (deviceId && "setSinkId" in audio) {
-        await safeSetSink(audio, deviceId);
-      }
-
-      // -----------------------------------
-      // Duration safety
-      // -----------------------------------
-      const fileDuration = Number.isFinite(audio.duration)
-        ? audio.duration
-        : Number.MAX_SAFE_INTEGER;
-
-      const safeStartTime = Math.max(0, Math.min(startTime, fileDuration));
-
-      const safeEndTime = Math.max(
-        safeStartTime,
-        Math.min(endTime ?? fileDuration, fileDuration),
-      );
-
-      const playbackDuration = safeEndTime - safeStartTime;
-
-      if (playbackDuration <= 0) throw new Error("Invalid playback duration");
-
-      audio.currentTime = safeStartTime;
-
-      // -----------------------------------
-      // Register active player
-      // -----------------------------------
-      activePlayersRef.current.add(audio);
-
-      // -----------------------------------
-      // Fade-in (safer version)
-      // -----------------------------------
-      const targetVolume = clampVolume(gain);
-
-      audio.volume = fadeIn > 0 ? 0 : targetVolume;
-
-      if (fadeIn > 0) {
-        const step = 50;
-        const totalSteps = (fadeIn * 1000) / step;
-        const increment = targetVolume / totalSteps;
-
-        let v = 0;
-
-        fadeInInterval = window.setInterval(() => {
-          v += increment;
-          audio.volume = Math.min(v, targetVolume);
-
-          if (v >= targetVolume) {
-            clearInterval(fadeInInterval);
-          }
-        }, step);
-      }
-
-      // -----------------------------------
-      // Fade-out (simplified + safer timing)
-      // -----------------------------------
-      if (fadeOut > 0) {
-        const step = 50;
-        const durationMs = fadeOut * 1000;
-        const steps = durationMs / step;
-        const decrement = targetVolume / steps;
-
-        const fadeStart = Math.max(0, (playbackDuration - fadeOut) * 1000);
-
-        fadeOutTimeout = window.setTimeout(() => {
-          let v = audio.volume;
-
-          fadeOutInterval = window.setInterval(() => {
-            v -= decrement;
-            v = Math.max(0, v);
-
-            audio.volume = v;
-
-            if (v <= 0) {
-              clearInterval(fadeOutInterval);
-            }
-          }, step);
-        }, fadeStart);
-      }
-
-      // -----------------------------------
-      // Cleanup logic (single source of truth)
-      // -----------------------------------
-      const cleanup = () => {
-        safeClear();
-
-        activePlayersRef.current.delete(audio);
-
-        audio.pause();
-        audio.src = "";
-        audio.load();
-
-        URL.revokeObjectURL(url);
-
-        audio.onended = null;
-        audio.onerror = null;
-      };
-
-      audio.onended = cleanup;
-
-      // -----------------------------------
-      // Play
-      // -----------------------------------
-      await audio.play();
-
-      // -----------------------------------
-      // Fallback stop
-      // -----------------------------------
-      cleanupTimeout = window.setTimeout(() => {
-        cleanup();
-      }, playbackDuration * 1000);
-
-      return audio;
-    } catch (err) {
-      console.error("Playback failed:", err);
-      throw err;
-    }
-  }
 
   // #endregion
 
@@ -505,29 +329,37 @@ function App() {
   };
 
   useEffect(() => {
-    loadSounds();
-    loadSettings();
-    loadDevices();
-    detectVBAudio();
+    const load = async () => {
+      try {
+        await Promise.all([initialize(), loadSounds(), detectVBAudio()]);
 
-    bus.emit("new-notification", {
-      status: "INFO",
-      message: "Config Loaded!",
-    });
+        bus.emit("new-notification", {
+          status: "INFO",
+          message: "Config Loaded!",
+        });
+      } catch (err) {
+        console.error("Initialization failed", err);
+
+        bus.emit("new-notification", {
+          status: "ERROR",
+          message: "Failed to load config",
+        });
+      } finally {
+        setConfig((prev) => ({ ...prev, loading: false }));
+      }
+    };
+
+    load();
   }, []);
 
   useEffect(() => {
     registerHotkeys();
-  }, [config.sounds]);
+  }, [config.sounds, config.settings]);
 
   useEffect(() => {
-    currentOutputDeviceRef.current = config.localOutputDevice;
-  }, [config.localOutputDevice]);
-
-  useEffect(() => {
-    const unsubscribe = api.onPlaySound((soundId: string) => {
+    const unsubscribe = api.onPlaySound(async (soundId: string) => {
       if (soundId === "STOP_ALL") {
-        stopAllSounds();
+        audioEngine.stopAll();
         bus.emit("new-notification", {
           status: "INFO",
           message: "All Sounds Stopped!",
@@ -538,7 +370,7 @@ function App() {
       const sound = config.sounds.find((s) => s.id === Number(soundId));
 
       if (sound) {
-        playSound(sound, { ...sound });
+        audioEngine.play(sound);
       }
     });
 
@@ -569,28 +401,7 @@ function App() {
     };
   }, []);
 
-  // useEffect(() => {
-  //   const ctx = getAudioContext();
-
-  //   const recover = async () => {
-  //     if (ctx.state !== "running") {
-  //       try {
-  //         await ctx.resume();
-  //         console.log("AudioContext recovered:", ctx.state);
-  //       } catch (err) {
-  //         console.warn("AudioContext recovery failed", err);
-  //       }
-  //     }
-  //   };
-
-  //   const events = ["click", "keydown", "mousedown", "touchstart"];
-
-  //   events.forEach((e) => window.addEventListener(e, recover));
-
-  //   return () => {
-  //     events.forEach((e) => window.removeEventListener(e, recover));
-  //   };
-  // }, []);
+  if (config.loading) return <span>Loading...</span>;
 
   return (
     <div style={{ padding: 10 }}>
@@ -606,7 +417,7 @@ function App() {
             recordEnabled: true,
           }))
         }
-        stopAll={stopAllSounds}
+        stopAll={audioEngine.stopAll}
         instructions={() =>
           setConfig((prev) => ({
             ...prev,
@@ -634,7 +445,7 @@ function App() {
             <span>
               {
                 config.inputDevices.find(
-                  (d) => d.id === config.selectedInputDevice,
+                  (d) => d.id === config.selectedInputDevice.id,
                 )?.label
               }
             </span>
@@ -643,23 +454,24 @@ function App() {
             <SpeakerIcon className="icon fill" />
             <span>
               {
-                config.outputDevices.find((d) => d.id === config.vmOutputDevice)
-                  ?.label
+                config.outputDevices.find(
+                  (d) => d.id === config.vmOutputDevice.id,
+                )?.label
               }
             </span>
           </div>
           <div className="flex-gap">
             <MusicNoteIcon className="icon fill" />
-            <div style={{ display: "grid", gap: 10 }}>
+            <div style={{ display: "flex", gap: 10 }}>
               <select
                 value={config.localOutputDevice}
                 onChange={async (e) => {
+                  audioEngine.setDevice(e.target.value);
+
                   setConfig((prev) => ({
                     ...prev,
                     localOutputDevice: e.target.value,
                   }));
-
-                  await applyOutputDeviceToAll(e.target.value);
                 }}
               >
                 {config.outputDevices
@@ -670,6 +482,27 @@ function App() {
                     </option>
                   ))}
               </select>
+              <button
+                onClick={() => {
+                  const vbCableInput = config.outputDevices.find((d) =>
+                    d.label.toLowerCase().includes("cable input"),
+                  );
+
+                  if (!vbCableInput) {
+                    console.error("VB Cable Input not found");
+                    return;
+                  }
+
+                  audioEngine.setDevice(vbCableInput.id);
+
+                  setConfig((prev) => ({
+                    ...prev,
+                    localOutputDevice: vbCableInput?.id,
+                  }));
+                }}
+              >
+                Send to VoiceMeeter
+              </button>
             </div>
           </div>
         </div>
@@ -690,19 +523,17 @@ function App() {
         selectedOutputDevice={config.vmOutputDevice}
         inputDevices={config.inputDevices}
         selectedInputDevice={config.selectedInputDevice}
+        loadVMConfig={getVMConfig}
         onClose={() =>
           setConfig((prev) => ({ ...prev, voicemeeterEnabled: false }))
         }
         onSave={(data) => {
-          const {
-            currentInputDevice: selectedInputDevice,
-            currentOutputDevice: selectedOutputDevice,
-          } = data;
+          const { currentInputDevice, currentOutputDevice } = data;
 
           setConfig((prev) => ({
             ...prev,
-            selectedInputDevice,
-            vmOutputDevice: selectedOutputDevice,
+            selectedInputDevice: currentInputDevice,
+            vmOutputDevice: currentOutputDevice,
           }));
         }}
         loadDevices={loadDevices}
@@ -741,6 +572,8 @@ function App() {
 
       {config.settings && (
         <SettingsModal
+          inputDevices={config.inputDevices}
+          outputDevices={config.outputDevices}
           allHotkeys={
             config.sounds
               .filter((s) => s.hotkey !== undefined)
@@ -753,7 +586,7 @@ function App() {
               settingsEnabled: false,
             }))
           }
-          settings={config.settings}
+          loadSettings={api.readSettings}
           onSave={async (data) => {
             await api.updateSettings(data);
             setConfig((prev) => ({
@@ -761,12 +594,12 @@ function App() {
               settingsEnabled: false,
             }));
 
+            loadSettings();
+
             bus.emit("new-notification", {
               status: "INFO",
               message: "Settings Updated!",
             });
-
-            loadSettings();
           }}
         />
       )}
@@ -779,15 +612,17 @@ function App() {
             recordEnabled: false,
           }))
         }
+        header={
+          <>
+            <CircleIcon className="icon fill" />
+            <h2>Record New Sound</h2>
+          </>
+        }
       >
-        <div
-          className="flex-gap"
-          style={{ position: "absolute", top: 15, left: 15 }}
-        >
-          <CircleIcon className="icon fill" />
-          <h2>Record New Sound</h2>
-        </div>
         <Recorder
+          defaultInputDevice={config.selectedInputDevice.id}
+          devices={config.inputDevices}
+          loadDevices={loadDevices}
           onSave={async (blob, duration, mimeType) => {
             const buffer = await blob.arrayBuffer();
 
@@ -821,19 +656,18 @@ function App() {
             deleteSound: 0,
           }))
         }
+        header={
+          <>
+            <TrashIcon className="icon stroke" />
+            <h2>Delete Sound</h2>
+          </>
+        }
       >
         <div style={{ display: "grid", justifyItems: "center" }}>
           <span>Are you sure you want to delete?</span>
           <button onClick={() => handleDelete(config.deleteSound)}>
             Confirm
           </button>
-        </div>
-        <div
-          className="flex-gap"
-          style={{ position: "absolute", top: 15, left: 15 }}
-        >
-          <TrashIcon className="icon stroke" />
-          <h2>Delete Sound</h2>
         </div>
       </Modal>
 
@@ -846,14 +680,13 @@ function App() {
             editingSound: null,
           }));
         }}
+        header={
+          <>
+            <MusicNoteIcon className="icon fill" />
+            <h2>Edit Sound</h2>
+          </>
+        }
       >
-        <div
-          className="flex-gap"
-          style={{ position: "absolute", top: 15, left: 15 }}
-        >
-          <MusicNoteIcon className="icon fill" />
-          <h2>Edit Sound</h2>
-        </div>
         <SoundEditor
           sound={config.editingSound!}
           blob={config.editingBlob!}
@@ -862,8 +695,8 @@ function App() {
               .filter((s) => s.hotkey !== undefined)
               .map((s) => s.hotkey) as Hotkey[]
           }
-          playSound={playSound}
-          stopSound={stopAllSounds}
+          playSound={audioEngine.play}
+          stopSound={audioEngine.stopAll}
           onSave={async (data: Sound) => {
             await api.updateSound(data);
 
@@ -904,7 +737,7 @@ function App() {
           <SoundTile
             key={sound.id}
             sound={sound}
-            playSound={playSound}
+            playSound={audioEngine.play}
             deleteSound={(id) =>
               setConfig((prev) => ({ ...prev, deleteSound: id }))
             }

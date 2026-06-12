@@ -14,7 +14,7 @@ type Props = {
   sound: Sound;
   blob: Blob;
   allHotkeys: Hotkey[];
-  playSound: (sound: Sound, options: Partial<Sound>) => void;
+  playSound: (sound: Sound) => void;
   stopSound: () => void;
   onSave: (data: Sound) => void;
 };
@@ -107,14 +107,13 @@ export default function SoundEditor({
         <Modal
           isOpen={config.helper}
           onClose={() => setConfig((prev) => ({ ...prev, helper: false }))}
+          header={
+            <>
+              <QuestionIcon className="icon fill" />
+              <h2>Sound Editor</h2>
+            </>
+          }
         >
-          <div
-            className="flex-gap"
-            style={{ position: "absolute", top: 20, left: 10 }}
-          >
-            <QuestionIcon className="icon fill" />
-            <h2>Sound Editor</h2>
-          </div>
           <div>
             <div className="flex-gap">
               <HotkeyIcon className="icon fill" />
