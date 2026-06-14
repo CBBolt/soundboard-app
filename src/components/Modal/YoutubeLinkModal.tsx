@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import SaveIcon from "../../icons/SaveIcon";
 import Modal from "./Modal";
+import LoadingSpinner from "../LoadingSpinner";
 
 type Props = {
   show: boolean;
@@ -26,7 +27,10 @@ export default function YoutubeLinkModal({
     <Modal
       isOpen={show}
       onClose={onClose}
-      lockedCondition={loading}
+      locked={{
+        lockedCondition: loading,
+        lockedMessage: "Audio is being downloaded",
+      }}
       header={
         <>
           <h2>Add Youtube Link</h2>
@@ -39,16 +43,21 @@ export default function YoutubeLinkModal({
         onClick={() => {
           onSave(url);
           setLoading(true);
+          setURL("");
         }}
       >
         <SaveIcon className="icon fill" />
       </div>
 
-      {loading && <div>{progress}%</div>}
+      {loading && progress >= 0 && <LoadingSpinner />}
 
       <div className="flex-gap">
         <span>Link:</span>
-        <input value={url} onChange={(e) => setURL(e.target.value)} />
+        <input
+          disabled={loading}
+          value={url}
+          onChange={(e) => setURL(e.target.value)}
+        />
       </div>
     </Modal>
   );

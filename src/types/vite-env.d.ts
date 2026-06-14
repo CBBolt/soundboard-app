@@ -44,9 +44,9 @@ declare global {
   type Settings = {
     baseColor: string;
     stopHotkey: Hotkey;
-    defaultInputDevice: VMAudioDevice;
-    defaultOutputDevice: VMAudioDevice;
-    defaultLocalOutputDevice: string;
+    defaultInputDevice?: VMAudioDevice;
+    defaultOutputDevice?: VMAudioDevice;
+    defaultLocalOutputDevice?: string;
   };
 
   type Hotkey = {

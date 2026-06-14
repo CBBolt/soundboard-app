@@ -32,6 +32,8 @@ export default function VMDeviceDriverSelector({
           }))
         }
       >
+        <option value="">-- Select Device --</option>
+
         {devices
           .sort((a, b) => a.label.localeCompare(b.label))
           .map((d) => (

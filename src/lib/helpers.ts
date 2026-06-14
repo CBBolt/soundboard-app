@@ -1,5 +1,8 @@
 export const clampVolume = (v: number) => Math.max(0, Math.min(1, v));
 
+export const truncateText = (s: string, c: number = 20) =>
+  s.length > c ? s.slice(0, c) + "..." : s;
+
 export function getContrastTextColor(color: string) {
   const hex = color.replace("#", "");
 
@@ -120,5 +123,62 @@ export async function getDevices() {
     console.error("Failed loading devices", err);
   }
 
-  return { inputs: vmInputs, outputs: vmOutputs };
+  return {
+    inputs: vmInputs.sort((a, b) => a.label.localeCompare(b.label)),
+    outputs: vmOutputs.sort((a, b) => a.label.localeCompare(b.label)),
+  };
 }
+
+export const getVMConfig = async () => {
+  const api = window.electronAPI;
+
+  const inputA = await api.setVMCommand({
+    cmd: "get_float",
+    param: "Strip[1].A1",
+  });
+  const inputGain = await api.setVMCommand({
+    cmd: "get_float",
+    param: "Strip[1].Gain",
+  });
+  const inputMute = await api.setVMCommand({
+    cmd: "get_float",
+    param: "Strip[1].Mute",
+  });
+
+  const soundboardA = await api.setVMCommand({
+    cmd: "get_float",
+    param: "Strip[0].A1",
+  });
+  const soundboardGain = await api.setVMCommand({
+    cmd: "get_float",
+    param: "Strip[0].Gain",
+  });
+  const soundboardMute = await api.setVMCommand({
+    cmd: "get_float",
+    param: "Strip[0].Mute",
+  });
+
+  const outputGain = await api.setVMCommand({
+    cmd: "get_float",
+    param: "Bus[0].Gain",
+  });
+
+  const outputMute = await api.setVMCommand({
+    cmd: "get_float",
+    param: "Bus[0].Mute",
+  });
+
+  return {
+    input: {
+      a: inputA.float_value,
+      gain: inputGain.float_value,
+      mute: inputMute.float_value,
+    },
+    soundboard: {
+      a: soundboardA.float_value,
+      gain: soundboardGain.float_value,
+      mute: soundboardMute.float_value,
+    },
+    output: { gain: outputGain.float_value, mute: outputMute.float_value },
+  };
+};

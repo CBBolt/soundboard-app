@@ -3,15 +3,16 @@ type Props = {
   onClose: () => void;
   children: React.ReactNode;
   header?: React.ReactNode;
-  lockedCondition?: boolean;
+  locked?: { lockedCondition: boolean; lockedMessage: string };
 };
 
+import WarningIcon from "../../icons/WarningIcon";
 import styles from "../../styles/Modal.module.css";
 
 export default function Modal({
   isOpen,
   onClose,
-  lockedCondition,
+  locked,
   header,
   children,
 }: Props) {
@@ -21,24 +22,25 @@ export default function Modal({
     <div
       className={styles["modal-overlay"]}
       onClick={() => {
-        if (lockedCondition) return;
+        if (locked?.lockedCondition) return;
         onClose();
       }}
-      style={{ background: lockedCondition ? "red" : "" }}
     >
       <div
         className={styles["modal-content"]}
         onClick={(e) => e.stopPropagation()}
       >
-        <button
-          className={styles["modal-close"]}
-          onClick={() => {
-            if (lockedCondition) return;
-            onClose();
-          }}
-        >
-          ×
-        </button>
+        {!locked?.lockedCondition && (
+          <button
+            className={styles["modal-close"]}
+            onClick={() => {
+              if (locked?.lockedCondition) return;
+              onClose();
+            }}
+          >
+            ×
+          </button>
+        )}
 
         {header && (
           <>
@@ -50,6 +52,13 @@ export default function Modal({
             </div>
             <div className="seperator" />
           </>
+        )}
+
+        {locked && locked.lockedCondition && (
+          <div className="flex-gap" style={{ justifyContent: "center" }}>
+            <WarningIcon className="icon fill stroke" />
+            <span>{locked.lockedMessage}</span>
+          </div>
         )}
 
         {children}

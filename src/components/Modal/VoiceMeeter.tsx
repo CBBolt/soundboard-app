@@ -8,15 +8,15 @@ import MusicNoteIcon from "../../icons/MusicNoteIcon";
 import VMDeviceDriverSelector from "../VoiceMeeter/VMDeviceDriverSelector";
 import HeadphoneIcon from "../../icons/HeadphoneIcon";
 import QuestionIcon from "../../icons/QuestionIcon";
+import GearIcon from "../../icons/GearIcon";
+import { truncateText } from "../../lib/helpers";
 
 type VoiceMeeterProps = {
-  show: boolean;
   outputDevices: AudioDevice[];
   selectedOutputDevice: VMAudioDevice;
   inputDevices: AudioDevice[];
   selectedInputDevice: VMAudioDevice;
   loadVMConfig: () => object;
-  onClose: () => void;
   onSave: (data: {
     currentInputDevice: VMAudioDevice;
     currentOutputDevice: VMAudioDevice;
@@ -31,6 +31,7 @@ type VMChannel = {
 };
 
 type VMConfig = {
+  expand: boolean;
   currentInputDevice: VMAudioDevice;
   inputChannel: VMChannel;
   soundboardChannel: VMChannel;
@@ -39,9 +40,9 @@ type VMConfig = {
   helper: boolean;
 };
 
+type VMChannelKey = "inputChannel" | "soundboardChannel" | "outputChannel";
+
 export default function VoiceMeeter({
-  show,
-  onClose,
   onSave,
   loadDevices,
   loadVMConfig,
@@ -54,6 +55,7 @@ export default function VoiceMeeter({
     currentInputDevice: selectedInputDevice,
     currentOuputDevice: selectedOutputDevice,
     helper: false,
+    expand: false,
     inputChannel: {
       mute: false,
       a: true,
@@ -70,6 +72,10 @@ export default function VoiceMeeter({
       gain: 0,
     },
   });
+
+  // useEffect(() => {
+  //   loadVMConfig();
+  // }, []);
 
   useEffect(() => {
     const load = async () => {
@@ -104,7 +110,7 @@ export default function VoiceMeeter({
     };
 
     load();
-  }, [show]);
+  }, [config.expand]);
 
   async function updateVMParam(data: {
     param: string;
@@ -131,340 +137,361 @@ export default function VoiceMeeter({
     }
   }
 
+  const muteButton = (
+    channel: VMChannelKey,
+    param: string,
+    icon: "note" | "speaker" | "mic",
+    smaller: boolean = false,
+  ): React.ReactNode => {
+    const style: React.CSSProperties = {
+      fill: config[channel].mute ? "tomato" : "",
+    };
+
+    const iconNode = () => {
+      switch (icon) {
+        case "note":
+          return (
+            <MusicNoteIcon
+              className={`icon fill ${smaller ? "sml" : ""}`}
+              style={style}
+            />
+          );
+        case "speaker":
+          return (
+            <SpeakerIcon
+              className={`icon fill ${smaller ? "sml" : ""}`}
+              style={style}
+            />
+          );
+        case "mic":
+          return (
+            <MicIcon
+              className={`icon fill ${smaller ? "sml" : ""}`}
+              style={style}
+            />
+          );
+      }
+    };
+
+    return (
+      <div
+        className="icon-btn grey"
+        onClick={() =>
+          setConfig((prev) => {
+            const next = !prev[channel].mute;
+
+            updateVMParam({
+              param: `${param}.Mute`,
+              float: true,
+              value: next ? 1 : 0,
+            });
+
+            return {
+              ...prev,
+              [channel]: {
+                ...prev[channel],
+                mute: next,
+              },
+            };
+          })
+        }
+      >
+        {iconNode()}
+      </div>
+    );
+  };
+
+  const aButton = (
+    channel: VMChannelKey,
+    param: string,
+    smaller: boolean = false,
+  ): React.ReactNode => {
+    const style: React.CSSProperties = {
+      fill: config[channel].a ? "var(--base-color)" : "",
+    };
+
+    return (
+      <div
+        className="icon-btn grey"
+        onClick={() =>
+          setConfig((prev) => {
+            const next = !prev[channel].a;
+
+            updateVMParam({
+              param: `${param}.A1`,
+              float: true,
+              value: next ? 1 : 0,
+            });
+
+            return {
+              ...prev,
+              [channel]: {
+                ...prev[channel],
+                a: next,
+              },
+            };
+          })
+        }
+      >
+        <HeadphoneIcon
+          className={`icon fill ${smaller ? "sml" : ""}`}
+          style={style}
+        />
+      </div>
+    );
+  };
+
   const api = window.electronAPI;
 
   return (
-    <Modal
-      isOpen={show}
-      onClose={onClose}
-      header={
-        <>
-          <MusicNoteIcon className="icon fill" />
-          <span>VoiceMeeter Setup</span>
-        </>
-      }
-    >
-      <div className="flex-gap">
-        <div style={{ display: "grid", gap: 10 }}>
-          <div className="flex-gap">
+    <>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "0.5fr 1fr",
+          gap: 10,
+          position: "absolute",
+          bottom: 0,
+          left: 0,
+          background: "rgba(0, 0, 0, 0.75)",
+          boxShadow: "black 1px 1px 10px 1px",
+          padding: 2,
+          borderRadius: 5,
+          zIndex: 50,
+          fontSize: "smaller",
+          textAlign: "left",
+        }}
+      >
+        <div className="flex-gap">
+          {muteButton("soundboardChannel", "Strip[0]", "note", true)}
+          {aButton("soundboardChannel", "Strip[0]", true)}
+        </div>
+        <span>Soundboard</span>
+
+        <div className="flex-gap">
+          {muteButton("inputChannel", "Strip[1]", "mic", true)}
+          {aButton("inputChannel", "Strip[1]", true)}
+        </div>
+        <span>{truncateText(config.currentInputDevice.name)}</span>
+
+        <div className="flex-gap">
+          {muteButton("outputChannel", "Bus[0]", "speaker", true)}
+        </div>
+        <span>{truncateText(config.currentOuputDevice.name)}</span>
+        <div style={{ position: "absolute", top: "0", right: 0 }}>
+          <button
+            onClick={() => setConfig((prev) => ({ ...prev, expand: true }))}
+          >
             <div className="flex-gap">
-              <div
-                className="icon-btn grey"
-                onClick={() =>
-                  setConfig((prev) => {
-                    const next = !prev.soundboardChannel.mute;
-
-                    updateVMParam({
-                      param: "Strip[0].Mute",
-                      float: true,
-                      value: next ? 1 : 0,
-                    });
-
-                    return {
-                      ...prev,
-                      soundboardChannel: {
-                        ...prev.soundboardChannel,
-                        mute: next,
-                      },
-                    };
-                  })
-                }
-              >
-                <MusicNoteIcon
-                  className="icon fill"
-                  style={{
-                    fill: config.soundboardChannel.mute ? "tomato" : "",
-                  }}
-                />
-              </div>
-              <div
-                className="icon-btn grey"
-                onClick={() =>
-                  setConfig((prev) => {
-                    const next = !prev.soundboardChannel.a;
-
-                    updateVMParam({
-                      param: "Strip[0].A1",
-                      float: true,
-                      value: next ? 1 : 0,
-                    });
-
-                    return {
-                      ...prev,
-                      soundboardChannel: {
-                        ...prev.soundboardChannel,
-                        a: next,
-                      },
-                    };
-                  })
-                }
-              >
-                <HeadphoneIcon
-                  className="icon fill"
-                  style={{
-                    fill: config.soundboardChannel.a ? "var(--base-color)" : "",
-                  }}
-                />
-              </div>
+              <GearIcon className="icon stroke sml" />
             </div>
-            <div style={{ display: "grid", gap: 10 }}>
-              <span>Soundboard Output</span>
-              <VolumeSlider
-                min={-10}
-                max={12}
-                percentage={false}
-                value={config.soundboardChannel.gain}
-                onChange={async (val) => {
-                  await api.setVMCommand({
-                    cmd: "set_float",
-                    param: "Strip[0].Gain",
-                    value: val,
-                  });
-
-                  setConfig((prev) => ({
-                    ...prev,
-                    soundboardChannel: { ...prev.soundboardChannel, gain: val },
-                  }));
-                }}
-              />
-            </div>
-          </div>
-          <div className="flex-gap">
-            <div className="flex-gap">
-              <div
-                className="icon-btn grey"
-                onClick={() =>
-                  setConfig((prev) => {
-                    const next = !prev.inputChannel.mute;
-
-                    updateVMParam({
-                      param: "Strip[1].Mute",
-                      float: true,
-                      value: next ? 1 : 0,
-                    });
-
-                    return {
-                      ...prev,
-                      inputChannel: { ...prev.inputChannel, mute: next },
-                    };
-                  })
-                }
-              >
-                <MicIcon
-                  className="icon fill"
-                  style={{ fill: config.inputChannel.mute ? "tomato" : "" }}
-                />
-              </div>
-
-              <div
-                className="icon-btn grey"
-                onClick={() =>
-                  setConfig((prev) => {
-                    const next = !prev.inputChannel.a;
-
-                    updateVMParam({
-                      param: "Strip[1].A1",
-                      float: true,
-                      value: next ? 1 : 0,
-                    });
-
-                    return {
-                      ...prev,
-                      inputChannel: { ...prev.inputChannel, a: next },
-                    };
-                  })
-                }
-              >
-                <HeadphoneIcon
-                  className="icon fill"
-                  style={{
-                    fill: config.inputChannel.a ? "var(--base-color)" : "",
-                  }}
-                />
-              </div>
-            </div>
-            <div style={{ display: "grid", gap: 10 }}>
-              <VMDeviceDriverSelector
-                currentDevice={config.currentInputDevice}
-                devices={inputDevices}
-                onChange={async (device) => {
-                  setConfig((prev) => ({
-                    ...prev,
-                    currentInputDevice: device,
-                  }));
-
-                  onSave({
-                    currentInputDevice: device,
-                    currentOutputDevice: config.currentOuputDevice,
-                  });
-
-                  await api.setVMCommand({
-                    cmd: "set_string",
-                    param: `Strip[1].Device.${device.driver}`,
-                    string_value: device.name,
-                  });
-
-                  await api.updateSettings({
-                    defaultInputDevice: device,
-                  });
-                }}
-              />
-              <VolumeSlider
-                min={-10}
-                max={12}
-                percentage={false}
-                value={config.inputChannel.gain}
-                onChange={async (val) => {
-                  await api.setVMCommand({
-                    cmd: "set_float",
-                    param: "Strip[1].Gain",
-                    value: val,
-                  });
-
-                  setConfig((prev) => ({
-                    ...prev,
-                    inputChannel: { ...prev.inputChannel, gain: val },
-                  }));
-                }}
-              />
-            </div>
-          </div>
-          <div className="flex-gap">
-            <div
-              className="icon-btn grey"
-              onClick={() =>
-                setConfig((prev) => {
-                  const next = !prev.outputChannel.mute;
-
-                  updateVMParam({
-                    param: "Bus[0].Mute",
-                    float: true,
-                    value: next ? 1 : 0,
-                  });
-
-                  return {
-                    ...prev,
-                    outputChannel: {
-                      ...prev.outputChannel,
-                      mute: next,
-                    },
-                  };
-                })
-              }
-            >
-              <SpeakerIcon
-                className="icon fill"
-                style={{ fill: config.outputChannel.mute ? "tomato" : "" }}
-              />
-            </div>
-            <div style={{ display: "grid", gap: 10 }}>
-              <VMDeviceDriverSelector
-                currentDevice={config.currentOuputDevice}
-                devices={outputDevices}
-                onChange={async (device) => {
-                  setConfig((prev) => ({
-                    ...prev,
-                    currentOuputDevice: device,
-                  }));
-
-                  onSave({
-                    currentInputDevice: config.currentInputDevice,
-                    currentOutputDevice: device,
-                  });
-
-                  await api.setVMCommand({
-                    cmd: "set_string",
-                    param: `Bus[0].Device.${device.driver}`,
-                    string_value: device.name,
-                  });
-
-                  await api.updateSettings({
-                    defaultOutputDevice: device,
-                  });
-                }}
-              />
-              <VolumeSlider
-                min={-10}
-                max={12}
-                percentage={false}
-                value={config.outputChannel.gain}
-                onChange={async (val) => {
-                  await api.setVMCommand({
-                    cmd: "set_float",
-                    param: "Bus[0].Gain",
-                    value: val,
-                  });
-
-                  setConfig((prev) => ({
-                    ...prev,
-                    outputChannel: { ...prev.outputChannel, gain: val },
-                  }));
-                }}
-              />
-            </div>
-          </div>
+          </button>
         </div>
       </div>
-
       <Modal
-        isOpen={config.helper}
-        onClose={() => setConfig((prev) => ({ ...prev, helper: false }))}
+        isOpen={config.expand}
+        onClose={() => setConfig((prev) => ({ ...prev, expand: false }))}
         header={
           <>
-            <QuestionIcon className="icon fill" />
-            <span>VoiceMeeter Helper</span>
+            <MusicNoteIcon className="icon fill" />
+            <span>VoiceMeeter Setup</span>
           </>
         }
       >
-        <div style={{ display: "grid", gap: 10 }}>
-          <div className="flex-gap">
-            <RefreshIcon className="icon stroke" />
-            Refresh all devices
-          </div>
-          <div className="flex-gap">
-            <div className="icon-btn grey">
-              <MicIcon className="icon fill" />
+        <div className="flex-gap">
+          <div style={{ display: "grid", gap: 10 }}>
+            <div className="flex-gap">
+              <div className="flex-gap">
+                {muteButton("soundboardChannel", "Strip[0]", "note")}
+                {aButton("soundboardChannel", "Strip[0]")}
+              </div>
+              <div style={{ display: "grid", gap: 10 }}>
+                <span>Soundboard Output</span>
+                <VolumeSlider
+                  min={-10}
+                  max={12}
+                  percentage={false}
+                  value={config.soundboardChannel.gain}
+                  onChange={async (val) => {
+                    await api.setVMCommand({
+                      cmd: "set_float",
+                      param: "Strip[0].Gain",
+                      value: val,
+                    });
+
+                    setConfig((prev) => ({
+                      ...prev,
+                      soundboardChannel: {
+                        ...prev.soundboardChannel,
+                        gain: val,
+                      },
+                    }));
+                  }}
+                />
+              </div>
             </div>
-            Toggle for muting different tracks (sounboard, mic, speakers)
-          </div>
-          <div className="flex-gap">
-            <div className="icon-btn grey">
-              <HeadphoneIcon className="icon fill" />
+            <div className="flex-gap">
+              <div className="flex-gap">
+                {muteButton("inputChannel", "Strip[1]", "mic")}
+                {aButton("inputChannel", "Strip[1]")}
+              </div>
+              <div style={{ display: "grid", gap: 10 }}>
+                <VMDeviceDriverSelector
+                  currentDevice={config.currentInputDevice}
+                  devices={inputDevices}
+                  onChange={async (device) => {
+                    setConfig((prev) => ({
+                      ...prev,
+                      currentInputDevice: device,
+                    }));
+
+                    onSave({
+                      currentInputDevice: device,
+                      currentOutputDevice: config.currentOuputDevice,
+                    });
+
+                    await api.setVMCommand({
+                      cmd: "set_string",
+                      param: `Strip[1].Device.${device.driver}`,
+                      string_value: device.name,
+                    });
+
+                    await api.updateSettings({
+                      defaultInputDevice: device,
+                    });
+                  }}
+                />
+                <VolumeSlider
+                  min={-10}
+                  max={12}
+                  percentage={false}
+                  value={config.inputChannel.gain}
+                  onChange={async (val) => {
+                    await api.setVMCommand({
+                      cmd: "set_float",
+                      param: "Strip[1].Gain",
+                      value: val,
+                    });
+
+                    setConfig((prev) => ({
+                      ...prev,
+                      inputChannel: { ...prev.inputChannel, gain: val },
+                    }));
+                  }}
+                />
+              </div>
             </div>
-            Toggle for monitoring sounds or playing them through the game. This
-            is useful if you want to hear the sounboard or yourself talk for mic
-            testing.
-          </div>
-          <div className="flex-gap">
-            <div className="icon-btn grey">WDM / MME</div>
-            This is a VoiceMeeter thing, but basically is the default device
-            driver (WDM) and legacy driver (MME). The toggle is there for
-            convience in case WDM doesn't work.
+            <div className="flex-gap">
+              {muteButton("outputChannel", "Bus[0]", "speaker")}
+              <div style={{ display: "grid", gap: 10 }}>
+                <VMDeviceDriverSelector
+                  currentDevice={config.currentOuputDevice}
+                  devices={outputDevices}
+                  onChange={async (device) => {
+                    setConfig((prev) => ({
+                      ...prev,
+                      currentOuputDevice: device,
+                    }));
+
+                    onSave({
+                      currentInputDevice: config.currentInputDevice,
+                      currentOutputDevice: device,
+                    });
+
+                    await api.setVMCommand({
+                      cmd: "set_string",
+                      param: `Bus[0].Device.${device.driver}`,
+                      string_value: device.name,
+                    });
+
+                    await api.updateSettings({
+                      defaultOutputDevice: device,
+                    });
+                  }}
+                />
+                <VolumeSlider
+                  min={-10}
+                  max={12}
+                  percentage={false}
+                  value={config.outputChannel.gain}
+                  onChange={async (val) => {
+                    await api.setVMCommand({
+                      cmd: "set_float",
+                      param: "Bus[0].Gain",
+                      value: val,
+                    });
+
+                    setConfig((prev) => ({
+                      ...prev,
+                      outputChannel: { ...prev.outputChannel, gain: val },
+                    }));
+                  }}
+                />
+              </div>
+            </div>
           </div>
         </div>
-      </Modal>
 
-      <div
-        className="flex-gap"
-        style={{
-          position: "absolute",
-          top: 0,
-          right: 50,
-          justifyContent: "center",
-          marginTop: "10px",
-        }}
-      >
-        <button
-          onClick={() => setConfig((prev) => ({ ...prev, helper: true }))}
+        <Modal
+          isOpen={config.helper}
+          onClose={() => setConfig((prev) => ({ ...prev, helper: false }))}
+          header={
+            <>
+              <QuestionIcon className="icon fill" />
+              <span>VoiceMeeter Helper</span>
+            </>
+          }
         >
-          <QuestionIcon className="icon fill" />
-        </button>
-        <button onClick={loadDevices}>
-          <div className="flex-gap">
-            <RefreshIcon className="icon stroke" />
+          <div style={{ display: "grid", gap: 10 }}>
+            <div className="flex-gap">
+              <RefreshIcon className="icon stroke" />
+              Refresh all devices
+            </div>
+            <div className="flex-gap">
+              <div className="icon-btn grey">
+                <MicIcon className="icon fill" />
+              </div>
+              Toggle for muting different tracks (sounboard, mic, speakers)
+            </div>
+            <div className="flex-gap">
+              <div className="icon-btn grey">
+                <HeadphoneIcon className="icon fill" />
+              </div>
+              Toggle for monitoring sounds or playing them through the game.
+              This is useful if you want to hear the sounboard or yourself talk
+              for mic testing.
+            </div>
+            <div className="flex-gap">
+              <div className="icon-btn grey">WDM / MME</div>
+              This is a VoiceMeeter thing, but basically is the default device
+              driver (WDM) and legacy driver (MME). The toggle is there for
+              convience in case WDM doesn't work.
+            </div>
           </div>
-        </button>
-      </div>
-    </Modal>
+        </Modal>
+
+        <div
+          className="flex-gap"
+          style={{
+            position: "absolute",
+            top: 0,
+            right: 50,
+            justifyContent: "center",
+            marginTop: "10px",
+          }}
+        >
+          <button
+            onClick={() => setConfig((prev) => ({ ...prev, helper: true }))}
+          >
+            <QuestionIcon className="icon fill" />
+          </button>
+          <button onClick={loadDevices}>
+            <div className="flex-gap">
+              <RefreshIcon className="icon stroke" />
+            </div>
+          </button>
+        </div>
+      </Modal>
+    </>
   );
 }

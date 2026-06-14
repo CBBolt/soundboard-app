@@ -9,6 +9,10 @@ import MicIcon from "../../icons/MicIcon";
 import VMDeviceDriverSelector from "../VoiceMeeter/VMDeviceDriverSelector";
 import SpeakerIcon from "../../icons/SpeakerIcon";
 import VMDeviceSelector from "../VoiceMeeter/VMDeviceSelector";
+import WarningIcon from "../../icons/WarningIcon";
+import PencilIcon from "../../icons/PencilIcon";
+import TrashIcon from "../../icons/TrashIcon";
+import { truncateText } from "../../lib/helpers";
 
 type Props = {
   allHotkeys: Hotkey[];
@@ -24,6 +28,9 @@ type SettingsType = {
   settings: Settings | null;
   listeningForHotkey: boolean;
   removeHotkey: boolean;
+  editInputDevice: boolean;
+  editOutputDevice: boolean;
+  editLocalOutputDevice: boolean;
 };
 
 export default function SettingsModal({
@@ -39,6 +46,9 @@ export default function SettingsModal({
     settings: null,
     listeningForHotkey: false,
     removeHotkey: false,
+    editInputDevice: false,
+    editOutputDevice: false,
+    editLocalOutputDevice: false,
   });
 
   useEffect(() => {
@@ -87,6 +97,109 @@ export default function SettingsModal({
           <SaveIcon className="icon fill" />
         </div>
 
+        <Modal
+          isOpen={config.editInputDevice}
+          onClose={() =>
+            setConfig((prev) => ({ ...prev, editInputDevice: false }))
+          }
+          header={
+            <>
+              <MicIcon className="icon fill" />
+              <span>Set Default Mic</span>
+            </>
+          }
+          locked={{
+            lockedCondition: !inputDevices.some(
+              (d) => d.id === config.settings?.defaultInputDevice?.id,
+            ),
+            lockedMessage: "Device not selected",
+          }}
+        >
+          <VMDeviceDriverSelector
+            currentDevice={config.settings.defaultInputDevice}
+            devices={inputDevices}
+            onChange={(device) => {
+              setConfig((prev) => ({
+                ...prev,
+                settings: {
+                  ...prev.settings,
+                  defaultInputDevice: device,
+                } as Settings,
+                editInputDevice: false,
+              }));
+            }}
+          />
+        </Modal>
+
+        <Modal
+          isOpen={config.editOutputDevice}
+          onClose={() =>
+            setConfig((prev) => ({ ...prev, editOutputDevice: false }))
+          }
+          header={
+            <>
+              <SpeakerIcon className="icon fill" />
+              <span>Set Default Output</span>
+            </>
+          }
+          locked={{
+            lockedCondition: !outputDevices.some(
+              (d) => d.id === config.settings?.defaultOutputDevice?.id,
+            ),
+            lockedMessage: "Device not selected",
+          }}
+        >
+          <VMDeviceDriverSelector
+            currentDevice={config.settings.defaultOutputDevice}
+            devices={outputDevices}
+            onChange={(device) => {
+              setConfig((prev) => ({
+                ...prev,
+                settings: {
+                  ...prev.settings,
+                  defaultOutputDevice: device,
+                } as Settings,
+                editOutputDevice: false,
+              }));
+            }}
+          />
+        </Modal>
+
+        <Modal
+          isOpen={config.editLocalOutputDevice}
+          onClose={() =>
+            setConfig((prev) => ({ ...prev, editLocalOutputDevice: false }))
+          }
+          header={
+            <>
+              <SpeakerIcon className="icon fill" />
+              <span>Set Default Local Output</span>
+            </>
+          }
+          locked={{
+            lockedCondition: !outputDevices.some(
+              (d) => d.id === config.settings?.defaultLocalOutputDevice,
+            ),
+            lockedMessage: "Device not selected",
+          }}
+        >
+          <VMDeviceSelector
+            currentDevice={config.settings.defaultLocalOutputDevice}
+            devices={outputDevices}
+            onChange={(value: string) => {
+              setConfig((prev) => ({
+                ...prev,
+                settings: {
+                  ...prev.settings,
+                  defaultLocalOutputDevice:
+                    value ?? config.settings?.defaultLocalOutputDevice,
+                } as Settings,
+                editLocalOutputDevice: false,
+              }));
+            }}
+          />
+        </Modal>
+
         <div className="flex-gap">
           <span>Base Color:</span>
           <input
@@ -114,96 +227,180 @@ export default function SettingsModal({
             }
           />
         </div>
-        <div className="flex-gap">
-          <span>Default Mic:</span>
+
+        <div className="seperator" />
+
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr 0.5fr",
+            gap: 10,
+          }}
+        >
           <div className="flex-gap">
+            <span>Default Mic:</span>
             <MicIcon className="icon fill" />
-            <VMDeviceDriverSelector
-              currentDevice={config.settings.defaultInputDevice}
-              devices={inputDevices}
-              onChange={(device) => {
-                setConfig((prev) => ({
-                  ...prev,
-                  settings: {
-                    ...prev.settings,
-                    defaultInputDevice: device,
-                  } as Settings,
-                }));
-              }}
-            />
           </div>
-        </div>
-
-        <div className="flex-gap">
-          <span>Default Output:</span>
           <div className="flex-gap">
-            <SpeakerIcon className="icon fill" />
-            <VMDeviceDriverSelector
-              currentDevice={config.settings.defaultOutputDevice}
-              devices={outputDevices}
-              onChange={(device) => {
-                setConfig((prev) => ({
-                  ...prev,
-                  settings: {
-                    ...prev.settings,
-                    defaultOutputDevice: device,
-                  } as Settings,
-                }));
-              }}
-            />
+            {config.settings.defaultInputDevice ? (
+              <>
+                <span>{`${truncateText(config.settings.defaultInputDevice.name, 15)} (${config.settings.defaultInputDevice.driver})`}</span>
+                {!inputDevices.some(
+                  (d) => d.id === config.settings?.defaultInputDevice?.id,
+                ) && (
+                  <>
+                    <WarningIcon className="icon stroke fill" />
+                    <span>Device not found</span>
+                  </>
+                )}
+              </>
+            ) : (
+              <span>No Device</span>
+            )}
           </div>
-        </div>
-
-        <div className="flex-gap">
-          <span>Default Local Output:</span>
           <div className="flex-gap">
-            <SpeakerIcon className="icon fill" />
-            <VMDeviceSelector
-              currentDevice={config.settings.defaultLocalOutputDevice}
-              devices={outputDevices}
-              onChange={(value: string) => {
+            <button
+              onClick={() =>
+                setConfig((prev) => ({ ...prev, editInputDevice: true }))
+              }
+            >
+              <PencilIcon className="icon fill" />
+            </button>
+            <button
+              onClick={() =>
                 setConfig((prev) => ({
                   ...prev,
                   settings: {
                     ...prev.settings,
-                    defaultLocalOutputDevice:
-                      value ?? config.settings?.defaultLocalOutputDevice,
+                    defaultInputDevice: undefined,
                   } as Settings,
-                }));
-              }}
-            />
+                }))
+              }
+            >
+              <TrashIcon className="icon stroke" />
+            </button>
           </div>
-        </div>
 
-        <HotkeyListenerModal
-          allHotkeys={allHotkeys}
-          remove={config.removeHotkey}
-          listening={config.listeningForHotkey}
-          onSave={(hotkey) =>
-            setConfig((prev) => ({
-              ...prev,
-              settings: {
-                ...prev.settings,
-                stopHotkey: hotkey as Hotkey,
-              } as Settings,
-            }))
-          }
-          onSaveClose={() =>
-            setConfig((prev) => ({ ...prev, listeningForHotkey: false }))
-          }
-          onRemove={() =>
-            setConfig((prev) => ({
-              ...prev,
-              settings: {
-                ...prev.settings,
-                stopHotkey: { key: "esc", shift: true } as Hotkey,
-              } as Settings,
-            }))
-          }
-          onRemoveClose={() =>
-            setConfig((prev) => ({ ...prev, removeHotkey: false }))
-          }
-        />
+          <div className="flex-gap">
+            <span>Default Output:</span>
+            <SpeakerIcon className="icon fill" />
+          </div>
+          {config.settings.defaultOutputDevice ? (
+            <>
+              <span>{`${truncateText(config.settings.defaultOutputDevice?.name, 15)} (${config.settings.defaultOutputDevice?.driver})`}</span>
+              {!outputDevices.some(
+                (d) => d.id === config.settings?.defaultOutputDevice?.id,
+              ) && (
+                <>
+                  <WarningIcon className="icon stroke fill" />
+                  <span>Device not found</span>
+                </>
+              )}
+            </>
+          ) : (
+            <span>No Device</span>
+          )}
+          <div className="flex-gap">
+            <button
+              onClick={() =>
+                setConfig((prev) => ({ ...prev, editOutputDevice: true }))
+              }
+            >
+              <PencilIcon className="icon fill" />
+            </button>
+            <button
+              onClick={() =>
+                setConfig((prev) => ({
+                  ...prev,
+                  settings: {
+                    ...prev.settings,
+                    defaultOutputDevice: undefined,
+                  } as Settings,
+                }))
+              }
+            >
+              <TrashIcon className="icon stroke" />
+            </button>
+          </div>
+
+          <div className="flex-gap">
+            <span>Default Local Output:</span>
+            <SpeakerIcon className="icon fill" />
+          </div>
+          {config.settings.defaultLocalOutputDevice ? (
+            <>
+              <span>
+                {truncateText(
+                  outputDevices.find(
+                    (d) => d.id === config.settings?.defaultLocalOutputDevice,
+                  )?.label!,
+                )}
+              </span>
+              {!outputDevices.some(
+                (d) => d.id === config.settings?.defaultLocalOutputDevice,
+              ) && (
+                <>
+                  <WarningIcon className="icon stroke fill" />
+                  <span>Device not found</span>
+                </>
+              )}
+            </>
+          ) : (
+            <span>No Device</span>
+          )}
+          <div className="flex-gap">
+            <button
+              onClick={() =>
+                setConfig((prev) => ({ ...prev, editLocalOutputDevice: true }))
+              }
+            >
+              <PencilIcon className="icon fill" />
+            </button>
+            <button
+              onClick={() =>
+                setConfig((prev) => ({
+                  ...prev,
+                  settings: {
+                    ...prev.settings,
+                    defaultLocalOutputDevice: undefined,
+                  } as Settings,
+                }))
+              }
+            >
+              <TrashIcon className="icon stroke" />
+            </button>
+          </div>
+
+          <HotkeyListenerModal
+            allHotkeys={allHotkeys}
+            remove={config.removeHotkey}
+            listening={config.listeningForHotkey}
+            onSave={(hotkey) =>
+              setConfig((prev) => ({
+                ...prev,
+                settings: {
+                  ...prev.settings,
+                  stopHotkey: hotkey as Hotkey,
+                } as Settings,
+              }))
+            }
+            onSaveClose={() =>
+              setConfig((prev) => ({ ...prev, listeningForHotkey: false }))
+            }
+            onRemove={() =>
+              setConfig((prev) => ({
+                ...prev,
+                settings: {
+                  ...prev.settings,
+                  stopHotkey: { key: "esc", shift: true } as Hotkey,
+                } as Settings,
+              }))
+            }
+            onRemoveClose={() =>
+              setConfig((prev) => ({ ...prev, removeHotkey: false }))
+            }
+          />
+        </div>
       </>
     </Modal>
   );

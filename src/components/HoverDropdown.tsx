@@ -45,22 +45,12 @@ export default function Dropdown({ label, items }: DropdownProps) {
       ref={rootRef}
       style={{
         position: "relative",
-        display: "inline-block",
+        display: "flex",
       }}
     >
       {/* Trigger */}
 
-      <button
-        onClick={() => setOpen((p) => !p)}
-        style={{
-          padding: "8px 12px",
-          color: "white",
-
-          cursor: "pointer",
-        }}
-      >
-        {label}
-      </button>
+      <button onClick={() => setOpen((p) => !p)}>{label}</button>
 
       {/* Menu */}
 
@@ -97,11 +87,7 @@ export default function Dropdown({ label, items }: DropdownProps) {
                   }}
                   style={{
                     width: "100%",
-
-                    padding: "10px 12px",
-                    color: "var(--text)",
-
-                    cursor: "pointer",
+                    padding: "10px",
                   }}
                 >
                   {item.label}

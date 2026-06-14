@@ -266,18 +266,16 @@ function registerIpcHandlers() {
   // ============================================
 
   ipcMain.handle("add-youtube-audio", async (_, url) => {
-    const outputTemplate = path.join(soundsPath, "%(title)s-%(id)s.%(ext)s");
+    const outputTemplate = path.join(soundsPath, "%(id)s.%(ext)s");
 
     const meta = await getYoutubeMetadata(url);
-
-    console.log(meta);
 
     const filePath = await downloadYoutube(url, outputTemplate);
 
     const sound = saveSoundFile({
       sourcePath: filePath,
       fileName: path.basename(filePath),
-      originalName: path.basename(filePath),
+      originalName: meta.title,
       deleteSource: true,
       metadata: {
         duration: meta.duration,

@@ -43,7 +43,7 @@ export default function ActionsBar({
     >
       <div>
         <h1 style={{ marginBottom: 0 }}>Soundboard</h1>
-        <span style={{ fontSize: "small" }}>V 1.0.0</span>
+        <span style={{ fontSize: "small" }}>V 1.1.0</span>
       </div>
       <div className="flex-gap">
         <HoverDropdown
@@ -120,11 +120,11 @@ export default function ActionsBar({
           ]}
         />
         <button onClick={showSettings}>
-          <GearIcon className="icon stroke" />
+          <GearIcon className="icon sml stroke" />
         </button>
         <button onClick={stopAll}>
           <div className="flex-gap">
-            <SquareIcon className="icon fill" />
+            <SquareIcon className="icon fill sml" />
             <span>All</span>
             {settings && <HotkeyComponent hotkey={settings.stopHotkey} />}
           </div>
