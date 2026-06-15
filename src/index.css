@@ -262,6 +262,12 @@ button:active,
   align-items: center;
 }
 
+.grid-gap {
+  display: grid;
+  gap: 10px;
+  align-items: center;
+}
+
 .panel {
   border: 2px solid #0f4191;
   background-color: #186bf0;

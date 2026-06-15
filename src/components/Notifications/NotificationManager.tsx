@@ -17,19 +17,18 @@ export default function NotificationManager() {
 
       const id = Date.now() + Math.random();
 
-      const newNotification = { ...n, id, persistent: n.status === "ERROR" };
-
-      setNotifications((prev) => [newNotification, ...prev]);
-
-      if (!newNotification.persistent) {
-        setTimeout(() => {
-          setNotifications((prev) => prev.filter((noti) => noti.id !== id));
-        }, 5500);
-      }
+      setNotifications((prev) => [
+        {
+          ...n,
+          id,
+          persistent: n.status === "ERROR",
+        },
+        ...prev,
+      ]);
     });
 
     const unsubscribeRemove = bus.subscribe("remove-notification", (id) => {
-      setNotifications((prev) => prev.filter((noti) => noti.id !== id));
+      setNotifications((prev) => prev.filter((n) => n.id !== id));
     });
 
     return () => {

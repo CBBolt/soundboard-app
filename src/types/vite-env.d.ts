@@ -1,6 +1,11 @@
 export {};
 
 declare global {
+  type ControllerData = {
+    message: string;
+    data?: unknown;
+  };
+
   type VBCommand = {
     cmd:
       | "get_float"
@@ -63,6 +68,7 @@ declare global {
     fileName: string;
     duration?: number;
 
+    icon?: string;
     color?: string;
     startTime?: number;
     endTime?: number;
@@ -75,6 +81,12 @@ declare global {
 
   interface Window {
     electronAPI: {
+      //Window
+      showController: () => void;
+      hideController: () => void;
+      sendSound: (id: number) => void;
+      sendData: (data: ControllerData) => void;
+
       // Files
       getFileUrl: (path: string) => Promise<string>;
       pickAudioFile: () => Promise<string | null>;
@@ -92,6 +104,7 @@ declare global {
 
       onPlaySound: (callback: (soundId: string) => void) => void;
       onYoutubeProgress: (callback: (percent: number) => void) => void;
+      onMainRecieved: (callback: (data: ControllerData) => void) => void;
 
       // Settings
       readSettings: () => Settings;

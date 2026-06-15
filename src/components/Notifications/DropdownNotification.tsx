@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useEventBus } from "../../contexts/GlobalEventContext";
 
 import styles from "./_styles/Notification.module.css";
@@ -10,28 +10,33 @@ export default function DropdownNotification({
   notification: NotificationProps;
 }) {
   const bus = useEventBus();
+  const [visible, setVisible] = useState(false);
   const { id, message, status, persistent } = notification;
 
   const notificationRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (notificationRef.current) {
-      setTimeout(
-        () => notificationRef.current?.classList.add(styles.show),
-        100,
-      );
+    setVisible(true);
 
-      if (!persistent) {
-        setTimeout(
-          () => notificationRef.current?.classList.remove(styles.show),
-          3000,
-        );
-      }
+    if (!persistent) {
+      const hide = setTimeout(() => setVisible(false), 3000);
+
+      const remove = setTimeout(() => {
+        bus.emit("remove-notification", id);
+      }, 3250);
+
+      return () => {
+        clearTimeout(hide);
+        clearTimeout(remove);
+      };
     }
-  }, [persistent]);
+  }, [bus, id, persistent]);
 
   return (
-    <div ref={notificationRef} className={`${styles["notification"]}`}>
+    <div
+      ref={notificationRef}
+      className={`${styles.notification} ${visible ? styles.show : ""}`}
+    >
       <div className={`${styles["notification-bg"]} ${styles[status]}`} />
       <div className={styles["notification-body"]}>
         <button

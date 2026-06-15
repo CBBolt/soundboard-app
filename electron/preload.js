@@ -1,6 +1,20 @@
 const { contextBridge, ipcRenderer } = require("electron");
 
 contextBridge.exposeInMainWorld("electronAPI", {
+  showController: () => ipcRenderer.invoke("show-controller"),
+  hideController: () => ipcRenderer.invoke("hide-controller"),
+  sendSound: (id) => ipcRenderer.invoke("send-sound", id),
+  sendData: (data) => ipcRenderer.invoke("send-data", data),
+  onMainRecieved: (callback) => {
+    const handler = (_, data) => callback(data);
+
+    ipcRenderer.on("main-recieved", handler);
+
+    return () => {
+      ipcRenderer.removeListener("main-recieved", handler);
+    };
+  },
+
   // Files
   pickAudioFile: () => ipcRenderer.invoke("pick-audio-file"),
   getFileUrl: (filePath) => ipcRenderer.invoke("get-file-url", filePath),

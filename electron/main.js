@@ -115,6 +115,8 @@ app.on("window-all-closed", () => {
 // ======================================================
 
 let mainWindow;
+let controllerWindow;
+let showController = false;
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -128,6 +130,22 @@ function createWindow() {
       contextIsolation: true,
       nodeIntegration: false,
     },
+  });
+
+  globalShortcut.register("Shift+A", () => {
+    console.log("toggle", !showController);
+
+    showController = !showController;
+
+    if (showController) {
+      if (controllerWindow) {
+        controllerWindow.show();
+      } else {
+        createcontrollerWindow();
+      }
+    } else {
+      if (controllerWindow) controllerWindow.hide();
+    }
   });
 
   if (process.env.VITE_DEV_SERVER_URL) {
@@ -146,6 +164,30 @@ function createWindow() {
 // ======================================================
 
 function registerIpcHandlers() {
+  ipcMain.handle("show-controller", () => {
+    if (controllerWindow) {
+      controllerWindow.show();
+    } else {
+      createcontrollerWindow();
+    }
+
+    showController = true;
+  });
+
+  ipcMain.handle("hide-controller", () => {
+    if (controllerWindow) controllerWindow.hide();
+
+    showController = false;
+  });
+
+  ipcMain.handle("send-sound", (_, id) => {
+    mainWindow.webContents.send("play-sound", id);
+  });
+
+  ipcMain.handle("send-data", (_, data) => {
+    controllerWindow.webContents.send("main-recieved", data);
+  });
+
   // ======================================================
   // VB AUDIO
   // ======================================================
@@ -686,6 +728,7 @@ function registerHotkey(hotkey, soundId) {
 
     const success = globalShortcut.register(key, () => {
       mainWindow.webContents.send("play-sound", soundId);
+      controllerWindow.webContents.send("play-sound", soundId);
     });
 
     return success;
@@ -712,4 +755,44 @@ function getYtDlpPath() {
     default:
       throw new Error("Unsupported platform");
   }
+}
+
+function createcontrollerWindow() {
+  controllerWindow = new BrowserWindow({
+    // parent: mainWindow,
+    modal: true,
+
+    width: 600,
+    height: 400,
+
+    skipTaskbar: true,
+    frame: false,
+    transparent: true,
+
+    // resizable: false,
+    minimizable: false,
+    maximizable: false,
+    alwaysOnTop: true,
+
+    webPreferences: {
+      preload: path.join(__dirname, "preload.js"),
+      contextIsolation: true,
+      nodeIntegration: false,
+    },
+  });
+
+  if (process.env.VITE_DEV_SERVER_URL) {
+    controllerWindow.webContents.openDevTools();
+    controllerWindow.loadURL(
+      `${process.env.VITE_DEV_SERVER_URL}/controller.html`,
+    );
+  } else {
+    controllerWindow.loadFile(
+      path.join(app.getAppPath(), "dist/renderer/controller.html"),
+    );
+  }
+
+  controllerWindow.on("closed", () => {
+    controllerWindow = null;
+  });
 }

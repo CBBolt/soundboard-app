@@ -12,7 +12,7 @@ import { audioEngine } from "./audio/AudioEngine";
 import Recorder from "./components/Sound/Recorder";
 import SoundEditor from "./components/Sound/SoundEditor";
 import Modal from "./components/Modal/Modal";
-import SoundTile from "./components/Sound/SoundTile";
+// import SoundTile from "./components/Sound/SoundTile";
 import ActionsBar from "./components/ActionsBar";
 import InstructionModal from "./components/Modal/InstructionModal";
 import SettingsModal from "./components/Modal/SettingsModal";
@@ -27,6 +27,7 @@ import VoiceMeeter from "./components/Modal/VoiceMeeter";
 import VMDeviceSelector from "./components/VoiceMeeter/VMDeviceSelector";
 import HeadphoneIcon from "./icons/HeadphoneIcon";
 import Splashscreen from "./components/SplashScreen";
+import SoundLibrary from "./components/library/SoundLibrary";
 
 /*
 
@@ -126,7 +127,13 @@ function App() {
 
     setConfig((prev) => ({
       ...prev,
-      outputDevices: outputs,
+      outputDevices: outputs.filter((d) => {
+        const label = d.label.toLowerCase();
+
+        return !["cable", "voicemeeter"].some((blocked) =>
+          label.includes(blocked),
+        );
+      }),
       inputDevices: inputs,
     }));
   };
@@ -208,9 +215,13 @@ function App() {
     setConfig((prev) => ({
       ...prev,
       settings,
-      outputDevices: outputs.filter(
-        (d) => !d.label.toLowerCase().includes("cable in"),
-      ),
+      outputDevices: outputs.filter((d) => {
+        const label = d.label.toLowerCase();
+
+        return !["cable", "voicemeeter"].some((blocked) =>
+          label.includes(blocked),
+        );
+      }),
       inputDevices: inputs,
       localOutputDevice,
       vmOutputDevice,
@@ -367,17 +378,11 @@ function App() {
     <div style={{ padding: 10 }}>
       <NotificationManager />
 
+      <button onClick={() => api.sendData({ message: "reload" })}>Test</button>
+      <button onClick={() => api.showController()}>Show</button>
+
       <ActionsBar
-        settings={config.settings}
         VBDetected={config.VBDetected}
-        addSound={addSound}
-        startRecord={() =>
-          setConfig((prev) => ({
-            ...prev,
-            recordEnabled: true,
-          }))
-        }
-        stopAll={audioEngine.stopAll}
         instructions={() =>
           setConfig((prev) => ({
             ...prev,
@@ -390,17 +395,61 @@ function App() {
             settingsEnabled: true,
           }))
         }
-        youtube={() =>
-          setConfig((prev) => ({
-            ...prev,
-            youtubeEnabled: true,
-          }))
-        }
+        settings={config.settings}
+        stopAll={audioEngine.stopAll}
       />
 
-      <div className="flex-gap" style={{}}>
-        <MusicNoteIcon className="icon fill" />
-        <div style={{ display: "flex", gap: 10 }}>
+      <div className="flex-gap">
+        <button
+          className="icon-btn grey"
+          onClick={async () => {
+            if (!config.toVoiceMeeter) {
+              const { outputs } = await getDevices();
+
+              const vbCableInput = outputs.find((d) =>
+                d.label.toLowerCase().includes("cable input"),
+              );
+
+              if (!vbCableInput) {
+                console.error("VB Cable Input not found");
+                return;
+              }
+
+              audioEngine.setDevice(vbCableInput.id);
+            } else {
+              audioEngine.setDevice(config.localOutputDevice);
+            }
+
+            setConfig((prev) => ({
+              ...prev,
+              toVoiceMeeter: !prev.toVoiceMeeter,
+            }));
+          }}
+        >
+          <HeadphoneIcon
+            className="icon fill"
+            style={{ fill: !config.toVoiceMeeter ? "var(--base-color)" : "" }}
+          />
+        </button>
+        {config.toVoiceMeeter ? (
+          <VoiceMeeter
+            outputDevices={config.outputDevices}
+            selectedOutputDevice={config.vmOutputDevice}
+            inputDevices={config.inputDevices}
+            selectedInputDevice={config.selectedInputDevice}
+            loadVMConfig={getVMConfig}
+            onSave={(data) => {
+              const { currentInputDevice, currentOutputDevice } = data;
+
+              setConfig((prev) => ({
+                ...prev,
+                selectedInputDevice: currentInputDevice,
+                vmOutputDevice: currentOutputDevice,
+              }));
+            }}
+            loadDevices={loadDevices}
+          />
+        ) : (
           <VMDeviceSelector
             disabled={config.toVoiceMeeter}
             currentDevice={config.localOutputDevice}
@@ -414,56 +463,8 @@ function App() {
               }));
             }}
           />
-          <button
-            className="icon-btn grey"
-            onClick={async () => {
-              if (!config.toVoiceMeeter) {
-                const { outputs } = await getDevices();
-
-                const vbCableInput = outputs.find((d) =>
-                  d.label.toLowerCase().includes("cable input"),
-                );
-
-                if (!vbCableInput) {
-                  console.error("VB Cable Input not found");
-                  return;
-                }
-
-                audioEngine.setDevice(vbCableInput.id);
-              } else {
-                audioEngine.setDevice(config.localOutputDevice);
-              }
-              setConfig((prev) => ({
-                ...prev,
-                toVoiceMeeter: !prev.toVoiceMeeter,
-              }));
-            }}
-          >
-            <HeadphoneIcon
-              className="icon fill"
-              style={{ fill: !config.toVoiceMeeter ? "var(--base-color)" : "" }}
-            />
-          </button>
-        </div>
+        )}
       </div>
-
-      <VoiceMeeter
-        outputDevices={config.outputDevices}
-        selectedOutputDevice={config.vmOutputDevice}
-        inputDevices={config.inputDevices}
-        selectedInputDevice={config.selectedInputDevice}
-        loadVMConfig={getVMConfig}
-        onSave={(data) => {
-          const { currentInputDevice, currentOutputDevice } = data;
-
-          setConfig((prev) => ({
-            ...prev,
-            selectedInputDevice: currentInputDevice,
-            vmOutputDevice: currentOutputDevice,
-          }));
-        }}
-        loadDevices={loadDevices}
-      />
 
       <InstructionModal
         VBDetected={config.VBDetected}
@@ -651,7 +652,26 @@ function App() {
           </div>
         </div>
       )}
-      <div
+
+      <SoundLibrary
+        sounds={config.sounds}
+        onDelete={(id) => setConfig((prev) => ({ ...prev, deleteSound: id }))}
+        onEdit={openEditor}
+        addSound={addSound}
+        startRecord={() =>
+          setConfig((prev) => ({
+            ...prev,
+            recordEnabled: true,
+          }))
+        }
+        addYoutube={() =>
+          setConfig((prev) => ({
+            ...prev,
+            youtubeEnabled: true,
+          }))
+        }
+      />
+      {/* <div
         style={{
           position: "relative",
           display: "grid",
@@ -683,7 +703,7 @@ function App() {
             editSound={openEditor}
           />
         ))}
-      </div>
+      </div> */}
     </div>
   );
 }

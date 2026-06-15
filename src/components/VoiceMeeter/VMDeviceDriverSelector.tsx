@@ -14,8 +14,8 @@ export default function VMDeviceDriverSelector({
 }: VMDeviceProps) {
   const [device, setDevice] = useState<VMAudioDevice>(
     currentDevice ?? {
-      name: devices[0].label,
-      id: devices[0].id,
+      name: "",
+      id: "",
       driver: "WDM",
     },
   );

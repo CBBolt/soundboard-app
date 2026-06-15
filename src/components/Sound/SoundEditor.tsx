@@ -24,6 +24,7 @@ type SoundSettings = {
   listeningForHotkey: boolean;
   removeHotkey: boolean;
   editSound: boolean;
+  editIcon: boolean;
   helper: boolean;
 };
 
@@ -40,6 +41,7 @@ export default function SoundEditor({
     listeningForHotkey: false,
     removeHotkey: false,
     editSound: false,
+    editIcon: false,
     helper: false,
   });
 
@@ -79,6 +81,31 @@ export default function SoundEditor({
           gridTemplateRows: "1fr 1fr",
         }}
       >
+        {/* <label className="flex-gap">
+          Icon:{" "}
+          {config.settings.icon ? (
+            <>
+              <IconComponent iconName={config.settings.icon} />
+            </>
+          ) : (
+            <span>None</span>
+          )}
+          <button
+            onClick={() => setConfig((prev) => ({ ...prev, editIcon: true }))}
+          >
+            <PencilIcon className="icon fill" />
+          </button>
+          <button
+            onClick={() =>
+              setConfig((prev) => ({
+                ...prev,
+                settings: { ...prev.settings, icon: undefined },
+              }))
+            }
+          >
+            <TrashIcon className="icon stroke" />
+          </button>
+        </label> */}
         <label className="flex-gap">
           Name:
           <input type="text" value={name} onChange={update("name")} />

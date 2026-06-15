@@ -1,7 +1,4 @@
-import CircleIcon from "../icons/CircleIcon";
-import FolderIcon from "../icons/FolderIcon";
 import GearIcon from "../icons/GearIcon";
-import PlusIcon from "../icons/PlusIcon";
 import QuestionIcon from "../icons/QuestionIcon";
 import SquareIcon from "../icons/SquareIcon";
 import HotkeyComponent from "./Hotkey/HotkeyComponent";
@@ -10,23 +7,17 @@ import HoverDropdown from "./HoverDropdown";
 type Props = {
   settings: Settings | undefined;
   VBDetected: VBDetected;
-  addSound: () => void;
-  startRecord: () => void;
   stopAll: () => void;
   instructions: () => void;
   showSettings: () => void;
-  youtube: () => void;
 };
 
 export default function ActionsBar({
   settings,
   VBDetected,
-  addSound,
-  startRecord,
   stopAll,
   instructions,
   showSettings,
-  youtube,
 }: Props) {
   return (
     <div
@@ -46,41 +37,6 @@ export default function ActionsBar({
         <span style={{ fontSize: "small" }}>V 1.1.0</span>
       </div>
       <div className="flex-gap">
-        <HoverDropdown
-          label={<PlusIcon className="icon sml fill" />}
-          items={[
-            {
-              label: (
-                <div className="flex-gap">
-                  <FolderIcon className="icon sml stroke" />
-                  <span>From File</span>
-                </div>
-              ),
-              button: true,
-              onClick: addSound,
-            },
-            {
-              label: (
-                <div className="flex-gap">
-                  <CircleIcon className="icon sml fill" />
-                  <span>Record New</span>
-                </div>
-              ),
-              button: true,
-              onClick: startRecord,
-            },
-            {
-              label: (
-                <div className="flex-gap">
-                  <CircleIcon className="icon sml fill" />
-                  <span>From YouTube</span>
-                </div>
-              ),
-              button: true,
-              onClick: youtube,
-            },
-          ]}
-        />
         <HoverDropdown
           label={<QuestionIcon className="icon sml fill" />}
           items={[

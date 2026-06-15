@@ -73,10 +73,6 @@ export default function VoiceMeeter({
     },
   });
 
-  // useEffect(() => {
-  //   loadVMConfig();
-  // }, []);
-
   useEffect(() => {
     const load = async () => {
       const config = await loadVMConfig();
@@ -250,14 +246,11 @@ export default function VoiceMeeter({
           display: "grid",
           gridTemplateColumns: "0.5fr 1fr",
           gap: 10,
-          position: "absolute",
-          bottom: 0,
-          left: 0,
+          position: "relative",
           background: "rgba(0, 0, 0, 0.75)",
           boxShadow: "black 1px 1px 10px 1px",
           padding: 2,
           borderRadius: 5,
-          zIndex: 50,
           fontSize: "smaller",
           textAlign: "left",
         }}
@@ -272,12 +265,12 @@ export default function VoiceMeeter({
           {muteButton("inputChannel", "Strip[1]", "mic", true)}
           {aButton("inputChannel", "Strip[1]", true)}
         </div>
-        <span>{truncateText(config.currentInputDevice.name)}</span>
+        <span>{truncateText(config.currentInputDevice.name, 30)}</span>
 
         <div className="flex-gap">
           {muteButton("outputChannel", "Bus[0]", "speaker", true)}
         </div>
-        <span>{truncateText(config.currentOuputDevice.name)}</span>
+        <span>{truncateText(config.currentOuputDevice.name, 30)}</span>
         <div style={{ position: "absolute", top: "0", right: 0 }}>
           <button
             onClick={() => setConfig((prev) => ({ ...prev, expand: true }))}
@@ -330,6 +323,7 @@ export default function VoiceMeeter({
                 />
               </div>
             </div>
+
             <div className="flex-gap">
               <div className="flex-gap">
                 {muteButton("inputChannel", "Strip[1]", "mic")}
