@@ -26,8 +26,10 @@ type Props = {
 
 type SettingsType = {
   settings: Settings | null;
-  listeningForHotkey: boolean;
-  removeHotkey: boolean;
+  listeningForHotkeyStop: boolean;
+  removeHotkeyStop: boolean;
+  listeningForHotkeyController: boolean;
+  removeHotkeyController: boolean;
   editInputDevice: boolean;
   editOutputDevice: boolean;
   editLocalOutputDevice: boolean;
@@ -44,8 +46,10 @@ export default function SettingsModal({
 }: Props) {
   const [config, setConfig] = useState<SettingsType>({
     settings: null,
-    listeningForHotkey: false,
-    removeHotkey: false,
+    listeningForHotkeyStop: false,
+    removeHotkeyStop: false,
+    listeningForHotkeyController: false,
+    removeHotkeyController: false,
     editInputDevice: false,
     editOutputDevice: false,
     editLocalOutputDevice: false,
@@ -216,13 +220,32 @@ export default function SettingsModal({
             onListen={() =>
               setConfig((prev) => ({
                 ...prev,
-                listeningForHotkey: true,
+                listeningForHotkeyStop: true,
               }))
             }
             onRemove={() =>
               setConfig((prev) => ({
                 ...prev,
-                removeHotkey: true,
+                removeHotkeyStop: true,
+              }))
+            }
+          />
+        </div>
+
+        <div className="flex-gap">
+          <span>Controller Toggle Hotkey:</span>
+          <HotkeyWrapper
+            hotkey={config.settings.controllerToggleHotkey}
+            onListen={() =>
+              setConfig((prev) => ({
+                ...prev,
+                listeningForHotkeyController: true,
+              }))
+            }
+            onRemove={() =>
+              setConfig((prev) => ({
+                ...prev,
+                removeHotkeyController: true,
               }))
             }
           />
@@ -373,8 +396,8 @@ export default function SettingsModal({
 
           <HotkeyListenerModal
             allHotkeys={allHotkeys}
-            remove={config.removeHotkey}
-            listening={config.listeningForHotkey}
+            remove={config.removeHotkeyStop}
+            listening={config.listeningForHotkeyStop}
             onSave={(hotkey) =>
               setConfig((prev) => ({
                 ...prev,
@@ -385,7 +408,7 @@ export default function SettingsModal({
               }))
             }
             onSaveClose={() =>
-              setConfig((prev) => ({ ...prev, listeningForHotkey: false }))
+              setConfig((prev) => ({ ...prev, listeningForHotkeyStop: false }))
             }
             onRemove={() =>
               setConfig((prev) => ({
@@ -397,7 +420,40 @@ export default function SettingsModal({
               }))
             }
             onRemoveClose={() =>
-              setConfig((prev) => ({ ...prev, removeHotkey: false }))
+              setConfig((prev) => ({ ...prev, removeHotkeyStop: false }))
+            }
+          />
+
+          <HotkeyListenerModal
+            allHotkeys={allHotkeys}
+            remove={config.removeHotkeyController}
+            listening={config.listeningForHotkeyController}
+            onSave={(hotkey) =>
+              setConfig((prev) => ({
+                ...prev,
+                settings: {
+                  ...prev.settings,
+                  controllerToggleHotkey: hotkey as Hotkey,
+                } as Settings,
+              }))
+            }
+            onSaveClose={() =>
+              setConfig((prev) => ({
+                ...prev,
+                listeningForHotkeyController: false,
+              }))
+            }
+            onRemove={() =>
+              setConfig((prev) => ({
+                ...prev,
+                settings: {
+                  ...prev.settings,
+                  controllerToggleHotkey: { key: "a", ctrl: true } as Hotkey,
+                } as Settings,
+              }))
+            }
+            onRemoveClose={() =>
+              setConfig((prev) => ({ ...prev, removeHotkeyController: false }))
             }
           />
         </div>

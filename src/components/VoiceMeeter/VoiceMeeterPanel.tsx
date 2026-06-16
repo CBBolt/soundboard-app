@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
-import Modal from "./Modal";
+import Modal from "../Modal/Modal";
 import RefreshIcon from "../../icons/RefreshIcon";
 import MicIcon from "../../icons/MicIcon";
 import SpeakerIcon from "../../icons/SpeakerIcon";
 import VolumeSlider from "../VolumeSlider";
 import MusicNoteIcon from "../../icons/MusicNoteIcon";
-import VMDeviceDriverSelector from "../VoiceMeeter/VMDeviceDriverSelector";
+import VMDeviceDriverSelector from "./VMDeviceDriverSelector";
 import HeadphoneIcon from "../../icons/HeadphoneIcon";
 import QuestionIcon from "../../icons/QuestionIcon";
 import GearIcon from "../../icons/GearIcon";
@@ -42,7 +42,7 @@ type VMConfig = {
 
 type VMChannelKey = "inputChannel" | "soundboardChannel" | "outputChannel";
 
-export default function VoiceMeeter({
+export default function VoiceMeeterPanel({
   onSave,
   loadDevices,
   loadVMConfig,
@@ -75,6 +75,8 @@ export default function VoiceMeeter({
 
   useEffect(() => {
     const load = async () => {
+      console.log("loading...");
+
       const config = await loadVMConfig();
 
       const configObj = config as {
@@ -106,7 +108,7 @@ export default function VoiceMeeter({
     };
 
     load();
-  }, [config.expand]);
+  }, []);
 
   async function updateVMParam(data: {
     param: string;

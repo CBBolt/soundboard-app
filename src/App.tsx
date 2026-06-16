@@ -23,7 +23,7 @@ import MusicNoteIcon from "./icons/MusicNoteIcon";
 import CircleIcon from "./icons/CircleIcon";
 import QuestionIcon from "./icons/QuestionIcon";
 import YoutubeLinkModal from "./components/Modal/YoutubeLinkModal";
-import VoiceMeeter from "./components/Modal/VoiceMeeter";
+import VoiceMeeter from "./components/VoiceMeeter/VoiceMeeterPanel";
 import VMDeviceSelector from "./components/VoiceMeeter/VMDeviceSelector";
 import HeadphoneIcon from "./icons/HeadphoneIcon";
 import Splashscreen from "./components/SplashScreen";
@@ -198,6 +198,8 @@ function App() {
         ? settings.defaultLocalOutputDevice
         : outputs[0].id;
 
+    audioEngine.setDevice(localOutputDevice);
+
     // Apply to VoiceMeeter
 
     await api.setVMCommand({
@@ -256,13 +258,25 @@ function App() {
 
   const registerHotkeys = () => {
     //Stop All
+    if (config.settings?.controllerToggleHotkey) {
+      api.registerHotkey(config.settings.controllerToggleHotkey, {
+        type: "controller",
+      });
+    }
+
     if (config.settings?.stopHotkey) {
-      api.registerHotkey(config.settings.stopHotkey, "STOP_ALL");
+      api.registerHotkey(config.settings.stopHotkey, {
+        type: "sound",
+        soundId: "STOP_ALL",
+      });
     }
 
     for (const s of config.sounds) {
       if (s.hotkey) {
-        api.registerHotkey(s.hotkey, s.id.toString());
+        api.registerHotkey(s.hotkey, {
+          type: "sound",
+          soundId: s.id.toString(),
+        });
       }
     }
   };

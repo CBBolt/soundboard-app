@@ -26,7 +26,6 @@ contextBridge.exposeInMainWorld("electronAPI", {
   saveSound: (filePath, metadata) =>
     ipcRenderer.invoke("save-sound", filePath, metadata),
   deleteSound: (id) => ipcRenderer.invoke("delete-sound", id),
-  renameSound: (data) => ipcRenderer.invoke("rename-sound", data),
   updateSound: (updated) => ipcRenderer.invoke("update-sound", updated),
   saveRecording: (buffer, metadata) =>
     ipcRenderer.invoke("save-recording", buffer, metadata),
@@ -58,7 +57,6 @@ contextBridge.exposeInMainWorld("electronAPI", {
   unregisterHotkeys: () => ipcRenderer.invoke("unregister-hotkeys"),
 
   // VB Audio
-
   detectVBAudio: () => ipcRenderer.invoke("detect-vb-audio"),
   disableVBAudio: () => ipcRenderer.invoke("disable-vb-audio"),
   openVoicemeeter: () => ipcRenderer.invoke("open-voicemeeter"),

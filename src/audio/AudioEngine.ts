@@ -60,8 +60,6 @@ class AudioEngine {
         audio.onerror = rej;
       });
 
-      console.log(this.deviceId);
-
       // -----------------------------------
       // Device routing
       // -----------------------------------

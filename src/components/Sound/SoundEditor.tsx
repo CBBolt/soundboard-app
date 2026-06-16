@@ -230,7 +230,10 @@ export default function SoundEditor({
           onClick={async () => {
             await handleSave();
             if (hotkey)
-              window.electronAPI.registerHotkey(hotkey, sound.id.toString());
+              window.electronAPI.registerHotkey(hotkey, {
+                type: "sound",
+                soundId: sound.id.toString(),
+              });
           }}
         >
           <SaveIcon className="icon fill" />

@@ -41,7 +41,7 @@ export default function ControllerApp() {
 
   return (
     <div className="backdrop">
-      <div className="titlebar">My Overlay</div>
+      <div className="titlebar" />{" "}
       <button onClick={() => window.electronAPI.hideController()}>Close</button>
       <div className="flex-gap">
         <SquareIcon className="icon fill sml" />

@@ -49,6 +49,7 @@ declare global {
   type Settings = {
     baseColor: string;
     stopHotkey: Hotkey;
+    controllerToggleHotkey: Hotkey;
     defaultInputDevice?: VMAudioDevice;
     defaultOutputDevice?: VMAudioDevice;
     defaultLocalOutputDevice?: string;
@@ -96,7 +97,6 @@ declare global {
       readSound: (path: string) => unknown;
       saveSound: (filePath: string, metadata: object) => void;
       deleteSound: (id: number) => void;
-      renameSound: ({ id: string, newName: string }) => void;
       updateSound: (data: Sound) => void;
       getSoundPath: (name: string) => Promise<string>;
       saveRecording: (buffer: ArrayBuffer, metadata: object) => void;
@@ -111,7 +111,7 @@ declare global {
       updateSettings: (data: Partial<Settings>) => void;
 
       // Hotkeys
-      registerHotkey: (hotkey: Hotkey, soundId: string) => void;
+      registerHotkey: (hotkey: Hotkey, data: object) => void;
       unregisterHotkeys: () => void;
 
       // VB Audio
