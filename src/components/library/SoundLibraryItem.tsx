@@ -1,6 +1,10 @@
+import { Icon } from "@iconify/react";
+import MusicNoteIcon from "../../icons/MusicNoteIcon";
 import PencilIcon from "../../icons/PencilIcon";
 import TrashIcon from "../../icons/TrashIcon";
 import HotkeyComponent from "../Hotkey/HotkeyComponent";
+import TagComponent from "../Tag/TagComponent";
+import Marquee from "../Marquee/Marquee";
 
 type ItemProps = {
   sound: Sound;
@@ -8,18 +12,57 @@ type ItemProps = {
   onDelete: (id: number) => void;
 };
 
+const MAX_TAGS = 3;
+
 export default function SoundLibraryItem({
   sound,
   onEdit,
   onDelete,
 }: ItemProps) {
   return (
-    <>
-      <span>{sound.name}</span>
+    <div
+      className="grid-gap grey"
+      style={{
+        textAlign: "center",
+        gridTemplateColumns: "0.1fr 1fr 1fr 1fr 0.5fr",
+        borderRadius: 5,
+        padding: 5,
+      }}
+    >
+      {sound.icon ? (
+        <Icon
+          icon={sound.icon}
+          className="icon"
+          style={{ color: sound.color }}
+        />
+      ) : (
+        <MusicNoteIcon className="icon fill" style={{ fill: sound.color }} />
+      )}
+      <Marquee text={sound.name} />
       {sound.hotkey ? (
         <HotkeyComponent hotkey={sound.hotkey} />
       ) : (
         <span>No Hotkey</span>
+      )}
+      {sound.tags ? (
+        <div
+          className="grid-gap grey"
+          style={{
+            gap: 2,
+            gridTemplateColumns: "repeat(auto-fit, minmax(40px, 1fr))",
+            padding: "0 10px",
+            borderRadius: 5,
+          }}
+        >
+          {sound.tags.slice(0, MAX_TAGS).map((t) => (
+            <TagComponent key={t.id} tag={t} mini={true} editable={false} />
+          ))}
+          {sound.tags.length > MAX_TAGS && (
+            <span>{`+${sound.tags.length - MAX_TAGS}..`}</span>
+          )}
+        </div>
+      ) : (
+        <div />
       )}
       <div className="flex-gap">
         <button onClick={() => onEdit(sound)}>
@@ -29,6 +72,6 @@ export default function SoundLibraryItem({
           <TrashIcon className="icon stroke" />
         </button>
       </div>
-    </>
+    </div>
   );
 }

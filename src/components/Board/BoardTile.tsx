@@ -3,7 +3,9 @@ import PlusIcon from "../../icons/PlusIcon";
 import styles from "./_styles/BoardTile.module.css";
 import Modal from "../Modal/Modal";
 import TrashIcon from "../../icons/TrashIcon";
-import { truncateText } from "../../lib/helpers";
+import Marquee from "../Marquee/Marquee";
+import { Icon } from "@iconify/react";
+import MusicNoteIcon from "../../icons/MusicNoteIcon";
 
 type TileProps = {
   sounds: Sound[];
@@ -41,7 +43,7 @@ export default function BoardTile({ sounds, sound, setSound }: TileProps) {
         </div>
       </Modal>
       <div
-        className={styles.tile}
+        className={`${styles.tile} ${sound ? "grey" : ""}`}
         onClick={() => {
           if (sound) {
           } else {
@@ -49,17 +51,43 @@ export default function BoardTile({ sounds, sound, setSound }: TileProps) {
           }
         }}
       >
+        <div
+          className={styles["tile-editor"]}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div
+            className="icon-btn"
+            onClick={(e) => {
+              e.stopPropagation();
+              setSound(sound ? 0 : -1);
+            }}
+          >
+            <TrashIcon className="icon stroke sml" />
+          </div>
+        </div>
         {sound ? (
           <>
-            <div
-              className="icon-btn"
-              onClick={() => {
-                setSound(0);
-              }}
-            >
-              <TrashIcon className="icon stroke" />
-            </div>
-            {truncateText(sound.name)}
+            {sound ? (
+              <div className="grid-gap">
+                <div>
+                  {sound.icon ? (
+                    <Icon
+                      icon={sound.icon}
+                      className="icon fill"
+                      style={{ color: sound.color }}
+                    />
+                  ) : (
+                    <MusicNoteIcon
+                      className="icon fill"
+                      style={{ fill: sound.color }}
+                    />
+                  )}
+                </div>
+                <Marquee text={sound.name} />
+              </div>
+            ) : (
+              <PlusIcon className="icon fill" style={{ opacity: 0.5 }} />
+            )}
           </>
         ) : (
           <PlusIcon className="icon fill" style={{ opacity: 0.5 }} />

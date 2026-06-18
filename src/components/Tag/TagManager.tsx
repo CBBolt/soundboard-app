@@ -6,6 +6,7 @@ import Modal from "../Modal/Modal";
 import SaveIcon from "../../icons/SaveIcon";
 import PencilIcon from "../../icons/PencilIcon";
 import TrashIcon from "../../icons/TrashIcon";
+import MagnifyGlassIcon from "../../icons/MagnifyGlassIcon";
 
 type TagProps = {
   tags: Tag[];
@@ -158,13 +159,16 @@ export default function TagManager({ tags, loadTags }: TagProps) {
       </Modal>
       <div>
         <div className="flex-gap">
-          <input
-            value={config.filter}
-            onChange={(e) =>
-              setConfig((prev) => ({ ...prev, filter: e.target.value }))
-            }
-            style={{ width: "50%" }}
-          />
+          <div className="flex-gap">
+            <input
+              type="search"
+              value={config.filter}
+              onChange={(e) =>
+                setConfig((prev) => ({ ...prev, filter: e.target.value }))
+              }
+            />
+            <MagnifyGlassIcon className="icon stroke" />
+          </div>
           <button
             onClick={() =>
               setConfig((prev) => ({

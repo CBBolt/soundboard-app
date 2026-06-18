@@ -5,9 +5,13 @@ import TriangeIcon from "../../icons/TriangleIcon";
 import PlusIcon from "../../icons/PlusIcon";
 import FolderIcon from "../../icons/FolderIcon";
 import CircleIcon from "../../icons/CircleIcon";
+import Carousel from "../Carousel/Carousel";
+import MagnifyGlassIcon from "../../icons/MagnifyGlassIcon";
+import TagIcon from "../../icons/TagIcon";
 
 type LibraryProps = {
   sounds: Sound[];
+  allTags: Tag[];
   onEdit: (sound: Sound) => void;
   onDelete: (id: number) => void;
   addSound: () => void;
@@ -17,6 +21,7 @@ type LibraryProps = {
 
 export default function SoundLibrary({
   sounds,
+  allTags,
   onEdit,
   onDelete,
   addSound,
@@ -24,15 +29,28 @@ export default function SoundLibrary({
   startRecord,
 }: LibraryProps) {
   const [filter, setFilter] = useState("");
+  const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
+
+  const filteredSounds = sounds.filter((sound) => {
+    const matchesName = sound.name.toLowerCase().includes(filter.toLowerCase());
+
+    const matchesTags =
+      selectedTags.length === 0 ||
+      sound.tags?.some((soundTag) =>
+        selectedTags.some((selectedTag) => selectedTag.id === soundTag.id),
+      );
+
+    return matchesName && matchesTags;
+  });
 
   return (
     <>
-      <div className="flex-gap">
-        <input
-          value={filter}
-          onChange={(e) => setFilter(e.target.value)}
-          style={{ width: "50%" }}
-        />
+      <div
+        className="grid-gap"
+        style={{
+          gridTemplateColumns: "0.1fr 1fr",
+        }}
+      >
         <HoverDropdown
           label={<PlusIcon className="icon fill" />}
           items={[
@@ -68,26 +86,54 @@ export default function SoundLibrary({
             },
           ]}
         />
+
+        <div className="flex-gap" style={{ justifyContent: "end" }}>
+          <div className="flex-gap">
+            <input
+              type="search"
+              value={filter}
+              onChange={(e) => setFilter(e.target.value)}
+            />
+            <MagnifyGlassIcon className="icon stroke" />
+          </div>
+          {allTags.length > 0 && (
+            <div className="flex-gap">
+              <Carousel
+                items={allTags}
+                curItemId={0}
+                onSelect={(id) =>
+                  setSelectedTags((prev) =>
+                    prev.some((t) => t.id === id)
+                      ? prev.filter((t) => t.id !== id)
+                      : [...prev, allTags.find((t) => t.id === id)!],
+                  )
+                }
+                maxItems={2}
+                isHighlighted={(tag) =>
+                  selectedTags.some((t) => tag.id === t.id)
+                }
+              />
+              <TagIcon className="icon stroke" />
+            </div>
+          )}
+        </div>
       </div>
       <div
         className="grid-gap"
         style={{
           textAlign: "start",
-          gridTemplateColumns: "1fr 1fr 1fr",
           height: "200px",
           overflowY: "auto",
         }}
       >
-        {sounds
-          .filter((s) => s.name.toLowerCase().includes(filter.toLowerCase()))
-          .map((s) => (
-            <SoundLibraryItem
-              key={s.id}
-              sound={s}
-              onEdit={onEdit}
-              onDelete={onDelete}
-            />
-          ))}
+        {filteredSounds.map((s) => (
+          <SoundLibraryItem
+            key={s.id}
+            sound={s}
+            onEdit={onEdit}
+            onDelete={onDelete}
+          />
+        ))}
       </div>
     </>
   );

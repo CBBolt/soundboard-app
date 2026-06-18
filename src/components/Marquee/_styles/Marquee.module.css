@@ -1,0 +1,25 @@
+.marquee-container {
+  overflow: hidden;
+  white-space: nowrap;
+  position: relative;
+}
+
+.marquee-text {
+  display: inline-block;
+  white-space: nowrap;
+  transform: translateX(0);
+}
+
+/* only animate on hover AND only if overflowing */
+.marquee-container:hover .marquee-text.animate {
+  animation: marquee linear infinite;
+}
+
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-100%);
+  }
+}

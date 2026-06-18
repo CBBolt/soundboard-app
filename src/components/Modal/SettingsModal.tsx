@@ -204,194 +204,204 @@ export default function SettingsModal({
           />
         </Modal>
 
-        <div className="flex-gap">
-          <span>Base Color:</span>
-          <input
-            type="color"
-            value={config.settings.baseColor}
-            onChange={update("baseColor")}
-            style={{ height: 50 }}
-          />
-        </div>
-        <div className="flex-gap">
-          <span>Stop All Hotkey:</span>
-          <HotkeyWrapper
-            hotkey={config.settings.stopHotkey}
-            onListen={() =>
-              setConfig((prev) => ({
-                ...prev,
-                listeningForHotkeyStop: true,
-              }))
-            }
-            onRemove={() =>
-              setConfig((prev) => ({
-                ...prev,
-                removeHotkeyStop: true,
-              }))
-            }
-          />
-        </div>
-
-        <div className="flex-gap">
-          <span>Controller Toggle Hotkey:</span>
-          <HotkeyWrapper
-            hotkey={config.settings.controllerToggleHotkey}
-            onListen={() =>
-              setConfig((prev) => ({
-                ...prev,
-                listeningForHotkeyController: true,
-              }))
-            }
-            onRemove={() =>
-              setConfig((prev) => ({
-                ...prev,
-                removeHotkeyController: true,
-              }))
-            }
-          />
-        </div>
-
-        <div className="seperator" />
-
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr 0.5fr",
-            gap: 10,
-          }}
-        >
+        <div className="grid-gap">
           <div className="flex-gap">
-            <span>Default Mic:</span>
-            <MicIcon className="icon fill" />
+            <span>Base Color:</span>
+            <input
+              type="color"
+              value={config.settings.baseColor}
+              onChange={update("baseColor")}
+              style={{ height: 50 }}
+            />
           </div>
           <div className="flex-gap">
-            {config.settings.defaultInputDevice ? (
-              <>
-                <span>{`${truncateText(config.settings.defaultInputDevice.name, 15)} (${config.settings.defaultInputDevice.driver})`}</span>
-                {!inputDevices.some(
-                  (d) => d.id === config.settings?.defaultInputDevice?.id,
-                ) && (
-                  <>
-                    <WarningIcon className="icon stroke fill" />
-                    <span>Device not found</span>
-                  </>
-                )}
-              </>
-            ) : (
-              <span>No Device</span>
-            )}
-          </div>
-          <div className="flex-gap">
-            <button
-              onClick={() =>
-                setConfig((prev) => ({ ...prev, editInputDevice: true }))
-              }
-            >
-              <PencilIcon className="icon fill" />
-            </button>
-            <button
-              onClick={() =>
+            <span>Stop All Hotkey:</span>
+            <HotkeyWrapper
+              hotkey={config.settings.stopHotkey}
+              onListen={() =>
                 setConfig((prev) => ({
                   ...prev,
-                  settings: {
-                    ...prev.settings,
-                    defaultInputDevice: undefined,
-                  } as Settings,
+                  listeningForHotkeyStop: true,
                 }))
               }
-            >
-              <TrashIcon className="icon stroke" />
-            </button>
+              onRemove={() =>
+                setConfig((prev) => ({
+                  ...prev,
+                  removeHotkeyStop: true,
+                }))
+              }
+            />
           </div>
 
           <div className="flex-gap">
-            <span>Default Output:</span>
-            <SpeakerIcon className="icon fill" />
+            <span>Controller Toggle Hotkey:</span>
+            <HotkeyWrapper
+              hotkey={config.settings.controllerToggleHotkey}
+              onListen={() =>
+                setConfig((prev) => ({
+                  ...prev,
+                  listeningForHotkeyController: true,
+                }))
+              }
+              onRemove={() =>
+                setConfig((prev) => ({
+                  ...prev,
+                  removeHotkeyController: true,
+                }))
+              }
+            />
           </div>
-          {config.settings.defaultOutputDevice ? (
-            <>
-              <span>{`${truncateText(config.settings.defaultOutputDevice?.name, 15)} (${config.settings.defaultOutputDevice?.driver})`}</span>
-              {!outputDevices.some(
-                (d) => d.id === config.settings?.defaultOutputDevice?.id,
-              ) && (
+
+          <div className="seperator" />
+
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr 0.5fr",
+              gap: 10,
+            }}
+          >
+            <div className="flex-gap">
+              <MicIcon className="icon fill" />
+              <span>Default Mic:</span>
+            </div>
+            <div className="flex-gap" style={{ justifyContent: "center" }}>
+              {config.settings.defaultInputDevice ? (
                 <>
-                  <WarningIcon className="icon stroke fill" />
-                  <span>Device not found</span>
+                  <span>{`${truncateText(config.settings.defaultInputDevice.name, 15)} (${config.settings.defaultInputDevice.driver})`}</span>
+                  {!inputDevices.some(
+                    (d) => d.id === config.settings?.defaultInputDevice?.id,
+                  ) && (
+                    <>
+                      <WarningIcon className="icon stroke fill" />
+                      <span>Device not found</span>
+                    </>
+                  )}
                 </>
+              ) : (
+                <span>No Device</span>
               )}
-            </>
-          ) : (
-            <span>No Device</span>
-          )}
-          <div className="flex-gap">
-            <button
-              onClick={() =>
-                setConfig((prev) => ({ ...prev, editOutputDevice: true }))
-              }
-            >
-              <PencilIcon className="icon fill" />
-            </button>
-            <button
-              onClick={() =>
-                setConfig((prev) => ({
-                  ...prev,
-                  settings: {
-                    ...prev.settings,
-                    defaultOutputDevice: undefined,
-                  } as Settings,
-                }))
-              }
-            >
-              <TrashIcon className="icon stroke" />
-            </button>
-          </div>
+            </div>
+            <div className="flex-gap">
+              <button
+                onClick={() =>
+                  setConfig((prev) => ({ ...prev, editInputDevice: true }))
+                }
+              >
+                <PencilIcon className="icon fill" />
+              </button>
+              <button
+                onClick={() =>
+                  setConfig((prev) => ({
+                    ...prev,
+                    settings: {
+                      ...prev.settings,
+                      defaultInputDevice: undefined,
+                    } as Settings,
+                  }))
+                }
+              >
+                <TrashIcon className="icon stroke" />
+              </button>
+            </div>
 
-          <div className="flex-gap">
-            <span>Default Local Output:</span>
-            <SpeakerIcon className="icon fill" />
-          </div>
-          {config.settings.defaultLocalOutputDevice ? (
-            <>
-              <span>
-                {truncateText(
-                  outputDevices.find(
+            <div className="flex-gap">
+              <SpeakerIcon className="icon fill" />
+              <span>Default Output:</span>
+            </div>
+            <div className="flex-gap" style={{ justifyContent: "center" }}>
+              {config.settings.defaultOutputDevice ? (
+                <>
+                  <span>{`${truncateText(config.settings.defaultOutputDevice?.name, 15)} (${config.settings.defaultOutputDevice?.driver})`}</span>
+                  {!outputDevices.some(
+                    (d) => d.id === config.settings?.defaultOutputDevice?.id,
+                  ) && (
+                    <>
+                      <WarningIcon className="icon stroke fill" />
+                      <span>Device not found</span>
+                    </>
+                  )}
+                </>
+              ) : (
+                <span>No Device</span>
+              )}
+            </div>
+            <div className="flex-gap">
+              <button
+                onClick={() =>
+                  setConfig((prev) => ({ ...prev, editOutputDevice: true }))
+                }
+              >
+                <PencilIcon className="icon fill" />
+              </button>
+              <button
+                onClick={() =>
+                  setConfig((prev) => ({
+                    ...prev,
+                    settings: {
+                      ...prev.settings,
+                      defaultOutputDevice: undefined,
+                    } as Settings,
+                  }))
+                }
+              >
+                <TrashIcon className="icon stroke" />
+              </button>
+            </div>
+
+            <div className="flex-gap">
+              <SpeakerIcon className="icon fill" />
+              <span>Default Local Output:</span>
+            </div>
+            <div className="flex-gap" style={{ justifyContent: "center" }}>
+              {config.settings.defaultLocalOutputDevice ? (
+                <>
+                  <span>
+                    {truncateText(
+                      outputDevices.find(
+                        (d) =>
+                          d.id === config.settings?.defaultLocalOutputDevice,
+                      )?.label!,
+                    )}
+                  </span>
+                  {!outputDevices.some(
                     (d) => d.id === config.settings?.defaultLocalOutputDevice,
-                  )?.label!,
-                )}
-              </span>
-              {!outputDevices.some(
-                (d) => d.id === config.settings?.defaultLocalOutputDevice,
-              ) && (
-                <>
-                  <WarningIcon className="icon stroke fill" />
-                  <span>Device not found</span>
+                  ) && (
+                    <>
+                      <WarningIcon className="icon stroke fill" />
+                      <span>Device not found</span>
+                    </>
+                  )}
                 </>
+              ) : (
+                <span>No Device</span>
               )}
-            </>
-          ) : (
-            <span>No Device</span>
-          )}
-          <div className="flex-gap">
-            <button
-              onClick={() =>
-                setConfig((prev) => ({ ...prev, editLocalOutputDevice: true }))
-              }
-            >
-              <PencilIcon className="icon fill" />
-            </button>
-            <button
-              onClick={() =>
-                setConfig((prev) => ({
-                  ...prev,
-                  settings: {
-                    ...prev.settings,
-                    defaultLocalOutputDevice: undefined,
-                  } as Settings,
-                }))
-              }
-            >
-              <TrashIcon className="icon stroke" />
-            </button>
+            </div>
+            <div className="flex-gap">
+              <button
+                onClick={() =>
+                  setConfig((prev) => ({
+                    ...prev,
+                    editLocalOutputDevice: true,
+                  }))
+                }
+              >
+                <PencilIcon className="icon fill" />
+              </button>
+              <button
+                onClick={() =>
+                  setConfig((prev) => ({
+                    ...prev,
+                    settings: {
+                      ...prev.settings,
+                      defaultLocalOutputDevice: undefined,
+                    } as Settings,
+                  }))
+                }
+              >
+                <TrashIcon className="icon stroke" />
+              </button>
+            </div>
           </div>
 
           <HotkeyListenerModal

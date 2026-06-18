@@ -2,9 +2,10 @@ import { useEffect, useState } from "react";
 
 import BoardComponent from "./BoardComponent";
 import PlusIcon from "../../icons/PlusIcon";
-import BoardScroller from "./BoardScroller";
+// import BoardScroller from "./BoardScroller";
 import Modal from "../Modal/Modal";
 import TrashIcon from "../../icons/TrashIcon";
+import Carousel from "../Carousel/Carousel";
 
 type BoardProps = {
   boards: Board[];
@@ -67,9 +68,9 @@ export default function BoardManager({
       </Modal>
       <div>
         <div className="flex-gap">
-          <BoardScroller
-            boards={boards}
-            curBoardId={config.curBoardId}
+          <Carousel
+            items={boards}
+            curItemId={config.curBoardId}
             onSelect={(id) =>
               setConfig((prev) => ({ ...prev, curBoardId: id }))
             }
@@ -99,9 +100,9 @@ export default function BoardManager({
                 window.electronAPI.updateBoard(board);
                 loadBoards();
               }}
-              onDelete={(id) =>
-                setConfig((prev) => ({ ...prev, deleteId: id }))
-              }
+              onDelete={(id) => {
+                setConfig((prev) => ({ ...prev, deleteId: id }));
+              }}
             />
           ) : (
             <span>No Board Selected</span>

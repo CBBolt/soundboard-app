@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@distube/ytdl-core": "^4.16.12",
+    "@iconify/react": "^6.0.2",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
     "tone": "^15.1.22",

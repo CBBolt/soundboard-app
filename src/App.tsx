@@ -35,11 +35,14 @@ import TagManager from "./components/Tag/TagManager";
 
 TODO:
 
- - Ability to organize sounds (labels, reorder, multiple boards?)
+ - Drag and Drop sounds to reorder in board
+ - HTML / CSS Board Layout
+ - Play Sound (Sound Library / Board Builder)
 
 CLEANUP:
 
  - Waveform ability to zoom in and out clip (time range)
+ - Overall styling cleanup
 
 */
 
@@ -562,7 +565,9 @@ function App() {
           <HeadphoneIcon
             className="icon fill"
             style={{
-              fill: !config.ui.toVoiceMeeter ? "var(--base-color)" : "",
+              fill: !config.ui.toVoiceMeeter
+                ? "oklch(from var(--accent) calc(l * 3) c h)"
+                : "",
             }}
           />
         </button>
@@ -835,36 +840,38 @@ function App() {
 
       {/* ================================== */}
 
-      <button
-        onClick={() =>
-          setConfig((prev) => ({ ...prev, ui: { ...prev.ui, tab: "SOUND" } }))
-        }
-        style={{ background: config.ui.tab === "SOUND" ? "red" : "" }}
-      >
-        Sounds
-      </button>
-      <button
-        onClick={() =>
-          setConfig((prev) => ({ ...prev, ui: { ...prev.ui, tab: "BOARD" } }))
-        }
-        style={{ background: config.ui.tab === "BOARD" ? "red" : "" }}
-      >
-        Boards
-      </button>
-      <button
-        onClick={() =>
-          setConfig((prev) => ({ ...prev, ui: { ...prev.ui, tab: "TAG" } }))
-        }
-        style={{ background: config.ui.tab === "TAG" ? "red" : "" }}
-      >
-        Tags
-      </button>
+      <div className="flex-gap" style={{ justifyContent: "center" }}>
+        {[
+          { id: "SOUND", name: "Sounds" },
+          { id: "BOARD", name: "Boards" },
+          { id: "TAG", name: "Tags" },
+        ].map((b, i) => (
+          <button
+            key={i}
+            onClick={() =>
+              setConfig((prev) => ({
+                ...prev,
+                ui: { ...prev.ui, tab: b.id as "SOUND" | "BOARD" | "TAG" },
+              }))
+            }
+            style={{
+              background:
+                config.ui.tab === b.id
+                  ? "oklch(from var(--base-color) calc(l * 0.5) c h)"
+                  : "",
+            }}
+          >
+            {b.name}
+          </button>
+        ))}
+      </div>
 
       <div className="seperator half" />
 
       {config.ui.tab === "SOUND" ? (
         <SoundLibrary
           sounds={config.data.sounds}
+          allTags={config.data.tags}
           onDelete={(id) =>
             setConfig((prev) => ({
               ...prev,

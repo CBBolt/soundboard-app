@@ -12,7 +12,7 @@
   --shadow:
     rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
 
-  --dark-panel: #191a1c;
+  --dark-panel: oklch(from var(--base-color) calc(l * 0.2) c h);
 
   --sans: "Space Grotesk", sans-serif;
 
@@ -223,6 +223,7 @@ button:disabled {
 }
 
 .grey {
+  color: white;
   background: var(--dark-panel);
 }
 
@@ -262,6 +263,16 @@ button:disabled {
   margin: 10px 0px;
 }
 
+.seperator.light {
+  background-color: oklch(from var(--base-color) calc(l * 1.5) c h);
+}
+
+.seperator.vertical {
+  min-height: 30px;
+  width: 2px;
+  margin: 0 10px;
+}
+
 .seperator.half {
   margin-left: 25%;
   width: 50%;
@@ -289,4 +300,28 @@ button:disabled {
 .panel.warning {
   border: 2px solid #ecdd00;
   background-color: #b1a500;
+}
+
+.scroll-container {
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.scroll-text {
+  display: inline-block;
+  white-space: nowrap;
+  transform: translateX(0);
+}
+
+.scroll-container:hover .scroll-text {
+  animation: marquee 8s linear infinite;
+}
+
+@keyframes marquee {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(-100%);
+  }
 }

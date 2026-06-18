@@ -3,6 +3,8 @@
   justify-content: center;
   align-items: center;
 
+  position: relative;
+
   cursor: pointer;
 
   width: 100px;
@@ -16,4 +18,30 @@
 
 .tile:hover {
   transform: scale(1.05);
+}
+
+.tile-editor {
+  position: absolute;
+  z-index: 10;
+
+  top: 0;
+  left: 0;
+  height: 10px;
+  width: calc(100% - 10px);
+  background-color: oklch(from var(--base-color) calc(l * 0.5) calc(c * 0.1) h);
+  border-radius: 5px;
+  padding: 5px;
+
+  visibility: none;
+  opacity: 0;
+
+  transition:
+    height 0.3s ease,
+    opacity 0.3s ease;
+}
+
+.tile-editor:hover {
+  visibility: visible;
+  opacity: 1;
+  height: 30px;
 }

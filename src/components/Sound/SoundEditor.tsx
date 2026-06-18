@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import SoundClipEditor from "./SoundClipEditor";
 
@@ -11,6 +11,11 @@ import HotkeyListenerModal from "../Modal/HotkeyListenerModal";
 import HotkeyWrapper from "../Hotkey/HotkeyWrapper";
 import PencilIcon from "../../icons/PencilIcon";
 import ArrowIcon from "../../icons/ArrowIcon";
+import TagComponent from "../Tag/TagComponent";
+import TagIcon from "../../icons/TagIcon";
+import { Icon } from "@iconify/react";
+import TrashIcon from "../../icons/TrashIcon";
+import IconPicker from "../Icon/IconPicker";
 
 type Props = {
   sound: Sound;
@@ -57,6 +62,20 @@ export default function SoundEditor({
     onSave({ ...config.settings });
   };
 
+  useEffect(() => {
+    setConfig((prev) => ({
+      ...prev,
+      settings: {
+        ...prev.settings,
+        ...sound,
+        tags:
+          sound.tags?.map(
+            (tag) => allTags.find((t) => t.id === tag.id) ?? tag,
+          ) ?? [],
+      },
+    }));
+  }, [sound, allTags]);
+
   const update =
     (key: keyof typeof config.settings) =>
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -79,74 +98,101 @@ export default function SoundEditor({
   return (
     <>
       <div
+        className="grid-gap"
         style={{
-          display: "grid",
-          gap: 10,
           marginTop: 12,
           gridTemplateColumns: "1fr 0.5fr",
-          gridTemplateRows: "1fr 1fr",
+          alignItems: "start",
         }}
       >
-        {/* <label className="flex-gap">
-          Icon:{" "}
-          {config.settings.icon ? (
-            <>
-              <IconComponent iconName={config.settings.icon} />
-            </>
-          ) : (
-            <span>None</span>
-          )}
-          <button
-            onClick={() => setConfig((prev) => ({ ...prev, editIcon: true }))}
-          >
-            <PencilIcon className="icon fill" />
-          </button>
-          <button
-            onClick={() =>
-              setConfig((prev) => ({
-                ...prev,
-                settings: { ...prev.settings, icon: undefined },
-              }))
+        <div className="grid-gap">
+          <label className="flex-gap">
+            Name:
+            <input type="text" value={name} onChange={update("name")} />
+          </label>
+          <HotkeyWrapper
+            hotkey={config.settings.hotkey}
+            onListen={() =>
+              setConfig((prev) => ({ ...prev, listeningForHotkey: true }))
             }
-          >
-            <TrashIcon className="icon stroke" />
-          </button>
-        </label> */}
-        <label className="flex-gap">
-          Name:
-          <input type="text" value={name} onChange={update("name")} />
-        </label>
-
-        <label className="flex-gap">
-          Color:
-          <input
-            type="color"
-            value={color ?? "#FFFFFF"}
-            onChange={update("color")}
-            style={{ height: "100%" }}
+            onRemove={() =>
+              setConfig((prev) => ({ ...prev, removeHotkey: true }))
+            }
           />
-        </label>
+          <div className="flex-gap">
+            <TagIcon className="icon stroke" />
+            <div
+              className="grid-gap grey"
+              style={{
+                gridTemplateColumns: "1fr 0.15fr",
+                borderRadius: 5,
+                padding: 10,
+              }}
+            >
+              {config.settings.tags && config.settings.tags.length > 0 ? (
+                <div
+                  className="grid-gap"
+                  style={{
+                    gap: 0,
+                    gridTemplateColumns: "repeat(auto-fit, minmax(50px, 1fr))",
+                  }}
+                >
+                  {config.settings.tags.map((t) => (
+                    <TagComponent key={t.id} tag={t} editable={false} />
+                  ))}
+                </div>
+              ) : (
+                <span>No Tags</span>
+              )}
 
-        <HotkeyWrapper
-          hotkey={config.settings.hotkey}
-          onListen={() =>
-            setConfig((prev) => ({ ...prev, listeningForHotkey: true }))
-          }
-          onRemove={() =>
-            setConfig((prev) => ({ ...prev, removeHotkey: true }))
-          }
-        />
-        <div className="flex-gap">
-          {config.settings.tags && config.settings.tags.length > 0 ? (
-            JSON.stringify(config.settings.tags)
-          ) : (
-            <span>No Tags</span>
-          )}
-          <button
-            onClick={() => setConfig((prev) => ({ ...prev, editTags: true }))}
-          >
-            <PencilIcon className="icon fill" />
-          </button>
+              <button
+                onClick={() =>
+                  setConfig((prev) => ({ ...prev, editTags: true }))
+                }
+              >
+                <PencilIcon className="icon fill" />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid-gap">
+          <label className="flex-gap">
+            Color:
+            <input
+              type="color"
+              value={color ?? "#FFFFFF"}
+              onChange={update("color")}
+              style={{ height: "50px" }}
+            />
+          </label>
+          <div className="flex-gap">
+            <label className="flex-gap">
+              Icon:
+              {config.settings.icon ? (
+                <>
+                  <Icon icon={config.settings.icon} className="icon" />
+                </>
+              ) : (
+                <span>None</span>
+              )}
+            </label>
+            <button
+              onClick={() => setConfig((prev) => ({ ...prev, editIcon: true }))}
+            >
+              <PencilIcon className="icon fill" />
+            </button>
+            <button
+              onClick={() =>
+                setConfig((prev) => ({
+                  ...prev,
+                  settings: { ...prev.settings, icon: undefined },
+                }))
+              }
+            >
+              <TrashIcon className="icon stroke" />
+            </button>
+          </div>
         </div>
 
         <Modal
@@ -159,7 +205,12 @@ export default function SoundEditor({
             </>
           }
         >
-          <div className="grid-gap">
+          <div
+            className="grid-gap"
+            style={{
+              gridTemplateColumns: "repeat(auto-fit, minmax(100px, 1fr))",
+            }}
+          >
             {allTags.map((t) => (
               <button
                 key={t.id}
@@ -182,7 +233,7 @@ export default function SoundEditor({
                   }))
                 }
               >
-                {t.name}
+                <TagComponent key={t.id} tag={t} editable={false} />
               </button>
             ))}
           </div>
@@ -193,6 +244,27 @@ export default function SoundEditor({
           >
             <ArrowIcon className="icon stroke" />
           </div>
+        </Modal>
+
+        <Modal
+          isOpen={config.editIcon}
+          onClose={() => setConfig((prev) => ({ ...prev, editIcon: false }))}
+          header={
+            <>
+              <Icon icon={"mdi:account"} className="icon fill" />
+              <span>Icon Picker</span>
+            </>
+          }
+        >
+          <IconPicker
+            onSelect={(name) =>
+              setConfig((prev) => ({
+                ...prev,
+                settings: { ...prev.settings, icon: name },
+                editIcon: false,
+              }))
+            }
+          />
         </Modal>
 
         <Modal
