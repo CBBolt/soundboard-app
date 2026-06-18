@@ -1,6 +1,7 @@
 const { contextBridge, ipcRenderer } = require("electron");
 
 contextBridge.exposeInMainWorld("electronAPI", {
+  //Controller
   showController: () => ipcRenderer.invoke("show-controller"),
   hideController: () => ipcRenderer.invoke("hide-controller"),
   sendSound: (id) => ipcRenderer.invoke("send-sound", id),
@@ -65,4 +66,16 @@ contextBridge.exposeInMainWorld("electronAPI", {
   // Settings
   readSettings: () => ipcRenderer.invoke("get-settings"),
   updateSettings: (data) => ipcRenderer.invoke("update-settings", data),
+
+  // Boards
+  getBoards: () => ipcRenderer.invoke("get-boards"),
+  addBoard: (board) => ipcRenderer.invoke("add-board", board),
+  updateBoard: (data) => ipcRenderer.invoke("update-board", data),
+  deleteBoard: (id) => ipcRenderer.invoke("delete-board", id),
+
+  //Tags
+  getTags: () => ipcRenderer.invoke("get-tags"),
+  addTag: (tag) => ipcRenderer.invoke("add-tag", tag),
+  updateTag: (data) => ipcRenderer.invoke("update-tag", data),
+  deleteTag: (id) => ipcRenderer.invoke("delete-tag", id),
 });

@@ -31,6 +31,10 @@ fn send_response(response: Response) {
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
+    //Note: Delay here is to ensure that VoiceMeeter is able to start before getting config
+    // and setting up API. If delay needs to be longer, change, rebuild (cargo build --release)
+    // and then overwrite resources/voicemeeter-bridge.exe
+    
     std::thread::sleep(Duration::from_secs(5));
 
     let vm = VoicemeeterSession::new(Voicemeeter::new()?)?;

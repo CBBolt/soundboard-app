@@ -9,9 +9,12 @@ import MusicNoteIcon from "../../icons/MusicNoteIcon";
 import QuestionIcon from "../../icons/QuestionIcon";
 import HotkeyListenerModal from "../Modal/HotkeyListenerModal";
 import HotkeyWrapper from "../Hotkey/HotkeyWrapper";
+import PencilIcon from "../../icons/PencilIcon";
+import ArrowIcon from "../../icons/ArrowIcon";
 
 type Props = {
   sound: Sound;
+  allTags: Tag[];
   blob: Blob;
   allHotkeys: Hotkey[];
   playSound: (sound: Sound) => void;
@@ -25,11 +28,13 @@ type SoundSettings = {
   removeHotkey: boolean;
   editSound: boolean;
   editIcon: boolean;
+  editTags: boolean;
   helper: boolean;
 };
 
 export default function SoundEditor({
   sound,
+  allTags,
   blob,
   allHotkeys,
   playSound,
@@ -37,12 +42,13 @@ export default function SoundEditor({
   onSave,
 }: Props) {
   const [config, setConfig] = useState<SoundSettings>({
-    settings: sound,
+    settings: { ...sound, tags: sound.tags ?? [] },
     listeningForHotkey: false,
     removeHotkey: false,
     editSound: false,
     editIcon: false,
     helper: false,
+    editTags: false,
   });
 
   const { name, hotkey, color } = config.settings;
@@ -130,6 +136,64 @@ export default function SoundEditor({
             setConfig((prev) => ({ ...prev, removeHotkey: true }))
           }
         />
+        <div className="flex-gap">
+          {config.settings.tags && config.settings.tags.length > 0 ? (
+            JSON.stringify(config.settings.tags)
+          ) : (
+            <span>No Tags</span>
+          )}
+          <button
+            onClick={() => setConfig((prev) => ({ ...prev, editTags: true }))}
+          >
+            <PencilIcon className="icon fill" />
+          </button>
+        </div>
+
+        <Modal
+          isOpen={config.editTags}
+          onClose={() => setConfig((prev) => ({ ...prev, editTags: false }))}
+          header={
+            <>
+              <PencilIcon className="icon fill" />
+              <h2>Edit Sound Tags</h2>
+            </>
+          }
+        >
+          <div className="grid-gap">
+            {allTags.map((t) => (
+              <button
+                key={t.id}
+                style={{
+                  background: config.settings.tags?.some(
+                    (tag) => t.id === tag.id,
+                  )
+                    ? "red"
+                    : "",
+                }}
+                onClick={() =>
+                  setConfig((prev) => ({
+                    ...prev,
+                    settings: {
+                      ...prev.settings,
+                      tags: prev.settings.tags?.some((tag) => tag.id === t.id)
+                        ? prev.settings.tags?.filter((tag) => t.id !== tag.id)
+                        : [...prev.settings.tags!, t],
+                    },
+                  }))
+                }
+              >
+                {t.name}
+              </button>
+            ))}
+          </div>
+          <div
+            className="icon-btn"
+            style={{ position: "absolute", top: 10, right: 50 }}
+            onClick={() => setConfig((prev) => ({ ...prev, editTags: false }))}
+          >
+            <ArrowIcon className="icon stroke" />
+          </div>
+        </Modal>
 
         <Modal
           isOpen={config.helper}

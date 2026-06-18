@@ -1,0 +1,12 @@
+.tile {
+  display: flex;
+  justify-content: center;
+
+  overflow: hidden;
+}
+
+.truncated {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

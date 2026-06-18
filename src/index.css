@@ -12,6 +12,8 @@
   --shadow:
     rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
 
+  --dark-panel: #191a1c;
+
   --sans: "Space Grotesk", sans-serif;
 
   font: 18px/145% var(--sans);
@@ -187,7 +189,6 @@ button,
   border: none;
   border-radius: 5px;
 
-  padding: 2px;
   display: inline-flex;
 
   font: inherit;
@@ -216,8 +217,13 @@ button:active,
   transform: translateY(1px);
 }
 
-.icon-btn.grey {
-  background: #191a1c;
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.grey {
+  background: var(--dark-panel);
 }
 
 .icon.fill {
@@ -252,8 +258,13 @@ button:active,
 .seperator {
   width: 100%;
   height: 2px;
-  background-color: oklch(from var(--base-color) calc(l * 0.2) c h);
+  background-color: oklch(from var(--base-color) calc(l * 0.5) c h);
   margin: 10px 0px;
+}
+
+.seperator.half {
+  margin-left: 25%;
+  width: 50%;
 }
 
 .flex-gap {

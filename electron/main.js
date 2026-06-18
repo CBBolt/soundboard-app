@@ -16,6 +16,9 @@ import { fileURLToPath } from "url";
 
 import { registerSoundHandlers } from "./ipc/soundHandler.js";
 import { registerSettingsHandlers } from "./ipc/settingsHandler.js";
+import { registerBoardsHandlers } from "./ipc/boardsHandler.js";
+import { registerTagsHandlers } from "./ipc/tagsHandler.js";
+
 import { registerHotkeysHandlers } from "./ipc/hotkeysHandler.js";
 import { registerVoiceMeeterHandlers } from "./ipc/voicemeeterHandler.js";
 import { registerControllerHandlers } from "./ipc/controllerHandler.js";
@@ -25,21 +28,24 @@ import { registerControllerHandlers } from "./ipc/controllerHandler.js";
 // ======================================================
 
 const __filename = fileURLToPath(import.meta.url);
-
 const __dirname = path.dirname(__filename);
-
 const userDataPath = app.getPath("userData");
 
 const soundsFolderPath = path.join(userDataPath, "sounds");
-
 const soundsPath = path.join(userDataPath, "sounds.json");
-
 const settingsPath = path.join(userDataPath, "settings.json");
+const boardsPath = path.join(userDataPath, "boards.json");
+const tagsPath = path.join(userDataPath, "tags.json");
+
+// ======================================================
+// VOICEMEETER BRIDGE
+// ======================================================
 
 const bridge = spawn("resources/voicemeeter-bridge.exe", [], {
   stdio: "pipe",
 });
 
+// Only use if needing to get stderr messages from Rust
 // bridge.stderr.on("data", (data) => {
 //   console.log("Rust:", data.toString());
 // });
@@ -149,6 +155,9 @@ function createWindow() {
 function registerIpcHandlers() {
   registerSoundHandlers(mainWindow, soundsFolderPath, soundsPath);
   registerSettingsHandlers(settingsPath);
+  registerBoardsHandlers(boardsPath);
+  registerTagsHandlers(tagsPath);
+
   registerHotkeysHandlers(mainWindow);
   registerVoiceMeeterHandlers(bridge, queue);
   registerControllerHandlers(mainWindow, __dirname);
@@ -195,5 +204,13 @@ function ensureStorage() {
 
   if (!fs.existsSync(settingsPath)) {
     fs.writeFileSync(settingsPath, "[]");
+  }
+
+  if (!fs.existsSync(boardsPath)) {
+    fs.writeFileSync(boardsPath, "[]");
+  }
+
+  if (!fs.existsSync(tagsPath)) {
+    fs.writeFileSync(tagsPath, "[]");
   }
 }

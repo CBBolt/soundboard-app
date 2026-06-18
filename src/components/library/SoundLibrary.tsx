@@ -34,7 +34,7 @@ export default function SoundLibrary({
           style={{ width: "50%" }}
         />
         <HoverDropdown
-          label={<PlusIcon className="icon sml fill" />}
+          label={<PlusIcon className="icon fill" />}
           items={[
             {
               label: (

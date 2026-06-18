@@ -75,8 +75,6 @@ export default function VoiceMeeterPanel({
 
   useEffect(() => {
     const load = async () => {
-      console.log("loading...");
-
       const config = await loadVMConfig();
 
       const configObj = config as {

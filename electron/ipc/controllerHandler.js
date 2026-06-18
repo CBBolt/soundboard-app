@@ -7,7 +7,6 @@ let controllerWindow;
 let __dirname;
 
 export function registerControllerHandlers(mainWindow, dirname) {
-  console.log(dirname);
   __dirname = dirname;
 
   ipcMain.handle("show-controller", () => {
@@ -31,7 +30,8 @@ export function registerControllerHandlers(mainWindow, dirname) {
   });
 
   ipcMain.handle("send-data", (_, data) => {
-    controllerWindow.webContents.send("main-recieved", data);
+    if (controllerWindow)
+      controllerWindow.webContents.send("main-recieved", data);
   });
 }
 

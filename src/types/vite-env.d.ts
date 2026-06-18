@@ -1,3 +1,4 @@
+import { boardLayoutTypes } from "../components/Board/_types/board";
 export {};
 
 declare global {
@@ -63,11 +64,27 @@ declare global {
     meta?: boolean;
   };
 
+  type Tag = {
+    id: number;
+    name: string;
+    color: string;
+  };
+
+  type BoardLayoutType = (typeof boardLayoutTypes)[number];
+
+  type Board = {
+    id: number;
+    name: string;
+    layout: BoardLayoutType;
+    sounds: number[];
+  };
+
   type Sound = {
     id: number;
     name: string;
     fileName: string;
     duration?: number;
+    tags?: Tag[];
 
     icon?: string;
     color?: string;
@@ -109,6 +126,18 @@ declare global {
       // Settings
       readSettings: () => Settings;
       updateSettings: (data: Partial<Settings>) => void;
+
+      // Boards
+      getBoards: () => Board[];
+      addBoard: (board: Partial<Board>) => void;
+      updateBoard: (data: Partial<Board>) => void;
+      deleteBoard: (id: number) => void;
+
+      // Tags
+      getTags: () => Tag[];
+      addTag: (tag: Tag) => void;
+      updateTag: (data: Partial<Tag>) => void;
+      deleteTag: (id: number) => void;
 
       // Hotkeys
       registerHotkey: (hotkey: Hotkey, data: object) => void;

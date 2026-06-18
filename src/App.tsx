@@ -27,7 +27,9 @@ import VoiceMeeter from "./components/VoiceMeeter/VoiceMeeterPanel";
 import VMDeviceSelector from "./components/VoiceMeeter/VMDeviceSelector";
 import HeadphoneIcon from "./icons/HeadphoneIcon";
 import Splashscreen from "./components/SplashScreen";
-import SoundLibrary from "./components/library/SoundLibrary";
+import SoundLibrary from "./components/Library/SoundLibrary";
+import BoardManager from "./components/Board/BoardManager";
+import TagManager from "./components/Tag/TagManager";
 
 /*
 
@@ -41,47 +43,89 @@ CLEANUP:
 
 */
 
-type AppConfig = {
-  loading: boolean;
+// #region Types
+
+type AppData = {
   sounds: Sound[];
-  settings: Settings | undefined;
+  boards: Board[];
+  tags: Tag[];
+  settings?: Settings;
+};
+
+type EditingState = {
   editingSound: Sound | null;
   editingBlob: Blob | null;
   deleteSound: number;
-  recordEnabled: boolean;
+};
+
+type ModalState = {
   instructionsEnabled: boolean;
   settingsEnabled: boolean;
+  recordEnabled: boolean;
   youtubeEnabled: boolean;
+};
+
+type UIState = {
+  loading: boolean;
   youtubeProgress: number;
   VBDetected: VBDetected;
   toVoiceMeeter: boolean;
+  tab: "SOUND" | "BOARD" | "TAG";
+};
+
+type AudioState = {
   outputDevices: AudioDevice[];
   localOutputDevice: string;
-  vmOutputDevice: VMAudioDevice;
+
   inputDevices: AudioDevice[];
   selectedInputDevice: VMAudioDevice;
+
+  vmOutputDevice: VMAudioDevice;
+};
+
+// #endregion
+
+type AppConfig = {
+  data: AppData;
+  modal: ModalState;
+  editing: EditingState;
+  ui: UIState;
+  audio: AudioState;
 };
 
 function App() {
   const [config, setConfig] = useState<AppConfig>({
-    loading: true,
-    sounds: [],
-    settings: undefined,
-    editingSound: null,
-    editingBlob: null,
-    deleteSound: 0,
-    recordEnabled: false,
-    instructionsEnabled: false,
-    settingsEnabled: false,
-    youtubeEnabled: false,
-    youtubeProgress: -1,
-    VBDetected: { voicemeeter: false, vbCable: false },
-    toVoiceMeeter: false,
-    outputDevices: [],
-    localOutputDevice: "",
-    vmOutputDevice: { id: "", name: "", driver: "WDM" },
-    inputDevices: [],
-    selectedInputDevice: { id: "", name: "", driver: "WDM" },
+    data: {
+      sounds: [],
+      boards: [],
+      tags: [],
+      settings: undefined,
+    },
+    modal: {
+      recordEnabled: false,
+      instructionsEnabled: false,
+      settingsEnabled: false,
+      youtubeEnabled: false,
+    },
+    editing: {
+      editingSound: null,
+      editingBlob: null,
+      deleteSound: 0,
+    },
+    ui: {
+      loading: true,
+      youtubeProgress: -1,
+      VBDetected: { voicemeeter: false, vbCable: false },
+      toVoiceMeeter: false,
+      tab: "SOUND",
+    },
+    audio: {
+      outputDevices: [],
+      localOutputDevice: "",
+      vmOutputDevice: { id: "", name: "", driver: "WDM" },
+      inputDevices: [],
+      selectedInputDevice: { id: "", name: "", driver: "WDM" },
+    },
   });
 
   const bus = useEventBus();
@@ -102,7 +146,10 @@ function App() {
 
     setConfig((prev) => ({
       ...prev,
-      VBDetected,
+      ui: {
+        ...prev.ui,
+        VBDetected,
+      },
     }));
 
     await api.setVMCommand({
@@ -113,12 +160,41 @@ function App() {
   };
 
   // Load saved sounds
+  const loadBoards = async () => {
+    const savedBoards = await api.getBoards();
+
+    setConfig((prev) => ({
+      ...prev,
+      data: {
+        ...prev.data,
+        boards: savedBoards,
+      },
+    }));
+  };
+
+  // Load saved sounds
+  const loadTags = async () => {
+    const savedTags = await api.getTags();
+
+    setConfig((prev) => ({
+      ...prev,
+      data: {
+        ...prev.data,
+        tags: savedTags,
+      },
+    }));
+  };
+
+  // Load saved sounds
   const loadSounds = async () => {
     const savedSounds = await api.getSounds();
 
     setConfig((prev) => ({
       ...prev,
-      sounds: savedSounds,
+      data: {
+        ...prev.data,
+        sounds: savedSounds,
+      },
     }));
   };
 
@@ -127,14 +203,17 @@ function App() {
 
     setConfig((prev) => ({
       ...prev,
-      outputDevices: outputs.filter((d) => {
-        const label = d.label.toLowerCase();
+      audio: {
+        ...prev.audio,
+        outputDevices: outputs.filter((d) => {
+          const label = d.label.toLowerCase();
 
-        return !["cable", "voicemeeter"].some((blocked) =>
-          label.includes(blocked),
-        );
-      }),
-      inputDevices: inputs,
+          return !["cable", "voicemeeter"].some((blocked) =>
+            label.includes(blocked),
+          );
+        }),
+        inputDevices: inputs,
+      },
     }));
   };
 
@@ -150,7 +229,10 @@ function App() {
 
     setConfig((prev) => ({
       ...prev,
-      settings,
+      data: {
+        ...prev.data,
+        settings,
+      },
     }));
   };
 
@@ -216,24 +298,30 @@ function App() {
 
     setConfig((prev) => ({
       ...prev,
-      settings,
-      outputDevices: outputs.filter((d) => {
-        const label = d.label.toLowerCase();
+      data: {
+        ...prev.data,
+        settings,
+      },
+      audio: {
+        ...prev.audio,
+        outputDevices: outputs.filter((d) => {
+          const label = d.label.toLowerCase();
 
-        return !["cable", "voicemeeter"].some((blocked) =>
-          label.includes(blocked),
-        );
-      }),
-      inputDevices: inputs,
-      localOutputDevice,
-      vmOutputDevice,
-      selectedInputDevice,
+          return !["cable", "voicemeeter"].some((blocked) =>
+            label.includes(blocked),
+          );
+        }),
+        inputDevices: inputs,
+        localOutputDevice,
+        vmOutputDevice,
+        selectedInputDevice,
+      },
     }));
   };
 
   // #endregion
 
-  // #region Audio
+  // #region Helpers
 
   const addSound = async () => {
     const filePath = await api.pickAudioFile();
@@ -254,24 +342,22 @@ function App() {
     await loadSounds();
   };
 
-  // #endregion
-
   const registerHotkeys = () => {
     //Stop All
-    if (config.settings?.controllerToggleHotkey) {
-      api.registerHotkey(config.settings.controllerToggleHotkey, {
+    if (config.data.settings?.controllerToggleHotkey) {
+      api.registerHotkey(config.data.settings.controllerToggleHotkey, {
         type: "controller",
       });
     }
 
-    if (config.settings?.stopHotkey) {
-      api.registerHotkey(config.settings.stopHotkey, {
+    if (config.data.settings?.stopHotkey) {
+      api.registerHotkey(config.data.settings.stopHotkey, {
         type: "sound",
         soundId: "STOP_ALL",
       });
     }
 
-    for (const s of config.sounds) {
+    for (const s of config.data.sounds) {
       if (s.hotkey) {
         api.registerHotkey(s.hotkey, {
           type: "sound",
@@ -286,7 +372,10 @@ function App() {
 
     setConfig((prev) => ({
       ...prev,
-      deleteSound: 0,
+      editing: {
+        ...prev.editing,
+        deleteSound: 0,
+      },
     }));
 
     bus.emit("new-notification", {
@@ -308,15 +397,28 @@ function App() {
 
     setConfig((prev) => ({
       ...prev,
-      editingBlob: blob,
-      editingSound: sound,
+      editing: {
+        ...prev.editing,
+        editingBlob: blob,
+        editingSound: sound,
+      },
     }));
   };
+
+  // #endregion
+
+  // #region Use Effect
 
   useEffect(() => {
     const load = async () => {
       try {
-        await Promise.all([initialize(), loadSounds(), detectVBAudio()]);
+        await Promise.all([
+          initialize(),
+          loadSounds(),
+          loadBoards(),
+          loadTags(),
+          detectVBAudio(),
+        ]);
 
         bus.emit("new-notification", {
           status: "INFO",
@@ -330,7 +432,10 @@ function App() {
           message: "Failed to load config",
         });
       } finally {
-        setConfig((prev) => ({ ...prev, loading: false }));
+        setConfig((prev) => ({
+          ...prev,
+          ui: { ...prev.ui, loading: false },
+        }));
       }
     };
 
@@ -339,7 +444,7 @@ function App() {
 
   useEffect(() => {
     registerHotkeys();
-  }, [config.sounds, config.settings]);
+  }, [config.data.sounds, config.data.settings]);
 
   useEffect(() => {
     const unsubscribe = api.onPlaySound(async (soundId: string) => {
@@ -352,7 +457,7 @@ function App() {
         return;
       }
 
-      const sound = config.sounds.find((s) => s.id === Number(soundId));
+      const sound = config.data.sounds.find((s) => s.id === Number(soundId));
 
       if (sound) {
         audioEngine.play(sound);
@@ -360,13 +465,16 @@ function App() {
     });
 
     return unsubscribe;
-  }, [config.sounds, config.editingSound]);
+  }, [config.data.sounds, config.editing.editingSound]);
 
   useEffect(() => {
     const unsubscribe = api.onYoutubeProgress((percent: number) => {
       setConfig((prev) => ({
         ...prev,
-        youtubeProgress: percent,
+        ui: {
+          ...prev.ui,
+          youtubeProgress: percent,
+        },
       }));
     });
 
@@ -386,7 +494,9 @@ function App() {
     };
   }, []);
 
-  if (config.loading) return <Splashscreen />;
+  // #endregion
+
+  if (config.ui.loading) return <Splashscreen />;
 
   return (
     <div style={{ padding: 10 }}>
@@ -396,20 +506,26 @@ function App() {
       <button onClick={() => api.showController()}>Show</button>
 
       <ActionsBar
-        VBDetected={config.VBDetected}
+        VBDetected={config.ui.VBDetected}
         instructions={() =>
           setConfig((prev) => ({
             ...prev,
-            instructionsEnabled: true,
+            modal: {
+              ...prev.modal,
+              instructionsEnabled: true,
+            },
           }))
         }
         showSettings={() =>
           setConfig((prev) => ({
             ...prev,
-            settingsEnabled: true,
+            modal: {
+              ...prev.modal,
+              settingsEnabled: true,
+            },
           }))
         }
-        settings={config.settings}
+        settings={config.data.settings}
         stopAll={audioEngine.stopAll}
       />
 
@@ -417,7 +533,7 @@ function App() {
         <button
           className="icon-btn grey"
           onClick={async () => {
-            if (!config.toVoiceMeeter) {
+            if (!config.ui.toVoiceMeeter) {
               const { outputs } = await getDevices();
 
               const vbCableInput = outputs.find((d) =>
@@ -431,49 +547,60 @@ function App() {
 
               audioEngine.setDevice(vbCableInput.id);
             } else {
-              audioEngine.setDevice(config.localOutputDevice);
+              audioEngine.setDevice(config.audio.localOutputDevice);
             }
 
             setConfig((prev) => ({
               ...prev,
-              toVoiceMeeter: !prev.toVoiceMeeter,
+              ui: {
+                ...prev.ui,
+                toVoiceMeeter: !prev.ui.toVoiceMeeter,
+              },
             }));
           }}
         >
           <HeadphoneIcon
             className="icon fill"
-            style={{ fill: !config.toVoiceMeeter ? "var(--base-color)" : "" }}
+            style={{
+              fill: !config.ui.toVoiceMeeter ? "var(--base-color)" : "",
+            }}
           />
         </button>
-        {config.toVoiceMeeter ? (
+        {config.ui.toVoiceMeeter ? (
           <VoiceMeeter
-            outputDevices={config.outputDevices}
-            selectedOutputDevice={config.vmOutputDevice}
-            inputDevices={config.inputDevices}
-            selectedInputDevice={config.selectedInputDevice}
+            outputDevices={config.audio.outputDevices}
+            selectedOutputDevice={config.audio.vmOutputDevice}
+            inputDevices={config.audio.inputDevices}
+            selectedInputDevice={config.audio.selectedInputDevice}
             loadVMConfig={getVMConfig}
             onSave={(data) => {
               const { currentInputDevice, currentOutputDevice } = data;
 
               setConfig((prev) => ({
                 ...prev,
-                selectedInputDevice: currentInputDevice,
-                vmOutputDevice: currentOutputDevice,
+                audio: {
+                  ...prev.audio,
+                  selectedInputDevice: currentInputDevice,
+                  vmOutputDevice: currentOutputDevice,
+                },
               }));
             }}
             loadDevices={loadDevices}
           />
         ) : (
           <VMDeviceSelector
-            disabled={config.toVoiceMeeter}
-            currentDevice={config.localOutputDevice}
-            devices={config.outputDevices}
+            disabled={config.ui.toVoiceMeeter}
+            currentDevice={config.audio.localOutputDevice}
+            devices={config.audio.outputDevices}
             onChange={(value: string) => {
               audioEngine.setDevice(value);
 
               setConfig((prev) => ({
                 ...prev,
-                localOutputDevice: value,
+                audio: {
+                  ...prev.audio,
+                  localOutputDevice: value,
+                },
               }));
             }}
           />
@@ -481,50 +608,67 @@ function App() {
       </div>
 
       <InstructionModal
-        VBDetected={config.VBDetected}
-        show={config.instructionsEnabled}
+        VBDetected={config.ui.VBDetected}
+        show={config.modal.instructionsEnabled}
         onClose={() =>
           setConfig((prev) => ({
             ...prev,
-            instructionsEnabled: false,
+            modal: {
+              ...prev.modal,
+              instructionsEnabled: false,
+            },
           }))
         }
       />
 
       <YoutubeLinkModal
-        show={config.youtubeEnabled}
+        show={config.modal.youtubeEnabled}
         onClose={() =>
           setConfig((prev) => ({
             ...prev,
-            youtubeEnabled: false,
+            modal: {
+              ...prev.modal,
+              youtubeEnabled: false,
+            },
           }))
         }
         onSave={async (url) => {
           await window.electronAPI.saveYoutubeLink(url);
           setConfig((prev) => ({
             ...prev,
-            youtubeProgress: -1,
-            youtubeEnabled: false,
+            ui: {
+              ...prev.ui,
+              youtubeProgress: -1,
+            },
+            modal: {
+              ...prev.modal,
+              youtubeEnabled: false,
+            },
           }));
           loadSounds();
         }}
-        progress={config.youtubeProgress}
+        progress={config.ui.youtubeProgress}
       />
 
-      {config.settings && (
+      {/* ================= MODALS ================= */}
+
+      {config.data.settings && (
         <SettingsModal
-          inputDevices={config.inputDevices}
-          outputDevices={config.outputDevices}
+          inputDevices={config.audio.inputDevices}
+          outputDevices={config.audio.outputDevices}
           allHotkeys={
-            config.sounds
+            config.data.sounds
               .filter((s) => s.hotkey !== undefined)
               .map((s) => s.hotkey) as Hotkey[]
           }
-          show={config.settingsEnabled}
+          show={config.modal.settingsEnabled}
           onClose={() =>
             setConfig((prev) => ({
               ...prev,
-              settingsEnabled: false,
+              modal: {
+                ...prev.modal,
+                settingsEnabled: false,
+              },
             }))
           }
           loadSettings={api.readSettings}
@@ -532,7 +676,10 @@ function App() {
             await api.updateSettings(data);
             setConfig((prev) => ({
               ...prev,
-              settingsEnabled: false,
+              modal: {
+                ...prev.modal,
+                settingsEnabled: false,
+              },
             }));
 
             loadSettings();
@@ -546,11 +693,14 @@ function App() {
       )}
 
       <Modal
-        isOpen={config.recordEnabled}
+        isOpen={config.modal.recordEnabled}
         onClose={() =>
           setConfig((prev) => ({
             ...prev,
-            recordEnabled: false,
+            modal: {
+              ...prev.modal,
+              recordEnabled: false,
+            },
           }))
         }
         header={
@@ -561,8 +711,8 @@ function App() {
         }
       >
         <Recorder
-          defaultInputDevice={config.selectedInputDevice.id}
-          devices={config.inputDevices}
+          defaultInputDevice={config.audio.selectedInputDevice.id}
+          devices={config.audio.inputDevices}
           loadDevices={loadDevices}
           onSave={async (blob, duration, mimeType) => {
             const buffer = await blob.arrayBuffer();
@@ -574,7 +724,10 @@ function App() {
 
             setConfig((prev) => ({
               ...prev,
-              recordEnabled: false,
+              modal: {
+                ...prev.modal,
+                recordEnabled: false,
+              },
             }));
 
             bus.emit("new-notification", {
@@ -590,11 +743,14 @@ function App() {
       <div className="seperator" />
 
       <Modal
-        isOpen={config.deleteSound > 0}
+        isOpen={config.editing.deleteSound > 0}
         onClose={() =>
           setConfig((prev) => ({
             ...prev,
-            deleteSound: 0,
+            editing: {
+              ...prev.editing,
+              deleteSound: 0,
+            },
           }))
         }
         header={
@@ -606,19 +762,25 @@ function App() {
       >
         <div style={{ display: "grid", justifyItems: "center" }}>
           <span>Are you sure you want to delete?</span>
-          <button onClick={() => handleDelete(config.deleteSound)}>
+          <button onClick={() => handleDelete(config.editing.deleteSound)}>
             Confirm
           </button>
         </div>
       </Modal>
 
       <Modal
-        isOpen={config.editingBlob !== null && config.editingSound !== null}
+        isOpen={
+          config.editing.editingBlob !== null &&
+          config.editing.editingSound !== null
+        }
         onClose={() => {
           setConfig((prev) => ({
             ...prev,
-            editingBlob: null,
-            editingSound: null,
+            editing: {
+              ...prev.editing,
+              editingBlob: null,
+              editingSound: null,
+            },
           }));
         }}
         header={
@@ -629,10 +791,11 @@ function App() {
         }
       >
         <SoundEditor
-          sound={config.editingSound!}
-          blob={config.editingBlob!}
+          sound={config.editing.editingSound!}
+          allTags={config.data.tags}
+          blob={config.editing.editingBlob!}
           allHotkeys={
-            config.sounds
+            config.data.sounds
               .filter((s) => s.hotkey !== undefined)
               .map((s) => s.hotkey) as Hotkey[]
           }
@@ -648,8 +811,11 @@ function App() {
 
             setConfig((prev) => ({
               ...prev,
-              editingBlob: null,
-              editingSound: null,
+              editing: {
+                ...prev.editing,
+                editingBlob: null,
+                editingSound: null,
+              },
             }));
 
             loadSounds();
@@ -657,7 +823,7 @@ function App() {
         />
       </Modal>
 
-      {config.sounds.length === 0 && (
+      {config.data.sounds.length === 0 && (
         <div>
           No sounds saved yet.
           <div>
@@ -667,57 +833,68 @@ function App() {
         </div>
       )}
 
-      <SoundLibrary
-        sounds={config.sounds}
-        onDelete={(id) => setConfig((prev) => ({ ...prev, deleteSound: id }))}
-        onEdit={openEditor}
-        addSound={addSound}
-        startRecord={() =>
-          setConfig((prev) => ({
-            ...prev,
-            recordEnabled: true,
-          }))
+      {/* ================================== */}
+
+      <button
+        onClick={() =>
+          setConfig((prev) => ({ ...prev, ui: { ...prev.ui, tab: "SOUND" } }))
         }
-        addYoutube={() =>
-          setConfig((prev) => ({
-            ...prev,
-            youtubeEnabled: true,
-          }))
-        }
-      />
-      {/* <div
-        style={{
-          position: "relative",
-          display: "grid",
-          gap: 10,
-          gridTemplateColumns: "repeat(auto-fill, minmax(110px, 1fr))",
-          height: 300,
-          overflowY: "auto",
-        }}
+        style={{ background: config.ui.tab === "SOUND" ? "red" : "" }}
       >
-        {[
-          ...config.sounds,
-          ...Array.from(
-            { length: 50 },
-            (_, i) =>
-              ({
-                id: i,
-                name: `Test Sound ${i + 1}`,
-                fileName: "",
-              }) as Sound,
-          ),
-        ].map((sound) => (
-          <SoundTile
-            key={sound.id}
-            sound={sound}
-            playSound={audioEngine.play}
-            deleteSound={(id) =>
-              setConfig((prev) => ({ ...prev, deleteSound: id }))
-            }
-            editSound={openEditor}
-          />
-        ))}
-      </div> */}
+        Sounds
+      </button>
+      <button
+        onClick={() =>
+          setConfig((prev) => ({ ...prev, ui: { ...prev.ui, tab: "BOARD" } }))
+        }
+        style={{ background: config.ui.tab === "BOARD" ? "red" : "" }}
+      >
+        Boards
+      </button>
+      <button
+        onClick={() =>
+          setConfig((prev) => ({ ...prev, ui: { ...prev.ui, tab: "TAG" } }))
+        }
+        style={{ background: config.ui.tab === "TAG" ? "red" : "" }}
+      >
+        Tags
+      </button>
+
+      <div className="seperator half" />
+
+      {config.ui.tab === "SOUND" ? (
+        <SoundLibrary
+          sounds={config.data.sounds}
+          onDelete={(id) =>
+            setConfig((prev) => ({
+              ...prev,
+              editing: { ...prev.editing, deleteSound: id },
+            }))
+          }
+          onEdit={openEditor}
+          addSound={addSound}
+          startRecord={() =>
+            setConfig((prev) => ({
+              ...prev,
+              modal: { ...prev.modal, recordEnabled: true },
+            }))
+          }
+          addYoutube={() =>
+            setConfig((prev) => ({
+              ...prev,
+              modal: { ...prev.modal, youtubeEnabled: true },
+            }))
+          }
+        />
+      ) : config.ui.tab === "BOARD" ? (
+        <BoardManager
+          boards={config.data.boards}
+          sounds={config.data.sounds}
+          loadBoards={loadBoards}
+        />
+      ) : (
+        <TagManager tags={config.data.tags} loadTags={loadTags} />
+      )}
     </div>
   );
 }
