@@ -9,12 +9,13 @@ let __dirname;
 export function registerControllerHandlers(mainWindow, dirname) {
   __dirname = dirname;
 
+  if (!controllerWindow) {
+    createcontrollerWindow();
+    controllerWindow.hide();
+  }
+
   ipcMain.handle("show-controller", () => {
-    if (controllerWindow) {
-      controllerWindow.show();
-    } else {
-      createcontrollerWindow();
-    }
+    if (controllerWindow) controllerWindow.show();
 
     showController = true;
   });
@@ -36,16 +37,14 @@ export function registerControllerHandlers(mainWindow, dirname) {
 }
 
 export function toggleController() {
+  if (!controllerWindow) return;
+
   showController = !showController;
 
   if (showController) {
-    if (controllerWindow) {
-      controllerWindow.show();
-    } else {
-      createcontrollerWindow();
-    }
+    controllerWindow.show();
   } else {
-    if (controllerWindow) controllerWindow.hide();
+    controllerWindow.hide();
   }
 }
 
@@ -73,7 +72,7 @@ function createcontrollerWindow() {
   });
 
   if (process.env.VITE_DEV_SERVER_URL) {
-    controllerWindow.webContents.openDevTools();
+    // controllerWindow.webContents.openDevTools();
     controllerWindow.loadURL(
       `${process.env.VITE_DEV_SERVER_URL}/controller.html`,
     );

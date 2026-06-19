@@ -12,6 +12,7 @@ import TagIcon from "../../icons/TagIcon";
 type LibraryProps = {
   sounds: Sound[];
   allTags: Tag[];
+  playSound: (sound: Sound) => void;
   onEdit: (sound: Sound) => void;
   onDelete: (id: number) => void;
   addSound: () => void;
@@ -22,6 +23,7 @@ type LibraryProps = {
 export default function SoundLibrary({
   sounds,
   allTags,
+  playSound,
   onEdit,
   onDelete,
   addSound,
@@ -130,6 +132,7 @@ export default function SoundLibrary({
           <SoundLibraryItem
             key={s.id}
             sound={s}
+            playSound={playSound}
             onEdit={onEdit}
             onDelete={onDelete}
           />

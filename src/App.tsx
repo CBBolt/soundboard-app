@@ -12,7 +12,6 @@ import { audioEngine } from "./audio/AudioEngine";
 import Recorder from "./components/Sound/Recorder";
 import SoundEditor from "./components/Sound/SoundEditor";
 import Modal from "./components/Modal/Modal";
-// import SoundTile from "./components/Sound/SoundTile";
 import ActionsBar from "./components/ActionsBar";
 import InstructionModal from "./components/Modal/InstructionModal";
 import SettingsModal from "./components/Modal/SettingsModal";
@@ -35,9 +34,7 @@ import TagManager from "./components/Tag/TagManager";
 
 TODO:
 
- - Drag and Drop sounds to reorder in board
  - HTML / CSS Board Layout
- - Play Sound (Sound Library / Board Builder)
 
 CLEANUP:
 
@@ -565,9 +562,8 @@ function App() {
           <HeadphoneIcon
             className="icon fill"
             style={{
-              fill: !config.ui.toVoiceMeeter
-                ? "oklch(from var(--accent) calc(l * 3) c h)"
-                : "",
+              fill: !config.ui.toVoiceMeeter ? "var(--base-color)" : "",
+              stroke: "white",
             }}
           />
         </button>
@@ -872,6 +868,7 @@ function App() {
         <SoundLibrary
           sounds={config.data.sounds}
           allTags={config.data.tags}
+          playSound={(sound) => audioEngine.play(sound)}
           onDelete={(id) =>
             setConfig((prev) => ({
               ...prev,
@@ -897,6 +894,7 @@ function App() {
         <BoardManager
           boards={config.data.boards}
           sounds={config.data.sounds}
+          playSound={(sound) => audioEngine.play(sound)}
           loadBoards={loadBoards}
         />
       ) : (

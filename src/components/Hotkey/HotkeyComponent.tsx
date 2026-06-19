@@ -17,7 +17,7 @@ export default function HotkeyComponent({
           <div className={`${styles.key} ${compact ? styles.small : ""}`}>
             {compact ? el.slice(0, 2) : el}
           </div>
-          {index < hotkeyElements.length - 1 && <span>+</span>}
+          {!compact && index < hotkeyElements.length - 1 && <span>+</span>}
         </div>
       ))}
     </div>

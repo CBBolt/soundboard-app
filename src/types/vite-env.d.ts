@@ -102,7 +102,7 @@ declare global {
       //Window
       showController: () => void;
       hideController: () => void;
-      sendSound: (id: number) => void;
+      sendSound: (id: string) => void;
       sendData: (data: ControllerData) => void;
 
       // Files

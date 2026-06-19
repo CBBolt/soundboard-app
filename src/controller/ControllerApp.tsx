@@ -1,14 +1,10 @@
 import { useEffect, useState } from "react";
-
-import SoundTile from "../components/Sound/SoundTile";
-
-// import { audioEngine } from "../audio/AudioEngine";
-import SquareIcon from "../icons/SquareIcon";
-import HotkeyComponent from "../components/Hotkey/HotkeyComponent";
+import BoardLayout from "./components/Layouts/Board/BoardLayout";
 
 export default function ControllerApp() {
   const [sounds, setSounds] = useState<Sound[]>([]);
   const [settings, setSettings] = useState<Settings | null>(null);
+  const [boardData, setBoardData] = useState<Board | null>(null);
 
   const loadSounds = async () => {
     const savedSounds = await window.electronAPI.getSounds();
@@ -27,6 +23,20 @@ export default function ControllerApp() {
     await loadSounds();
   };
 
+  const getSoundsFromId = (soundIds: number[]) =>
+    soundIds.map((s) => sounds.find((sound) => s === sound.id) ?? null);
+
+  const renderBody = () => {
+    if (!boardData || !settings) return <span>No Board Loaded</span>;
+
+    const boardSounds = getSoundsFromId(boardData.sounds);
+
+    switch (boardData.layout) {
+      case "BOARD":
+        return <BoardLayout settings={settings} sounds={boardSounds} />;
+    }
+  };
+
   useEffect(() => {
     reload();
   }, []);
@@ -34,40 +44,11 @@ export default function ControllerApp() {
   useEffect(() => {
     const unsubscribe = window.electronAPI.onMainRecieved(async (data) => {
       if (data.message === "reload") reload();
+      else if (data.message === "board_data") setBoardData(data.data as Board);
     });
 
     return unsubscribe;
   }, []);
 
-  return (
-    <div className="backdrop">
-      <div className="titlebar" />{" "}
-      <button onClick={() => window.electronAPI.hideController()}>Close</button>
-      <div className="flex-gap">
-        <SquareIcon className="icon fill sml" />
-        <span>All</span>
-        {settings && <HotkeyComponent hotkey={settings.stopHotkey} />}
-      </div>
-      <div
-        style={{
-          position: "relative",
-          display: "grid",
-          gap: 10,
-          gridTemplateColumns: "repeat(auto-fill, minmax(110px, 1fr))",
-          height: 300,
-          overflowY: "auto",
-        }}
-      >
-        {sounds.map((sound) => (
-          <SoundTile
-            key={sound.id}
-            sound={sound}
-            playSound={(sound) => window.electronAPI.sendSound(sound.id)}
-            deleteSound={() => {}}
-            editSound={() => {}}
-          />
-        ))}
-      </div>
-    </div>
-  );
+  return <div className="backdrop">{renderBody()}</div>;
 }

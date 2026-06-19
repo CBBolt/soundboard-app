@@ -10,25 +10,34 @@ import SoundboardIcon from "../../icons/SoundboardIcon";
 import PlusIcon from "../../icons/PlusIcon";
 
 import styles from "./_styles/BoardTile.module.css";
+import SquareIcon from "../../icons/SquareIcon";
 
 type BoardComponentProps = {
   board: Board;
   sounds: Sound[];
+  playSound: (sound: Sound) => void;
+  onSetBoard: (id: number) => void;
   onSave: (board: Board) => void;
   onDelete: (boardId: number) => void;
 };
 
 type BoardConfig = {
+  draggedIndex: number | null;
+  dropIndex: number | null;
   board: Board;
 };
 
 export default function BoardComponent({
   board,
   sounds,
+  playSound,
+  onSetBoard,
   onSave,
   onDelete,
 }: BoardComponentProps) {
   const [config, setConfig] = useState<BoardConfig>({
+    draggedIndex: null,
+    dropIndex: null,
     board: {
       ...board,
       sounds: board.sounds ?? [],
@@ -44,6 +53,15 @@ export default function BoardComponent({
       },
     }));
   }, [board]);
+
+  function moveItem<T>(array: T[], from: number, to: number) {
+    const copy = [...array];
+
+    const [item] = copy.splice(from, 1);
+    copy.splice(to, 0, item);
+
+    return copy;
+  }
 
   return (
     <>
@@ -94,6 +112,9 @@ export default function BoardComponent({
             </button>
           ))}
           <div className="seperator vertical light" />
+          <button onClick={() => onSetBoard(board.id)}>
+            <SquareIcon className="icon fill" />
+          </button>
           <button onClick={() => onSave(config.board)}>
             <SaveIcon className="icon fill" />
           </button>
@@ -141,8 +162,47 @@ export default function BoardComponent({
           return (
             <BoardTile
               key={i}
+              drag={{
+                dragged: config.draggedIndex === i,
+                dropOver: config.dropIndex === i,
+                onDragStart: () =>
+                  setConfig((prev) => ({ ...prev, draggedIndex: i })),
+                onDragOver: (e) => {
+                  e.preventDefault();
+                  setConfig((prev) => ({ ...prev, dropIndex: i }));
+                },
+                onDragEnd: () =>
+                  setConfig((prev) => ({
+                    ...prev,
+                    draggedIndex: null,
+                    dropIndex: null,
+                  })),
+                onDrop: () => {
+                  if (config.draggedIndex === null || config.draggedIndex === i)
+                    return;
+
+                  setConfig((prev) => ({
+                    ...prev,
+                    board: {
+                      ...prev.board,
+                      sounds: moveItem(
+                        prev.board.sounds,
+                        config.draggedIndex!,
+                        i,
+                      ),
+                    },
+                  }));
+
+                  setConfig((prev) => ({
+                    ...prev,
+                    draggedIndex: null,
+                    dropIndex: null,
+                  }));
+                },
+              }}
               sounds={sounds}
               sound={sound}
+              playSound={(sound) => playSound(sound)}
               setSound={(id) => {
                 setConfig((prev) => {
                   if (id === -1) {

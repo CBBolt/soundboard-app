@@ -10,10 +10,25 @@ import MusicNoteIcon from "../../icons/MusicNoteIcon";
 type TileProps = {
   sounds: Sound[];
   sound: Sound | null;
+  drag: {
+    dragged: boolean;
+    dropOver: boolean;
+    onDragStart: () => void;
+    onDragOver: (e: React.DragEvent<HTMLElement>) => void;
+    onDragEnd: () => void;
+    onDrop: () => void;
+  };
+  playSound: (sound: Sound) => void;
   setSound: (soundId: number) => void;
 };
 
-export default function BoardTile({ sounds, sound, setSound }: TileProps) {
+export default function BoardTile({
+  sounds,
+  sound,
+  drag,
+  playSound,
+  setSound,
+}: TileProps) {
   const [edit, setEdit] = useState(false);
 
   return (
@@ -42,14 +57,27 @@ export default function BoardTile({ sounds, sound, setSound }: TileProps) {
           ))}
         </div>
       </Modal>
+
       <div
+        draggable
         className={`${styles.tile} ${sound ? "grey" : ""}`}
+        style={{
+          opacity: drag.dragged ? 0.5 : 1,
+          background: drag.dropOver
+            ? "oklch(from var(--base-color) calc(l * 1.1) c h)"
+            : "",
+        }}
         onClick={() => {
           if (sound) {
+            playSound(sound);
           } else {
             setEdit(true);
           }
         }}
+        onDragStart={drag.onDragStart}
+        onDragOver={(e) => drag.onDragOver(e)}
+        onDragEnd={drag.onDragEnd}
+        onDrop={drag.onDrop}
       >
         <div
           className={styles["tile-editor"]}

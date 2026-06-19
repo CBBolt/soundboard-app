@@ -5,9 +5,11 @@ import TrashIcon from "../../icons/TrashIcon";
 import HotkeyComponent from "../Hotkey/HotkeyComponent";
 import TagComponent from "../Tag/TagComponent";
 import Marquee from "../Marquee/Marquee";
+import TriangeIcon from "../../icons/TriangleIcon";
 
 type ItemProps = {
   sound: Sound;
+  playSound: (sound: Sound) => void;
   onEdit: (sound: Sound) => void;
   onDelete: (id: number) => void;
 };
@@ -16,6 +18,7 @@ const MAX_TAGS = 3;
 
 export default function SoundLibraryItem({
   sound,
+  playSound,
   onEdit,
   onDelete,
 }: ItemProps) {
@@ -65,11 +68,14 @@ export default function SoundLibraryItem({
         <div />
       )}
       <div className="flex-gap">
+        <button onClick={() => playSound(sound)}>
+          <TriangeIcon className="icon fill sml" />
+        </button>
         <button onClick={() => onEdit(sound)}>
-          <PencilIcon className="icon fill" />
+          <PencilIcon className="icon fill sml" />
         </button>
         <button onClick={() => onDelete(sound.id)}>
-          <TrashIcon className="icon stroke" />
+          <TrashIcon className="icon stroke sml" />
         </button>
       </div>
     </div>

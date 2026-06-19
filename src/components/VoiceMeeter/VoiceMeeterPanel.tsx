@@ -204,6 +204,7 @@ export default function VoiceMeeterPanel({
   ): React.ReactNode => {
     const style: React.CSSProperties = {
       fill: config[channel].a ? "var(--base-color)" : "",
+      stroke: "white",
     };
 
     return (

@@ -10,10 +10,12 @@ import Carousel from "../Carousel/Carousel";
 type BoardProps = {
   boards: Board[];
   sounds: Sound[];
+  playSound: (sound: Sound) => void;
   loadBoards: () => void;
 };
 
 type BoardConfig = {
+  loadedBoardId: number;
   curBoardId: number;
   deleteId: number;
 };
@@ -21,9 +23,11 @@ type BoardConfig = {
 export default function BoardManager({
   boards,
   sounds,
+  playSound,
   loadBoards,
 }: BoardProps) {
   const [config, setConfig] = useState<BoardConfig>({
+    loadedBoardId: 0,
     curBoardId: -1,
     deleteId: 0,
   });
@@ -89,6 +93,9 @@ export default function BoardManager({
           >
             <PlusIcon className="icon fill" />
           </button>
+          {config.loadedBoardId && (
+            <span>{`Loaded Board: ${boards.find((b) => b.id === config.curBoardId)!.name}`}</span>
+          )}
         </div>
 
         <div>
@@ -96,6 +103,19 @@ export default function BoardManager({
             <BoardComponent
               board={curBoard}
               sounds={sounds}
+              playSound={playSound}
+              onSetBoard={(id) => {
+                const boardData = boards.find(
+                  (b) => b.id === config.curBoardId,
+                );
+
+                window.electronAPI.sendData({
+                  message: "board_data",
+                  data: boardData,
+                });
+
+                setConfig((prev) => ({ ...prev, loadedBoardId: id }));
+              }}
               onSave={(board) => {
                 window.electronAPI.updateBoard(board);
                 loadBoards();
