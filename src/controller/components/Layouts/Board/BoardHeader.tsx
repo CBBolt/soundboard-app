@@ -31,8 +31,9 @@ export default function BoardHeader({
           onClick={() => window.electronAPI.sendSound("STOP_ALL")}
         >
           <SquareIcon className="icon fill sml" />
-          <span>All</span>
-          {settings && <HotkeyComponent hotkey={settings.stopHotkey} />}
+          {settings && (
+            <HotkeyComponent hotkey={settings.stopHotkey} compact={true} />
+          )}
         </div>
         <label
           className="flex-gap"

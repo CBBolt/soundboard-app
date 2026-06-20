@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import BoardLayout from "./components/Layouts/Board/BoardLayout";
+import RadialLayout from "./components/Layouts/Radial/RadialLayout";
 
 export default function ControllerApp() {
   const [sounds, setSounds] = useState<Sound[]>([]);
@@ -29,11 +30,32 @@ export default function ControllerApp() {
   const renderBody = () => {
     if (!boardData || !settings) return <span>No Board Loaded</span>;
 
+    console.log(boardData, settings);
+
     const boardSounds = getSoundsFromId(boardData.sounds);
+    const key = `${boardData.id}-${boardData.layout}`;
 
     switch (boardData.layout) {
       case "BOARD":
-        return <BoardLayout settings={settings} sounds={boardSounds} />;
+        return (
+          <BoardLayout key={key} settings={settings} sounds={boardSounds} />
+        );
+      case "RADIAL":
+        return (
+          <RadialLayout key={key} settings={settings} sounds={boardSounds} />
+        );
+      case "HEX":
+        return (
+          <RadialLayout
+            key={key}
+            settings={settings}
+            sounds={boardSounds}
+            hexagon={true}
+          />
+        );
+
+      default:
+        return <span>Unknown layout: {String(boardData.layout)}</span>;
     }
   };
 
@@ -43,6 +65,8 @@ export default function ControllerApp() {
 
   useEffect(() => {
     const unsubscribe = window.electronAPI.onMainRecieved(async (data) => {
+      console.log(data);
+
       if (data.message === "reload") reload();
       else if (data.message === "board_data") setBoardData(data.data as Board);
     });

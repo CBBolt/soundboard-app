@@ -39,7 +39,13 @@ export default function BoardManager({
       setConfig((prev) => ({
         ...prev,
         curBoardId: boards[0].id,
+        loadedBoardId: boards[0].id,
       }));
+
+      window.electronAPI.sendData({
+        message: "board_data",
+        data: curBoard,
+      });
     }
   }, [boards, config.curBoardId]);
 
@@ -105,13 +111,9 @@ export default function BoardManager({
               sounds={sounds}
               playSound={playSound}
               onSetBoard={(id) => {
-                const boardData = boards.find(
-                  (b) => b.id === config.curBoardId,
-                );
-
                 window.electronAPI.sendData({
                   message: "board_data",
-                  data: boardData,
+                  data: curBoard,
                 });
 
                 setConfig((prev) => ({ ...prev, loadedBoardId: id }));

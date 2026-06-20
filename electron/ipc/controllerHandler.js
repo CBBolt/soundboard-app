@@ -72,7 +72,7 @@ function createcontrollerWindow() {
   });
 
   if (process.env.VITE_DEV_SERVER_URL) {
-    // controllerWindow.webContents.openDevTools();
+    controllerWindow.webContents.openDevTools();
     controllerWindow.loadURL(
       `${process.env.VITE_DEV_SERVER_URL}/controller.html`,
     );
