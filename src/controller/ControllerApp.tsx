@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import BoardLayout from "./components/Layouts/Board/BoardLayout";
 import RadialLayout from "./components/Layouts/Radial/RadialLayout";
+import ConstellationLayout from "./components/Layouts/Constellation/ConstellationLayout";
+import HexagonLayout from "./components/Layouts/Hexagon/HexagonLayout";
+import DefaultHeader from "./components/Layouts/DefaultHeader";
 
 export default function ControllerApp() {
   const [sounds, setSounds] = useState<Sound[]>([]);
@@ -28,9 +31,13 @@ export default function ControllerApp() {
     soundIds.map((s) => sounds.find((sound) => s === sound.id) ?? null);
 
   const renderBody = () => {
-    if (!boardData || !settings) return <span>No Board Loaded</span>;
-
-    console.log(boardData, settings);
+    if (!boardData || !settings)
+      return (
+        <div className="grid-gap">
+          <DefaultHeader settings={settings!} stop={false} />
+          <div>No Board Loaded</div>
+        </div>
+      );
 
     const boardSounds = getSoundsFromId(boardData.sounds);
     const key = `${boardData.id}-${boardData.layout}`;
@@ -46,11 +53,14 @@ export default function ControllerApp() {
         );
       case "HEX":
         return (
-          <RadialLayout
+          <HexagonLayout key={key} settings={settings} sounds={boardSounds} />
+        );
+      case "CONSTELLATION":
+        return (
+          <ConstellationLayout
             key={key}
             settings={settings}
             sounds={boardSounds}
-            hexagon={true}
           />
         );
 
@@ -65,10 +75,11 @@ export default function ControllerApp() {
 
   useEffect(() => {
     const unsubscribe = window.electronAPI.onMainRecieved(async (data) => {
-      console.log(data);
-
       if (data.message === "reload") reload();
-      else if (data.message === "board_data") setBoardData(data.data as Board);
+      else if (data.message === "board_data") {
+        reload();
+        setBoardData(data.data as Board);
+      }
     });
 
     return unsubscribe;

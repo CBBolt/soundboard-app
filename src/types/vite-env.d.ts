@@ -122,6 +122,7 @@ declare global {
       onPlaySound: (callback: (soundId: string) => void) => void;
       onYoutubeProgress: (callback: (percent: number) => void) => void;
       onMainRecieved: (callback: (data: ControllerData) => void) => void;
+      onToggleController: (callback: (data: boolean) => void) => void;
 
       // Settings
       readSettings: () => Settings;

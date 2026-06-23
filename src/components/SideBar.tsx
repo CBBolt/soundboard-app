@@ -1,0 +1,138 @@
+import { useState } from "react";
+import HeadphoneIcon from "../icons/HeadphoneIcon";
+import VoiceMeeterPanel from "./VoiceMeeter/VoiceMeeterPanel";
+import VMDeviceSelector from "./VoiceMeeter/VMDeviceSelector";
+
+type SidebarItem = {
+  id: string;
+  label: string;
+  icon?: React.ReactNode;
+  onClick?: () => void;
+};
+
+type SidebarProps = {
+  curItem: "BOARD" | "TAG" | "SOUND";
+  items: SidebarItem[];
+  defaultOpen?: boolean;
+  voiceMeeter: {
+    currentInput: VMAudioDevice;
+    currentOuput: VMAudioDevice;
+    currentLocalOutput: string;
+    toVoiceMeeter: boolean;
+    outputDevices: AudioDevice[];
+    inputDevices: AudioDevice[];
+    loadDevices: () => void;
+    getVMConfig: () => object;
+    onToggle: () => void;
+    onVoiceMeeterChange: ({
+      currentInputDevice,
+      currentOutputDevice,
+    }: {
+      currentInputDevice: VMAudioDevice;
+      currentOutputDevice: VMAudioDevice;
+    }) => void;
+    onLocalChange: (value: string) => void;
+  };
+};
+
+export default function SideBar({
+  curItem,
+  items,
+  defaultOpen = false,
+  voiceMeeter,
+}: SidebarProps) {
+  const [isOpen, setIsOpen] = useState(defaultOpen);
+
+  return (
+    <aside
+      style={{
+        position: "relative",
+        width: isOpen ? "40%" : 40,
+        transition: "width 0.2s ease",
+        borderRight: "1px solid #ddd",
+        background: "rgba(0, 0, 0, 0.5)",
+        height: "100%",
+        overflow: "hidden",
+      }}
+    >
+      <button
+        onClick={() => setIsOpen((open) => !open)}
+        style={{
+          width: "100%",
+          padding: "12px",
+          border: "none",
+          cursor: "pointer",
+        }}
+      >
+        {isOpen ? "◀" : "▶"}
+      </button>
+
+      {isOpen && (
+        <>
+          <nav>
+            {items.map((item) => {
+              const content = (
+                <>
+                  {item.icon && <span>{item.icon}</span>}
+                  {isOpen && <span>{item.label}</span>}
+                </>
+              );
+
+              return (
+                <button
+                  key={item.id}
+                  onClick={item.onClick}
+                  style={{
+                    width: "100%",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "12px",
+                    padding: "12px",
+                    margin: "5px 0",
+                    cursor: "pointer",
+                    textAlign: "left",
+                    border: curItem === item.id ? "2px solid white" : "",
+                  }}
+                >
+                  {content}
+                </button>
+              );
+            })}
+          </nav>
+
+          <div
+            className="flex-gap"
+            style={{ position: "absolute", bottom: 10 }}
+          >
+            <button className="icon-btn grey" onClick={voiceMeeter.onToggle}>
+              <HeadphoneIcon
+                className="icon fill"
+                style={{
+                  fill: !voiceMeeter.toVoiceMeeter ? "var(--base-color)" : "",
+                  stroke: !voiceMeeter.toVoiceMeeter ? "white" : "",
+                }}
+              />
+            </button>
+            {voiceMeeter.toVoiceMeeter ? (
+              <VoiceMeeterPanel
+                outputDevices={voiceMeeter.outputDevices}
+                selectedOutputDevice={voiceMeeter.currentOuput}
+                inputDevices={voiceMeeter.inputDevices}
+                selectedInputDevice={voiceMeeter.currentInput}
+                loadVMConfig={voiceMeeter.getVMConfig}
+                onSave={(data) => voiceMeeter.onVoiceMeeterChange(data)}
+                loadDevices={voiceMeeter.loadDevices}
+              />
+            ) : (
+              <VMDeviceSelector
+                currentDevice={voiceMeeter.currentLocalOutput}
+                devices={voiceMeeter.outputDevices}
+                onChange={(value: string) => voiceMeeter.onLocalChange(value)}
+              />
+            )}
+          </div>
+        </>
+      )}
+    </aside>
+  );
+}

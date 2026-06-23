@@ -2,7 +2,7 @@ import { Icon } from "@iconify/react";
 import MusicNoteIcon from "../../../../icons/MusicNoteIcon";
 import Marquee from "../../../../components/Marquee/Marquee";
 
-import styles from "./_styles/BoardTile.module.css";
+import styles from "./_styles/Hexagon.module.css";
 import HotkeyComponent from "../../../../components/Hotkey/HotkeyComponent";
 
 type TilePrpos = {
@@ -10,11 +10,11 @@ type TilePrpos = {
   tileSize: number;
 };
 
-export default function BoardTile({ sound, tileSize }: TilePrpos) {
+export default function HexagonTile({ sound, tileSize }: TilePrpos) {
   return (
     <div
-      className={styles.tile}
-      style={{ width: tileSize, height: tileSize }}
+      className={styles.hex}
+      style={{ width: tileSize, marginBottom: -(tileSize * 0.15) }}
       onClick={() => {
         if (!sound) return;
         window.electronAPI.sendSound(sound.id.toString());

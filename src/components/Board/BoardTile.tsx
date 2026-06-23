@@ -96,8 +96,26 @@ export default function BoardTile({
         {sound ? (
           <>
             {sound ? (
-              <div className="grid-gap">
-                <div>
+              <div
+                className="flex-gap"
+                style={{
+                  alignItems: "stretch",
+                  flexDirection: "column",
+                  overflow: "hidden",
+                }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    alignSelf: "center",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    background: "rgba(255, 255, 255, 0.2)",
+                    borderRadius: "100%",
+                    aspectRatio: 1,
+                    padding: 5,
+                  }}
+                >
                   {sound.icon ? (
                     <Icon
                       icon={sound.icon}

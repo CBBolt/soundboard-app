@@ -5,9 +5,11 @@ import path from "path";
 let showController = false;
 let controllerWindow;
 let __dirname;
+let curMainWindow;
 
 export function registerControllerHandlers(mainWindow, dirname) {
   __dirname = dirname;
+  curMainWindow = mainWindow;
 
   if (!controllerWindow) {
     createcontrollerWindow();
@@ -17,11 +19,15 @@ export function registerControllerHandlers(mainWindow, dirname) {
   ipcMain.handle("show-controller", () => {
     if (controllerWindow) controllerWindow.show();
 
+    mainWindow.webContents.send("toggle-controller", true);
+
     showController = true;
   });
 
   ipcMain.handle("hide-controller", () => {
     if (controllerWindow) controllerWindow.hide();
+
+    mainWindow.webContents.send("toggle-controller", false);
 
     showController = false;
   });
@@ -37,9 +43,11 @@ export function registerControllerHandlers(mainWindow, dirname) {
 }
 
 export function toggleController() {
-  if (!controllerWindow) return;
+  if (!controllerWindow || !curMainWindow) return;
 
   showController = !showController;
+
+  curMainWindow.webContents.send("toggle-controller", showController);
 
   if (showController) {
     controllerWindow.show();
@@ -72,7 +80,7 @@ function createcontrollerWindow() {
   });
 
   if (process.env.VITE_DEV_SERVER_URL) {
-    controllerWindow.webContents.openDevTools();
+    // controllerWindow.webContents.openDevTools();
     controllerWindow.loadURL(
       `${process.env.VITE_DEV_SERVER_URL}/controller.html`,
     );

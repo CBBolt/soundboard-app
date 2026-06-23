@@ -76,61 +76,55 @@ export default function BoardManager({
           Confirm
         </button>
       </Modal>
-      <div>
-        <div className="flex-gap">
-          <Carousel
-            items={boards}
-            curItemId={config.curBoardId}
-            onSelect={(id) =>
-              setConfig((prev) => ({ ...prev, curBoardId: id }))
-            }
-          />
-          <button
-            onClick={async () => {
-              const newBoard: Partial<Board> = {
-                name: "New Board",
-                layout: "BOARD",
-              };
+      <div className="flex-gap">
+        <Carousel
+          items={boards}
+          curItemId={config.curBoardId}
+          onSelect={(id) => setConfig((prev) => ({ ...prev, curBoardId: id }))}
+        />
+        <button
+          onClick={async () => {
+            const newBoard: Partial<Board> = {
+              name: "New Board",
+              layout: "BOARD",
+            };
 
-              await window.electronAPI.addBoard(newBoard);
+            await window.electronAPI.addBoard(newBoard);
 
-              await loadBoards();
-            }}
-          >
-            <PlusIcon className="icon fill" />
-          </button>
-          {config.loadedBoardId && (
-            <span>{`Loaded Board: ${boards.find((b) => b.id === config.curBoardId)!.name}`}</span>
-          )}
-        </div>
-
-        <div>
-          {curBoard ? (
-            <BoardComponent
-              board={curBoard}
-              sounds={sounds}
-              playSound={playSound}
-              onSetBoard={(id) => {
-                window.electronAPI.sendData({
-                  message: "board_data",
-                  data: curBoard,
-                });
-
-                setConfig((prev) => ({ ...prev, loadedBoardId: id }));
-              }}
-              onSave={(board) => {
-                window.electronAPI.updateBoard(board);
-                loadBoards();
-              }}
-              onDelete={(id) => {
-                setConfig((prev) => ({ ...prev, deleteId: id }));
-              }}
-            />
-          ) : (
-            <span>No Board Selected</span>
-          )}
-        </div>
+            await loadBoards();
+          }}
+        >
+          <PlusIcon className="icon fill" />
+        </button>
+        {config.loadedBoardId && (
+          <span>{`Loaded Board: ${boards.find((b) => b.id === config.curBoardId)!.name}`}</span>
+        )}
       </div>
+
+      {curBoard ? (
+        <BoardComponent
+          board={curBoard}
+          sounds={sounds}
+          playSound={playSound}
+          onSetBoard={(id) => {
+            window.electronAPI.sendData({
+              message: "board_data",
+              data: curBoard,
+            });
+
+            setConfig((prev) => ({ ...prev, loadedBoardId: id }));
+          }}
+          onSave={(board) => {
+            window.electronAPI.updateBoard(board);
+            loadBoards();
+          }}
+          onDelete={(id) => {
+            setConfig((prev) => ({ ...prev, deleteId: id }));
+          }}
+        />
+      ) : (
+        <span>No Board Selected</span>
+      )}
     </>
   );
 }

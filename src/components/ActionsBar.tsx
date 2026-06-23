@@ -1,4 +1,5 @@
 import GearIcon from "../icons/GearIcon";
+import OverlayIcon from "../icons/OverlayIcon";
 import QuestionIcon from "../icons/QuestionIcon";
 import SquareIcon from "../icons/SquareIcon";
 import HotkeyComponent from "./Hotkey/HotkeyComponent";
@@ -7,16 +8,20 @@ import HoverDropdown from "./HoverDropdown";
 type Props = {
   settings: Settings | undefined;
   VBDetected: VBDetected;
+  overlay: boolean;
   stopAll: () => void;
   instructions: () => void;
+  toggleOverlay: () => void;
   showSettings: () => void;
 };
 
 export default function ActionsBar({
   settings,
   VBDetected,
+  overlay,
   stopAll,
   instructions,
+  toggleOverlay,
   showSettings,
 }: Props) {
   return (
@@ -37,6 +42,15 @@ export default function ActionsBar({
         <span style={{ fontSize: "small" }}>V 1.1.0</span>
       </div>
       <div className="flex-gap">
+        <button onClick={toggleOverlay} className="grey">
+          <OverlayIcon
+            className="icon fill sml"
+            style={{
+              fill: overlay ? "var(--base-color)" : "",
+              stroke: overlay ? "white" : "",
+            }}
+          />
+        </button>
         <HoverDropdown
           label={<QuestionIcon className="icon sml fill" />}
           items={[

@@ -15,6 +15,15 @@ contextBridge.exposeInMainWorld("electronAPI", {
       ipcRenderer.removeListener("main-recieved", handler);
     };
   },
+  onToggleController: (callback) => {
+    const handler = (_, data) => callback(data);
+
+    ipcRenderer.on("toggle-controller", handler);
+
+    return () => {
+      ipcRenderer.removeListener("toggle-controller", handler);
+    };
+  },
 
   // Files
   pickAudioFile: () => ipcRenderer.invoke("pick-audio-file"),

@@ -1,0 +1,66 @@
+.constellation-sound {
+  position: absolute;
+
+  width: 14px;
+  height: 14px;
+
+  transform: translate(-50%, -50%);
+
+  cursor: pointer;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  transition: 0.3s transform ease;
+}
+
+.constellation-sound:not(.empty):hover {
+  transform: translate(-50%, -50%) scale(1.1);
+}
+
+.constellation-sound::before {
+  content: "";
+
+  position: absolute;
+
+  width: 10px;
+  height: 10px;
+
+  border-radius: 50%;
+
+  background: white;
+
+  box-shadow:
+    0 0 4px rgba(255, 255, 255, 0.9),
+    0 0 10px rgba(120, 180, 255, 0.6);
+}
+
+.constellation-sound.empty::before {
+  background: black;
+
+  width: 7px;
+  height: 7px;
+
+  box-shadow:
+    0 0 4px rgba(0, 0, 0, 0.9),
+    0 0 10px rgba(120, 180, 255, 0.6);
+}
+
+.network {
+  position: fixed;
+  inset: 0;
+}
+
+.lines {
+  position: fixed;
+  inset: 0;
+  overflow: visible;
+
+  pointer-events: none;
+}
+
+.lines line {
+  stroke: rgba(255, 255, 255, 0.15);
+  stroke-width: 2;
+}

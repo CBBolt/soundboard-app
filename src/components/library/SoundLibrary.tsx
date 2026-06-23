@@ -123,9 +123,11 @@ export default function SoundLibrary({
       <div
         className="grid-gap"
         style={{
-          textAlign: "start",
-          height: "200px",
+          flex: "1",
           overflowY: "auto",
+          textAlign: "start",
+          alignItems: "start",
+          padding: 5,
         }}
       >
         {filteredSounds.map((s) => (

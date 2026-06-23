@@ -79,7 +79,7 @@ export default function RadialLayout({
 
         return (
           <RadialSound
-            key={sound?.id ?? index}
+            key={`${sound?.id ?? index}-${index}`}
             sound={sound}
             x={x}
             y={y}

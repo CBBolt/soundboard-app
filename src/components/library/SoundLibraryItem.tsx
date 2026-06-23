@@ -32,15 +32,27 @@ export default function SoundLibraryItem({
         padding: 5,
       }}
     >
-      {sound.icon ? (
-        <Icon
-          icon={sound.icon}
-          className="icon"
-          style={{ color: sound.color }}
-        />
-      ) : (
-        <MusicNoteIcon className="icon fill" style={{ fill: sound.color }} />
-      )}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          background: "rgba(255, 255, 255, 0.2)",
+          borderRadius: "100%",
+          aspectRatio: 1,
+          padding: 2,
+        }}
+      >
+        {sound.icon ? (
+          <Icon
+            icon={sound.icon}
+            className="icon"
+            style={{ color: sound.color }}
+          />
+        ) : (
+          <MusicNoteIcon className="icon fill" style={{ fill: sound.color }} />
+        )}
+      </div>
       <Marquee text={sound.name} />
       {sound.hotkey ? (
         <HotkeyComponent hotkey={sound.hotkey} />

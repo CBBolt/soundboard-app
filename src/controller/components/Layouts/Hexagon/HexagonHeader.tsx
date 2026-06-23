@@ -1,25 +1,28 @@
 import { Icon } from "@iconify/react";
 import HotkeyComponent from "../../../../components/Hotkey/HotkeyComponent";
 import SquareIcon from "../../../../icons/SquareIcon";
+import { useRef } from "react";
+import { useContainerWidth } from "../_lib/helpers";
 
 type HeaderProps = {
   settings: Settings;
-  width: number;
   tileSize: number;
   onSetTileSize: (number: number) => void;
 };
 
-export default function BoardHeader({
+export default function HexagonHeader({
   settings,
-  width,
   tileSize,
   onSetTileSize,
 }: HeaderProps) {
+  const ref = useRef<HTMLDivElement>(null!);
+  const width = useContainerWidth(ref);
+
   return (
     <div
+      ref={ref}
       className="titlebar grid-gap"
       style={{
-        width: "100%",
         placeItems: "center",
         gridTemplateColumns: "repeat(auto-fit, minmax(70px, 1fr))",
       }}
@@ -36,7 +39,7 @@ export default function BoardHeader({
         style={{ padding: 2 }}
         onClick={() => window.electronAPI.sendSound("STOP_ALL")}
       >
-        <SquareIcon className="icon sml" style={{ fill: "tomato" }} />
+        <SquareIcon className="icon fill sml" style={{ fill: "tomato" }} />
         {width > 300 && settings && (
           <HotkeyComponent hotkey={settings.stopHotkey} compact={true} />
         )}
@@ -49,7 +52,7 @@ export default function BoardHeader({
         <input
           type="range"
           min={30}
-          max={200}
+          max={100}
           step={10}
           value={tileSize}
           onChange={(e) => onSetTileSize(Number(e.target.value))}

@@ -1,0 +1,31 @@
+.board {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.row {
+  display: flex;
+}
+
+.hex {
+  width: 90px;
+  aspect-ratio: 1 / 1.15;
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+
+  background-color: rgba(255, 255, 255, 0.5);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  cursor: pointer;
+  overflow: hidden;
+
+  transition: 0.3s transform ease;
+}
+
+.hex:hover {
+  transform: scale(1.05);
+}

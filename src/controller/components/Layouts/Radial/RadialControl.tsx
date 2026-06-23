@@ -49,7 +49,7 @@ export default function RadialControl({
             onClick={() => window.electronAPI.sendSound("STOP_ALL")}
           >
             <button className="icon-btn">
-              <SquareIcon className="icon fill sml" />
+              <SquareIcon className="icon sml" style={{ fill: "tomato" }} />
             </button>
             {settings && (
               <HotkeyComponent hotkey={settings.stopHotkey} compact={true} />
@@ -63,10 +63,6 @@ export default function RadialControl({
             </button>
 
             <div className={styles.center} />
-
-            {/* <div
-            className={styles.center}
-          >{`${ring.cur + 1} / ${ring.count}`}</div> */}
 
             <button onClick={onNext} disabled={ring.cur === ring.count - 1}>
               ›

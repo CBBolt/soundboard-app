@@ -10,7 +10,7 @@ import SoundboardIcon from "../../icons/SoundboardIcon";
 import PlusIcon from "../../icons/PlusIcon";
 
 import styles from "./_styles/BoardTile.module.css";
-import SquareIcon from "../../icons/SquareIcon";
+import LoadIcon from "../../icons/LoadIcon";
 
 type BoardComponentProps = {
   board: Board;
@@ -113,7 +113,7 @@ export default function BoardComponent({
           ))}
           <div className="seperator vertical light" />
           <button onClick={() => onSetBoard(board.id)}>
-            <SquareIcon className="icon fill" />
+            <LoadIcon className="icon fill stroke" />
           </button>
           <button onClick={() => onSave(config.board)}>
             <SaveIcon className="icon fill" />
@@ -127,9 +127,11 @@ export default function BoardComponent({
         className="grid-gap"
         style={{
           gridTemplateColumns: "repeat(auto-fit, 100px)",
-          height: 200,
+          width: "calc(100% - 10px)",
+          alignSelf: "start",
+          flex: 1,
           overflowY: "auto",
-          padding: "5px",
+          padding: 5,
         }}
       >
         {[...config.board.sounds, -1].map((soundId, i) => {

@@ -157,48 +157,45 @@ export default function TagManager({ tags, loadTags }: TagProps) {
           </label>
         </div>
       </Modal>
-      <div>
+
+      <div className="flex-gap">
         <div className="flex-gap">
-          <div className="flex-gap">
-            <input
-              type="search"
-              value={config.filter}
-              onChange={(e) =>
-                setConfig((prev) => ({ ...prev, filter: e.target.value }))
+          <input
+            type="search"
+            value={config.filter}
+            onChange={(e) =>
+              setConfig((prev) => ({ ...prev, filter: e.target.value }))
+            }
+          />
+          <MagnifyGlassIcon className="icon stroke" />
+        </div>
+        <button
+          onClick={() =>
+            setConfig((prev) => ({
+              ...prev,
+              addTag: { name: "New Tag", color: "#FFFFFF" },
+            }))
+          }
+        >
+          <PlusIcon className="icon fill" />
+        </button>
+      </div>
+
+      <div style={{ flex: 1, overflowY: "auto" }}>
+        {tags
+          .filter((t) =>
+            t.name.toLowerCase().includes(config.filter.toLowerCase()),
+          )
+          .map((b, i) => (
+            <TagComponent
+              key={i}
+              tag={b}
+              onEdit={(tag) => setConfig((prev) => ({ ...prev, editTag: tag }))}
+              onDelete={(id) =>
+                setConfig((prev) => ({ ...prev, deleteId: id }))
               }
             />
-            <MagnifyGlassIcon className="icon stroke" />
-          </div>
-          <button
-            onClick={() =>
-              setConfig((prev) => ({
-                ...prev,
-                addTag: { name: "New Tag", color: "#FFFFFF" },
-              }))
-            }
-          >
-            <PlusIcon className="icon fill" />
-          </button>
-        </div>
-
-        <div style={{ height: 200, overflowY: "auto" }}>
-          {tags
-            .filter((t) =>
-              t.name.toLowerCase().includes(config.filter.toLowerCase()),
-            )
-            .map((b, i) => (
-              <TagComponent
-                key={i}
-                tag={b}
-                onEdit={(tag) =>
-                  setConfig((prev) => ({ ...prev, editTag: tag }))
-                }
-                onDelete={(id) =>
-                  setConfig((prev) => ({ ...prev, deleteId: id }))
-                }
-              />
-            ))}
-        </div>
+          ))}
       </div>
     </>
   );

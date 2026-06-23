@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import BoardTile from "./BoardTile";
 import BoardHeader from "./BoardHeader";
+import { useContainerWidth } from "../_lib/helpers";
 
 type BoardLayoutProps = {
   settings: Settings;
@@ -10,9 +11,17 @@ type BoardLayoutProps = {
 export default function BoardLayout({ settings, sounds }: BoardLayoutProps) {
   const [tileSize, setTileSize] = useState(100);
 
+  const ref = useRef<HTMLDivElement>(null!);
+  const width = useContainerWidth(ref);
+
   return (
-    <>
+    <div
+      ref={ref}
+      className="flex-gap"
+      style={{ height: "100%", flexDirection: "column", overflow: "hidden" }}
+    >
       <BoardHeader
+        width={width}
         settings={settings}
         tileSize={tileSize}
         onSetTileSize={(num) => setTileSize(num)}
@@ -20,14 +29,20 @@ export default function BoardLayout({ settings, sounds }: BoardLayoutProps) {
       <div
         className="grid-gap"
         style={{
+          flex: 1,
+          minHeight: 0,
+          width: "100%",
+          padding: 5,
           overflow: "auto",
+          justifyContent: "center",
+          alignContent: "start",
           gridTemplateColumns: `repeat(auto-fit, ${tileSize}px)`,
         }}
       >
         {sounds.map((s, i) => (
-          <BoardTile key={s?.id ?? i} sound={s} tileSize={tileSize} />
+          <BoardTile key={`${s?.id ?? i}-${i}`} sound={s} tileSize={tileSize} />
         ))}
       </div>
-    </>
+    </div>
   );
 }

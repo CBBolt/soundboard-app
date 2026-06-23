@@ -22,24 +22,24 @@ import MusicNoteIcon from "./icons/MusicNoteIcon";
 import CircleIcon from "./icons/CircleIcon";
 import QuestionIcon from "./icons/QuestionIcon";
 import YoutubeLinkModal from "./components/Modal/YoutubeLinkModal";
-import VoiceMeeter from "./components/VoiceMeeter/VoiceMeeterPanel";
-import VMDeviceSelector from "./components/VoiceMeeter/VMDeviceSelector";
-import HeadphoneIcon from "./icons/HeadphoneIcon";
 import Splashscreen from "./components/SplashScreen";
 import SoundLibrary from "./components/Library/SoundLibrary";
 import BoardManager from "./components/Board/BoardManager";
 import TagManager from "./components/Tag/TagManager";
+import SideBar from "./components/SideBar";
+import SoundboardIcon from "./icons/SoundboardIcon";
+import TagIcon from "./icons/TagIcon";
 
 /*
 
 TODO:
-
- - HTML / CSS Board Layout
+ - Waveform ability to zoom in and out clip (time range)
+ - Updated Instructions / interactive tutorial
 
 CLEANUP:
 
- - Waveform ability to zoom in and out clip (time range)
- - Overall styling cleanup
+ - Component Cleanup
+ - YT Add cleanup / verification
 
 */
 
@@ -67,6 +67,7 @@ type ModalState = {
 
 type UIState = {
   loading: boolean;
+  controllerOverlay: boolean;
   youtubeProgress: number;
   VBDetected: VBDetected;
   toVoiceMeeter: boolean;
@@ -114,6 +115,7 @@ function App() {
     },
     ui: {
       loading: true,
+      controllerOverlay: false,
       youtubeProgress: -1,
       VBDetected: { voicemeeter: false, vbCable: false },
       toVoiceMeeter: false,
@@ -468,6 +470,20 @@ function App() {
   }, [config.data.sounds, config.editing.editingSound]);
 
   useEffect(() => {
+    const unsubscribe = api.onToggleController((data: boolean) => {
+      setConfig((prev) => ({
+        ...prev,
+        ui: {
+          ...prev.ui,
+          controllerOverlay: data,
+        },
+      }));
+    });
+
+    return unsubscribe;
+  }, []);
+
+  useEffect(() => {
     const unsubscribe = api.onYoutubeProgress((percent: number) => {
       setConfig((prev) => ({
         ...prev,
@@ -499,14 +515,30 @@ function App() {
   if (config.ui.loading) return <Splashscreen />;
 
   return (
-    <div style={{ padding: 10 }}>
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        height: "100dvh",
+      }}
+    >
       <NotificationManager />
-
-      <button onClick={() => api.sendData({ message: "reload" })}>Test</button>
-      <button onClick={() => api.showController()}>Show</button>
 
       <ActionsBar
         VBDetected={config.ui.VBDetected}
+        overlay={config.ui.controllerOverlay}
+        toggleOverlay={() => {
+          setConfig((prev) => ({
+            ...prev,
+            ui: { ...prev.ui, controllerOverlay: !prev.ui.controllerOverlay },
+          }));
+
+          if (config.ui.controllerOverlay) {
+            api.hideController();
+          } else {
+            api.showController();
+          }
+        }}
         instructions={() =>
           setConfig((prev) => ({
             ...prev,
@@ -529,52 +561,47 @@ function App() {
         stopAll={audioEngine.stopAll}
       />
 
-      <div className="flex-gap">
-        <button
-          className="icon-btn grey"
-          onClick={async () => {
-            if (!config.ui.toVoiceMeeter) {
-              const { outputs } = await getDevices();
+      <div
+        className="flex-gap"
+        style={{ alignItems: "start", overflowY: "auto", height: "100%" }}
+      >
+        <SideBar
+          voiceMeeter={{
+            currentInput: config.audio.selectedInputDevice,
+            currentOuput: config.audio.vmOutputDevice,
+            currentLocalOutput: config.audio.localOutputDevice,
+            inputDevices: config.audio.inputDevices,
+            outputDevices: config.audio.outputDevices,
+            toVoiceMeeter: config.ui.toVoiceMeeter,
+            loadDevices: loadDevices,
+            getVMConfig: getVMConfig,
+            onToggle: async () => {
+              if (!config.ui.toVoiceMeeter) {
+                const { outputs } = await getDevices();
 
-              const vbCableInput = outputs.find((d) =>
-                d.label.toLowerCase().includes("cable input"),
-              );
+                const vbCableInput = outputs.find((d) =>
+                  d.label.toLowerCase().includes("cable input"),
+                );
 
-              if (!vbCableInput) {
-                console.error("VB Cable Input not found");
-                return;
+                if (!vbCableInput) {
+                  console.error("VB Cable Input not found");
+                  return;
+                }
+
+                audioEngine.setDevice(vbCableInput.id);
+              } else {
+                audioEngine.setDevice(config.audio.localOutputDevice);
               }
 
-              audioEngine.setDevice(vbCableInput.id);
-            } else {
-              audioEngine.setDevice(config.audio.localOutputDevice);
-            }
-
-            setConfig((prev) => ({
-              ...prev,
-              ui: {
-                ...prev.ui,
-                toVoiceMeeter: !prev.ui.toVoiceMeeter,
-              },
-            }));
-          }}
-        >
-          <HeadphoneIcon
-            className="icon fill"
-            style={{
-              fill: !config.ui.toVoiceMeeter ? "var(--base-color)" : "",
-              stroke: "white",
-            }}
-          />
-        </button>
-        {config.ui.toVoiceMeeter ? (
-          <VoiceMeeter
-            outputDevices={config.audio.outputDevices}
-            selectedOutputDevice={config.audio.vmOutputDevice}
-            inputDevices={config.audio.inputDevices}
-            selectedInputDevice={config.audio.selectedInputDevice}
-            loadVMConfig={getVMConfig}
-            onSave={(data) => {
+              setConfig((prev) => ({
+                ...prev,
+                ui: {
+                  ...prev.ui,
+                  toVoiceMeeter: !prev.ui.toVoiceMeeter,
+                },
+              }));
+            },
+            onVoiceMeeterChange: (data) => {
               const { currentInputDevice, currentOutputDevice } = data;
 
               setConfig((prev) => ({
@@ -585,15 +612,8 @@ function App() {
                   vmOutputDevice: currentOutputDevice,
                 },
               }));
-            }}
-            loadDevices={loadDevices}
-          />
-        ) : (
-          <VMDeviceSelector
-            disabled={config.ui.toVoiceMeeter}
-            currentDevice={config.audio.localOutputDevice}
-            devices={config.audio.outputDevices}
-            onChange={(value: string) => {
+            },
+            onLocalChange: (value) => {
               audioEngine.setDevice(value);
 
               setConfig((prev) => ({
@@ -603,213 +623,208 @@ function App() {
                   localOutputDevice: value,
                 },
               }));
-            }}
-          />
-        )}
-      </div>
-
-      <InstructionModal
-        VBDetected={config.ui.VBDetected}
-        show={config.modal.instructionsEnabled}
-        onClose={() =>
-          setConfig((prev) => ({
-            ...prev,
-            modal: {
-              ...prev.modal,
-              instructionsEnabled: false,
             },
-          }))
-        }
-      />
-
-      <YoutubeLinkModal
-        show={config.modal.youtubeEnabled}
-        onClose={() =>
-          setConfig((prev) => ({
-            ...prev,
-            modal: {
-              ...prev.modal,
-              youtubeEnabled: false,
+          }}
+          curItem={config.ui.tab}
+          items={[
+            {
+              id: "SOUND",
+              label: "Sound Library",
+              icon: <MusicNoteIcon className="icon fill sml" />,
+              onClick: () =>
+                setConfig((prev) => ({
+                  ...prev,
+                  ui: { ...prev.ui, tab: "SOUND" },
+                })),
             },
-          }))
-        }
-        onSave={async (url) => {
-          await window.electronAPI.saveYoutubeLink(url);
-          setConfig((prev) => ({
-            ...prev,
-            ui: {
-              ...prev.ui,
-              youtubeProgress: -1,
+            {
+              id: "BOARD",
+              label: "Board Library",
+              icon: <SoundboardIcon className="icon stroke sml" />,
+              onClick: () =>
+                setConfig((prev) => ({
+                  ...prev,
+                  ui: { ...prev.ui, tab: "BOARD" },
+                })),
             },
-            modal: {
-              ...prev.modal,
-              youtubeEnabled: false,
+            {
+              id: "TAG",
+              label: "Tag Library",
+              icon: <TagIcon className="icon stroke sml" />,
+              onClick: () =>
+                setConfig((prev) => ({
+                  ...prev,
+                  ui: { ...prev.ui, tab: "TAG" },
+                })),
             },
-          }));
-          loadSounds();
-        }}
-        progress={config.ui.youtubeProgress}
-      />
+          ]}
+        />
 
-      {/* ================= MODALS ================= */}
+        {/* ================= MODALS ================= */}
 
-      {config.data.settings && (
-        <SettingsModal
-          inputDevices={config.audio.inputDevices}
-          outputDevices={config.audio.outputDevices}
-          allHotkeys={
-            config.data.sounds
-              .filter((s) => s.hotkey !== undefined)
-              .map((s) => s.hotkey) as Hotkey[]
-          }
-          show={config.modal.settingsEnabled}
+        <InstructionModal
+          VBDetected={config.ui.VBDetected}
+          show={config.modal.instructionsEnabled}
           onClose={() =>
             setConfig((prev) => ({
               ...prev,
               modal: {
                 ...prev.modal,
-                settingsEnabled: false,
+                instructionsEnabled: false,
               },
             }))
           }
-          loadSettings={api.readSettings}
-          onSave={async (data) => {
-            await api.updateSettings(data);
+        />
+
+        <YoutubeLinkModal
+          show={config.modal.youtubeEnabled}
+          onClose={() =>
             setConfig((prev) => ({
               ...prev,
               modal: {
                 ...prev.modal,
-                settingsEnabled: false,
+                youtubeEnabled: false,
+              },
+            }))
+          }
+          onSave={async (url) => {
+            await window.electronAPI.saveYoutubeLink(url);
+            setConfig((prev) => ({
+              ...prev,
+              ui: {
+                ...prev.ui,
+                youtubeProgress: -1,
+              },
+              modal: {
+                ...prev.modal,
+                youtubeEnabled: false,
               },
             }));
-
-            loadSettings();
-
-            bus.emit("new-notification", {
-              status: "INFO",
-              message: "Settings Updated!",
-            });
+            loadSounds();
           }}
+          progress={config.ui.youtubeProgress}
         />
-      )}
 
-      <Modal
-        isOpen={config.modal.recordEnabled}
-        onClose={() =>
-          setConfig((prev) => ({
-            ...prev,
-            modal: {
-              ...prev.modal,
-              recordEnabled: false,
-            },
-          }))
-        }
-        header={
-          <>
-            <CircleIcon className="icon fill" />
-            <h2>Record New Sound</h2>
-          </>
-        }
-      >
-        <Recorder
-          defaultInputDevice={config.audio.selectedInputDevice.id}
-          devices={config.audio.inputDevices}
-          loadDevices={loadDevices}
-          onSave={async (blob, duration, mimeType) => {
-            const buffer = await blob.arrayBuffer();
+        {config.data.settings && (
+          <SettingsModal
+            inputDevices={config.audio.inputDevices}
+            outputDevices={config.audio.outputDevices}
+            allHotkeys={
+              config.data.sounds
+                .filter((s) => s.hotkey !== undefined)
+                .map((s) => s.hotkey) as Hotkey[]
+            }
+            show={config.modal.settingsEnabled}
+            onClose={() =>
+              setConfig((prev) => ({
+                ...prev,
+                modal: {
+                  ...prev.modal,
+                  settingsEnabled: false,
+                },
+              }))
+            }
+            loadSettings={api.readSettings}
+            onSave={async (data) => {
+              await api.updateSettings(data);
+              setConfig((prev) => ({
+                ...prev,
+                modal: {
+                  ...prev.modal,
+                  settingsEnabled: false,
+                },
+              }));
 
-            await api.saveRecording(buffer, {
-              duration,
-              mimeType,
-            });
+              loadSettings();
 
+              bus.emit("new-notification", {
+                status: "INFO",
+                message: "Settings Updated!",
+              });
+            }}
+          />
+        )}
+
+        <Modal
+          isOpen={config.modal.recordEnabled}
+          onClose={() =>
             setConfig((prev) => ({
               ...prev,
               modal: {
                 ...prev.modal,
                 recordEnabled: false,
               },
-            }));
-
-            bus.emit("new-notification", {
-              status: "INFO",
-              message: "Sound Added!",
-            });
-
-            await loadSounds();
-          }}
-        />
-      </Modal>
-
-      <div className="seperator" />
-
-      <Modal
-        isOpen={config.editing.deleteSound > 0}
-        onClose={() =>
-          setConfig((prev) => ({
-            ...prev,
-            editing: {
-              ...prev.editing,
-              deleteSound: 0,
-            },
-          }))
-        }
-        header={
-          <>
-            <TrashIcon className="icon stroke" />
-            <h2>Delete Sound</h2>
-          </>
-        }
-      >
-        <div style={{ display: "grid", justifyItems: "center" }}>
-          <span>Are you sure you want to delete?</span>
-          <button onClick={() => handleDelete(config.editing.deleteSound)}>
-            Confirm
-          </button>
-        </div>
-      </Modal>
-
-      <Modal
-        isOpen={
-          config.editing.editingBlob !== null &&
-          config.editing.editingSound !== null
-        }
-        onClose={() => {
-          setConfig((prev) => ({
-            ...prev,
-            editing: {
-              ...prev.editing,
-              editingBlob: null,
-              editingSound: null,
-            },
-          }));
-        }}
-        header={
-          <>
-            <MusicNoteIcon className="icon fill" />
-            <h2>Edit Sound</h2>
-          </>
-        }
-      >
-        <SoundEditor
-          sound={config.editing.editingSound!}
-          allTags={config.data.tags}
-          blob={config.editing.editingBlob!}
-          allHotkeys={
-            config.data.sounds
-              .filter((s) => s.hotkey !== undefined)
-              .map((s) => s.hotkey) as Hotkey[]
+            }))
           }
-          playSound={audioEngine.play}
-          stopSound={audioEngine.stopAll}
-          onSave={async (data: Sound) => {
-            await api.updateSound(data);
+          header={
+            <>
+              <CircleIcon className="icon fill" />
+              <h2>Record New Sound</h2>
+            </>
+          }
+        >
+          <Recorder
+            defaultInputDevice={config.audio.selectedInputDevice.id}
+            devices={config.audio.inputDevices}
+            loadDevices={loadDevices}
+            onSave={async (blob, duration, mimeType) => {
+              const buffer = await blob.arrayBuffer();
 
-            bus.emit("new-notification", {
-              status: "INFO",
-              message: "Sound Updated!",
-            });
+              await api.saveRecording(buffer, {
+                duration,
+                mimeType,
+              });
 
+              setConfig((prev) => ({
+                ...prev,
+                modal: {
+                  ...prev.modal,
+                  recordEnabled: false,
+                },
+              }));
+
+              bus.emit("new-notification", {
+                status: "INFO",
+                message: "Sound Added!",
+              });
+
+              await loadSounds();
+            }}
+          />
+        </Modal>
+
+        <Modal
+          isOpen={config.editing.deleteSound > 0}
+          onClose={() =>
+            setConfig((prev) => ({
+              ...prev,
+              editing: {
+                ...prev.editing,
+                deleteSound: 0,
+              },
+            }))
+          }
+          header={
+            <>
+              <TrashIcon className="icon stroke" />
+              <h2>Delete Sound</h2>
+            </>
+          }
+        >
+          <div style={{ display: "grid", justifyItems: "center" }}>
+            <span>Are you sure you want to delete?</span>
+            <button onClick={() => handleDelete(config.editing.deleteSound)}>
+              Confirm
+            </button>
+          </div>
+        </Modal>
+
+        <Modal
+          isOpen={
+            config.editing.editingBlob !== null &&
+            config.editing.editingSound !== null
+          }
+          onClose={() => {
             setConfig((prev) => ({
               ...prev,
               editing: {
@@ -818,88 +833,119 @@ function App() {
                 editingSound: null,
               },
             }));
-
-            loadSounds();
           }}
-        />
-      </Modal>
+          header={
+            <>
+              <MusicNoteIcon className="icon fill" />
+              <h2>Edit Sound</h2>
+            </>
+          }
+        >
+          <SoundEditor
+            sound={config.editing.editingSound!}
+            allTags={config.data.tags}
+            blob={config.editing.editingBlob!}
+            allHotkeys={
+              config.data.sounds
+                .filter((s) => s.hotkey !== undefined)
+                .map((s) => s.hotkey) as Hotkey[]
+            }
+            playSound={audioEngine.play}
+            stopSound={audioEngine.stopAll}
+            onSave={async (data: Sound) => {
+              await api.updateSound(data);
 
-      {config.data.sounds.length === 0 && (
-        <div>
-          No sounds saved yet.
-          <div>
-            Not sure where to start? Click the{" "}
-            <QuestionIcon className="icon sml fill" /> to get started!
-          </div>
-        </div>
-      )}
+              bus.emit("new-notification", {
+                status: "INFO",
+                message: "Sound Updated!",
+              });
 
-      {/* ================================== */}
-
-      <div className="flex-gap" style={{ justifyContent: "center" }}>
-        {[
-          { id: "SOUND", name: "Sounds" },
-          { id: "BOARD", name: "Boards" },
-          { id: "TAG", name: "Tags" },
-        ].map((b, i) => (
-          <button
-            key={i}
-            onClick={() =>
               setConfig((prev) => ({
                 ...prev,
-                ui: { ...prev.ui, tab: b.id as "SOUND" | "BOARD" | "TAG" },
-              }))
-            }
+                editing: {
+                  ...prev.editing,
+                  editingBlob: null,
+                  editingSound: null,
+                },
+              }));
+
+              loadSounds();
+            }}
+          />
+        </Modal>
+
+        {/* ================================== */}
+
+        <div
+          className="flex-gap"
+          style={{
+            flex: 1,
+            flexDirection: "column",
+            alignItems: "start",
+            height: "calc(100% - 10px)",
+          }}
+        >
+          {config.data.sounds.length === 0 && (
+            <div>
+              No sounds saved yet.
+              <div>
+                Not sure where to start? Click the{" "}
+                <QuestionIcon className="icon sml fill" /> to get started!
+              </div>
+            </div>
+          )}
+
+          <div
+            className="flex-gap"
             style={{
-              background:
-                config.ui.tab === b.id
-                  ? "oklch(from var(--base-color) calc(l * 0.5) c h)"
-                  : "",
+              flexDirection: "column",
+              height: "100%",
+              width: "calc(100% - 10px)",
+              alignItems: "start",
+              background: "rgba(0, 0, 0, 0.2)",
+              padding: 5,
+              borderRadius: 5,
             }}
           >
-            {b.name}
-          </button>
-        ))}
+            {config.ui.tab === "SOUND" ? (
+              <SoundLibrary
+                sounds={config.data.sounds}
+                allTags={config.data.tags}
+                playSound={(sound) => audioEngine.play(sound)}
+                onDelete={(id) =>
+                  setConfig((prev) => ({
+                    ...prev,
+                    editing: { ...prev.editing, deleteSound: id },
+                  }))
+                }
+                onEdit={openEditor}
+                addSound={addSound}
+                startRecord={() =>
+                  setConfig((prev) => ({
+                    ...prev,
+                    modal: { ...prev.modal, recordEnabled: true },
+                  }))
+                }
+                addYoutube={() =>
+                  setConfig((prev) => ({
+                    ...prev,
+                    modal: { ...prev.modal, youtubeEnabled: true },
+                  }))
+                }
+              />
+            ) : config.ui.tab === "BOARD" ? (
+              <BoardManager
+                boards={config.data.boards}
+                sounds={config.data.sounds}
+                playSound={(sound) => audioEngine.play(sound)}
+                loadBoards={loadBoards}
+              />
+            ) : (
+              <TagManager tags={config.data.tags} loadTags={loadTags} />
+            )}
+          </div>
+        </div>
       </div>
-
-      <div className="seperator half" />
-
-      {config.ui.tab === "SOUND" ? (
-        <SoundLibrary
-          sounds={config.data.sounds}
-          allTags={config.data.tags}
-          playSound={(sound) => audioEngine.play(sound)}
-          onDelete={(id) =>
-            setConfig((prev) => ({
-              ...prev,
-              editing: { ...prev.editing, deleteSound: id },
-            }))
-          }
-          onEdit={openEditor}
-          addSound={addSound}
-          startRecord={() =>
-            setConfig((prev) => ({
-              ...prev,
-              modal: { ...prev.modal, recordEnabled: true },
-            }))
-          }
-          addYoutube={() =>
-            setConfig((prev) => ({
-              ...prev,
-              modal: { ...prev.modal, youtubeEnabled: true },
-            }))
-          }
-        />
-      ) : config.ui.tab === "BOARD" ? (
-        <BoardManager
-          boards={config.data.boards}
-          sounds={config.data.sounds}
-          playSound={(sound) => audioEngine.play(sound)}
-          loadBoards={loadBoards}
-        />
-      ) : (
-        <TagManager tags={config.data.tags} loadTags={loadTags} />
-      )}
     </div>
   );
 }

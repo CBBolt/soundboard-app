@@ -45,6 +45,18 @@ export const getAudioDuration = (file: Blob | File) =>
     };
   });
 
+function getStableDeviceId(device: MediaDeviceInfo) {
+  if (
+    device.deviceId &&
+    device.deviceId !== "default" &&
+    device.deviceId !== "communications"
+  ) {
+    return device.deviceId;
+  }
+
+  return `${device.kind}:${device.label}`;
+}
+
 export function fuzzyMatchDevices(
   vmDevices: string[],
   mediaDevices: MediaDeviceInfo[],
@@ -77,7 +89,7 @@ export function fuzzyMatchDevices(
 
     return {
       label: vmLabel,
-      id: bestMatch?.deviceId ?? "ERROR",
+      id: bestMatch ? getStableDeviceId(bestMatch) : "ERROR",
     };
   });
 }
