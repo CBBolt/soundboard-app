@@ -1,4 +1,4 @@
-type DragTarget = "start" | "end" | "fadeIn" | "fadeOut" | null;
+type DragTarget = "start" | "end" | "fadeIn" | "fadeOut" | "pan" | null;
 
 export interface WaveformSettings {
   startTime: number;
@@ -25,8 +25,15 @@ export class WaveformEditor {
   private settings: WaveformSettings;
   private onChange?: (settings: WaveformSettings) => void;
 
+  private rafPending = false;
+
   private HIT = 8;
   private HANDLESIZE = 6;
+
+  private viewStart = 0;
+  private viewEnd = 0;
+
+  private lastPanX = 0;
 
   private hover: DragTarget = null;
   private drag: DragTarget = null;
@@ -48,15 +55,48 @@ export class WaveformEditor {
     this.audioBuffer = options.audioBuffer;
     this.settings = options.settings;
 
+    const duration = options.audioBuffer.duration;
+
+    this.viewStart = 0;
+    this.viewEnd = Math.min(options.settings.endTime * 1.1, duration);
+
     this.onChange = options.onChange;
 
     this.bindEvents();
-    this.draw();
+    this.requestDraw();
   }
 
   // -----------------------------------
   // Public API
   // -----------------------------------
+
+  public zoom(factor: number, centerTime?: number) {
+    const duration = this.audioBuffer.duration;
+
+    centerTime ??= (this.viewStart + this.viewEnd) * 0.5;
+
+    const currentRange = this.viewEnd - this.viewStart;
+
+    const newRange = Math.max(0.05, Math.min(duration, currentRange / factor));
+
+    let start = centerTime - newRange * 0.5;
+    let end = centerTime + newRange * 0.5;
+
+    if (start < 0) {
+      end -= start;
+      start = 0;
+    }
+
+    if (end > duration) {
+      start -= end - duration;
+      end = duration;
+    }
+
+    this.viewStart = Math.max(0, start);
+    this.viewEnd = Math.min(duration, end);
+
+    this.requestDraw();
+  }
 
   public setSettings(settings: Partial<WaveformSettings>) {
     this.settings = {
@@ -64,12 +104,12 @@ export class WaveformEditor {
       ...settings,
     };
 
-    this.draw();
+    this.requestDraw();
   }
 
   public setAudioBuffer(buffer: AudioBuffer) {
     this.audioBuffer = buffer;
-    this.draw();
+    this.requestDraw();
   }
 
   public destroy() {
@@ -81,6 +121,8 @@ export class WaveformEditor {
   // -----------------------------------
 
   private bindEvents() {
+    this.canvas.addEventListener("wheel", this.handleWheel);
+
     this.canvas.addEventListener("pointerdown", this.handlePointerDown);
 
     this.canvas.addEventListener("pointermove", this.handlePointerMove);
@@ -91,6 +133,8 @@ export class WaveformEditor {
   }
 
   private unbindEvents() {
+    this.canvas.removeEventListener("wheel", this.handleWheel);
+
     this.canvas.removeEventListener("pointerdown", this.handlePointerDown);
 
     this.canvas.removeEventListener("pointermove", this.handlePointerMove);
@@ -104,6 +148,21 @@ export class WaveformEditor {
   // Helpers
   // -----------------------------------
 
+  private isVisibleX(x: number) {
+    return x >= -this.HANDLESIZE && x <= this.canvas.width + this.HANDLESIZE;
+  }
+
+  private requestDraw() {
+    if (this.rafPending) return;
+
+    this.rafPending = true;
+
+    requestAnimationFrame(() => {
+      this.rafPending = false;
+      this.draw();
+    });
+  }
+
   private getWidth() {
     return this.canvas.width;
   }
@@ -112,12 +171,16 @@ export class WaveformEditor {
     return Math.max(0, Math.min(this.getWidth(), x));
   }
 
-  private timeToX(time: number, duration: number) {
-    return (time / duration) * this.getWidth();
+  private timeToX(time: number) {
+    const range = this.viewEnd - this.viewStart;
+
+    return ((time - this.viewStart) / range) * this.getWidth();
   }
 
-  private xToTime(x: number, duration: number) {
-    return (x / this.getWidth()) * duration;
+  private xToTime(x: number) {
+    const range = this.viewEnd - this.viewStart;
+
+    return this.viewStart + (x / this.getWidth()) * range;
   }
 
   private getCanvasXY(e: PointerEvent): [number, number] {
@@ -156,20 +219,12 @@ export class WaveformEditor {
 
     const { startTime, endTime, fadeIn, fadeOut } = this.settings;
 
-    const duration = this.audioBuffer.duration;
+    const startX = this.timeToX(startTime);
+    const endX = this.timeToX(endTime);
 
-    const startX = this.timeToX(startTime, duration);
-    const endX = this.timeToX(endTime, duration);
+    const fadeInX = this.timeToX(Math.min(startTime + fadeIn, endTime));
 
-    const fadeInX = this.timeToX(
-      Math.min(startTime + fadeIn, endTime),
-      duration,
-    );
-
-    const fadeOutX = this.timeToX(
-      Math.max(endTime - fadeOut, startTime),
-      duration,
-    );
+    const fadeOutX = this.timeToX(Math.max(endTime - fadeOut, startTime));
 
     if (this.hitHandle(fadeInX, this.canvas.height * 0.25, x, y)) {
       this.drag = "fadeIn";
@@ -180,36 +235,30 @@ export class WaveformEditor {
     } else if (Math.abs(x - endX) < this.HIT) {
       this.drag = "end";
     } else {
-      this.drag = null;
-      this.isDragging = false;
+      this.drag = "pan";
+
+      this.lastPanX = x;
     }
   };
 
   private handlePointerMove = (e: PointerEvent) => {
     const [x, y] = this.getCanvasXY(e);
 
-    const duration = this.audioBuffer.duration;
-
     const { startTime, endTime, fadeIn, fadeOut } = this.settings;
 
-    const startX = this.timeToX(startTime, duration);
-    const endX = this.timeToX(endTime, duration);
+    const startX = this.timeToX(startTime);
+    const endX = this.timeToX(endTime);
 
-    const fadeInX = this.timeToX(
-      Math.min(startTime + fadeIn, endTime),
-      duration,
-    );
+    const fadeInX = this.timeToX(Math.min(startTime + fadeIn, endTime));
 
-    const fadeOutX = this.timeToX(
-      Math.max(endTime - fadeOut, startTime),
-      duration,
-    );
+    const fadeOutX = this.timeToX(Math.max(endTime - fadeOut, startTime));
 
     // dragging
     if (this.isDragging && this.drag) {
       if (this.pointerId !== e.pointerId) return;
 
-      const time = this.xToTime(x, duration);
+      const time = this.xToTime(x);
+      const visibleRange = this.viewEnd - this.viewStart;
 
       switch (this.drag) {
         case "start":
@@ -245,6 +294,32 @@ export class WaveformEditor {
             ),
           );
           break;
+        case "pan": {
+          const dx = x - this.lastPanX;
+          this.lastPanX = x;
+
+          const deltaTime = dx * (visibleRange / this.canvas.width);
+
+          const duration = this.audioBuffer.duration;
+
+          let start = this.viewStart - deltaTime;
+          let end = this.viewEnd - deltaTime;
+
+          if (start < 0) {
+            end -= start;
+            start = 0;
+          }
+
+          if (end > duration) {
+            start -= end - duration;
+            end = duration;
+          }
+
+          this.viewStart = start;
+          this.viewEnd = end;
+
+          break;
+        }
       }
 
       this.emitChange();
@@ -266,9 +341,15 @@ export class WaveformEditor {
       this.hover = null;
     }
 
-    this.canvas.style.cursor = this.hover ? "pointer" : "default";
+    if (this.isDragging && this.drag === "pan") {
+      this.canvas.style.cursor = "grabbing";
+    } else if (this.hover) {
+      this.canvas.style.cursor = "pointer";
+    } else {
+      this.canvas.style.cursor = "grab";
+    }
 
-    this.draw();
+    this.requestDraw();
   };
 
   private handlePointerUp = (e: PointerEvent) => {
@@ -279,6 +360,26 @@ export class WaveformEditor {
     this.isDragging = false;
     this.drag = null;
     this.pointerId = null;
+
+    this.canvas.style.cursor = this.hover ? "pointer" : "grab";
+  };
+
+  // -----------------------------------
+  // Mouse Wheel
+  // -----------------------------------
+
+  private handleWheel = (e: WheelEvent) => {
+    e.preventDefault();
+
+    const rect = this.canvas.getBoundingClientRect();
+
+    const x = ((e.clientX - rect.left) / rect.width) * this.canvas.width;
+
+    const centerTime = this.xToTime(x);
+
+    const factor = e.deltaY < 0 ? 1.25 : 0.8;
+
+    this.zoom(factor, centerTime);
   };
 
   // -----------------------------------
@@ -311,7 +412,12 @@ export class WaveformEditor {
 
     const data = buffer.getChannelData(0);
 
-    const step = Math.max(1, Math.floor(data.length / width));
+    const sampleRate = buffer.sampleRate;
+
+    const startSample = Math.floor(this.viewStart * sampleRate);
+    const endSample = Math.floor(this.viewEnd * sampleRate);
+
+    const visibleSamples = endSample - startSample;
 
     // background
     ctx.fillStyle = "#111";
@@ -319,28 +425,35 @@ export class WaveformEditor {
 
     // waveform
     ctx.strokeStyle = "#00ff99";
+    ctx.lineWidth = 1;
     ctx.beginPath();
 
-    for (let i = 0; i < width; i++) {
-      const sample = (data[i * step] || 0) * gain;
+    const samplesPerPixel = visibleSamples / width;
 
-      const clamped = Math.max(-1, Math.min(1, sample));
+    for (let x = 0; x < width; x++) {
+      const start = Math.floor(startSample + x * samplesPerPixel);
 
-      const y = ((1 - clamped) * height) / 2;
+      const end = Math.min(data.length, Math.floor(start + samplesPerPixel));
 
-      if (i === 0) {
-        ctx.moveTo(i, y);
-      } else {
-        ctx.lineTo(i, y);
+      let peak = 0;
+
+      for (let i = start; i < end; i++) {
+        peak = Math.max(peak, Math.abs(data[i] * gain));
       }
+
+      const y1 = height / 2 - peak * height * 0.45;
+      const y2 = height / 2 + peak * height * 0.45;
+
+      ctx.moveTo(x, y1);
+      ctx.lineTo(x, y2);
     }
 
     ctx.stroke();
 
     // selection
-    const startX = this.timeToX(startTime, buffer.duration);
+    const startX = this.timeToX(startTime);
 
-    const endX = this.timeToX(endTime, buffer.duration);
+    const endX = this.timeToX(endTime);
 
     ctx.fillStyle = "rgba(0,255,153,0.15)";
     ctx.fillRect(startX, 0, endX - startX, height);
@@ -360,10 +473,7 @@ export class WaveformEditor {
     ctx.stroke();
 
     // fade in region
-    const fadeInX = this.timeToX(
-      Math.min(startTime + fadeIn, endTime),
-      buffer.duration,
-    );
+    const fadeInX = this.timeToX(Math.min(startTime + fadeIn, endTime));
 
     ctx.save();
 
@@ -379,10 +489,7 @@ export class WaveformEditor {
     ctx.restore();
 
     // fade out region
-    const fadeOutX = this.timeToX(
-      Math.max(endTime - fadeOut, startTime),
-      buffer.duration,
-    );
+    const fadeOutX = this.timeToX(Math.max(endTime - fadeOut, startTime));
 
     ctx.save();
 
@@ -400,28 +507,36 @@ export class WaveformEditor {
     const centerY = height / 2;
 
     // handles
-    this.drawHandle(
-      startX,
-      centerY,
-      this.hover === "start" ? "#7CFFB2" : "#00ff99",
-    );
+    if (this.isVisibleX(startX)) {
+      this.drawHandle(
+        startX,
+        centerY,
+        this.hover === "start" ? "#7CFFB2" : "#00ff99",
+      );
+    }
 
-    this.drawHandle(
-      endX,
-      centerY,
-      this.hover === "end" ? "#ff6b8a" : "#ff3366",
-    );
+    if (this.isVisibleX(endX)) {
+      this.drawHandle(
+        endX,
+        centerY,
+        this.hover === "end" ? "#ff6b8a" : "#ff3366",
+      );
+    }
 
-    this.drawHandle(
-      fadeInX,
-      height * 0.25,
-      this.hover === "fadeIn" ? "#4dc3ff" : "#0096ff",
-    );
+    if (this.isVisibleX(fadeInX)) {
+      this.drawHandle(
+        fadeInX,
+        height * 0.25,
+        this.hover === "fadeIn" ? "#4dc3ff" : "#0096ff",
+      );
+    }
 
-    this.drawHandle(
-      fadeOutX,
-      height * 0.75,
-      this.hover === "fadeOut" ? "#ffd08a" : "#ffaa00",
-    );
+    if (this.isVisibleX(fadeOutX)) {
+      this.drawHandle(
+        fadeOutX,
+        height * 0.75,
+        this.hover === "fadeOut" ? "#ffd08a" : "#ffaa00",
+      );
+    }
   }
 }

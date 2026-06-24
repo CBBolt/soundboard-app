@@ -7,6 +7,7 @@ import styles from "../../styles/SoundClipEditor.module.css";
 import VolumeSlider from "../VolumeSlider";
 import QuestionIcon from "../../icons/QuestionIcon";
 import Modal from "../Modal/Modal";
+import LoadingSpinner from "../LoadingSpinner";
 
 type Props = {
   show: boolean;
@@ -225,6 +226,9 @@ export default function SoundClipEditor({
             />
             Fade Out
           </div>
+          <p style={{ textAlign: "start", fontSize: "small" }}>
+            Note: Fade In / Out are nice for smoothing out sounds
+          </p>
 
           <div className="seperator" />
 
@@ -232,6 +236,13 @@ export default function SoundClipEditor({
             Volume:
             <VolumeSlider value={0.4} onChange={() => {}} showValue={false} />
           </div>
+
+          <div className="seperator" />
+
+          <p style={{ textAlign: "start" }}>
+            Use the mouse scroll wheel to zoom in and drag within the graph to
+            pan around the sound
+          </p>
         </div>
       </Modal>
 
@@ -252,14 +263,13 @@ export default function SoundClipEditor({
             width: "100%",
           }}
         >
-          <div
-            style={{
-              display: "flex",
-              gap: "10px",
-            }}
-          >
-            <span>TRIMMED: {(endTime - startTime).toFixed(2)}s</span>
-            <span>TOTAL: {getDuration().toFixed(2)}s</span>
+          <div className="flex-gap">
+            {audioBufferRef.current && (
+              <>
+                <span>TRIMMED: {(endTime - startTime).toFixed(2)}s</span>
+                <span>TOTAL: {getDuration().toFixed(2)}s</span>
+              </>
+            )}
           </div>
           <div
             style={{
@@ -268,42 +278,39 @@ export default function SoundClipEditor({
               marginTop: 12,
             }}
           >
-            <div className="icon-btn" onClick={() => setHelper(true)}>
-              <QuestionIcon className="icon sml fill" />
-            </div>
-            <div
-              className="icon-btn"
-              onClick={() => playSound({ ...sound, ...settings })}
-            >
-              <TriangeIcon className="icon sml fill" />
-            </div>
+            <button onClick={() => setHelper(true)}>
+              <QuestionIcon className="icon sml fill" data-tooltip="Help" />
+            </button>
+            <button onClick={() => playSound({ ...sound, ...settings })}>
+              <TriangeIcon
+                className="icon sml fill"
+                data-tooltip="Play Edited Preview"
+              />
+            </button>
 
-            <div className="icon-btn" onClick={stopSound}>
-              <SquareIcon className="icon sml fill" />
-            </div>
+            <button onClick={stopSound}>
+              <SquareIcon
+                className="icon sml fill"
+                data-tooltip="Stop Edited Preview"
+              />
+            </button>
           </div>
         </div>
       </div>
       <div className="seperator" />
 
       {!audioBufferRef.current ? (
-        <span>Loading...</span>
+        <LoadingSpinner />
       ) : (
         <div
           className="flex-gap"
-          style={{
-            width: "100%",
-            alignItems: "center",
-            overflowX: "auto",
-            overflowY: "visible",
-          }}
+          style={{ justifyContent: "center", overflow: "auto" }}
         >
           <canvas
             ref={canvasRef}
-            width={300}
-            height={100}
+            width={500}
+            height={150}
             style={{
-              flex: 1,
               background: "#111",
               touchAction: "none",
               borderRadius: 8,

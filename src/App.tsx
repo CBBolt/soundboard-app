@@ -29,17 +29,16 @@ import TagManager from "./components/Tag/TagManager";
 import SideBar from "./components/SideBar";
 import SoundboardIcon from "./icons/SoundboardIcon";
 import TagIcon from "./icons/TagIcon";
+import GlobalTooltip from "./components/Tooltip/GlobalTooltip";
 
 /*
 
 TODO:
- - Waveform ability to zoom in and out clip (time range)
  - Updated Instructions / interactive tutorial
 
 CLEANUP:
 
  - Component Cleanup
- - YT Add cleanup / verification
 
 */
 
@@ -68,6 +67,7 @@ type ModalState = {
 type UIState = {
   loading: boolean;
   controllerOverlay: boolean;
+  loadedBoard: number;
   youtubeProgress: number;
   VBDetected: VBDetected;
   toVoiceMeeter: boolean;
@@ -116,6 +116,7 @@ function App() {
     ui: {
       loading: true,
       controllerOverlay: false,
+      loadedBoard: -1,
       youtubeProgress: -1,
       VBDetected: { voicemeeter: false, vbCable: false },
       toVoiceMeeter: false,
@@ -523,6 +524,7 @@ function App() {
       }}
     >
       <NotificationManager />
+      <GlobalTooltip />
 
       <ActionsBar
         VBDetected={config.ui.VBDetected}
@@ -625,6 +627,9 @@ function App() {
               }));
             },
           }}
+          loadedBoard={config.data.boards.find(
+            (b) => b.id === config.ui.loadedBoard,
+          )}
           curItem={config.ui.tab}
           items={[
             {
@@ -688,19 +693,32 @@ function App() {
             }))
           }
           onSave={async (url) => {
-            await window.electronAPI.saveYoutubeLink(url);
-            setConfig((prev) => ({
-              ...prev,
-              ui: {
-                ...prev.ui,
-                youtubeProgress: -1,
-              },
-              modal: {
-                ...prev.modal,
-                youtubeEnabled: false,
-              },
-            }));
-            loadSounds();
+            try {
+              await window.electronAPI.saveYoutubeLink(url);
+              setConfig((prev) => ({
+                ...prev,
+                modal: {
+                  ...prev.modal,
+                  youtubeEnabled: false,
+                },
+              }));
+            } catch (err) {
+              console.error(err);
+              bus.emit("new-notification", {
+                status: "ERROR",
+                message: "Error adding sound from link",
+              });
+            } finally {
+              setConfig((prev) => ({
+                ...prev,
+                ui: {
+                  ...prev.ui,
+                  youtubeProgress: -1,
+                },
+              }));
+
+              loadSounds();
+            }
           }}
           progress={config.ui.youtubeProgress}
         />
@@ -731,7 +749,6 @@ function App() {
                 ...prev,
                 modal: {
                   ...prev.modal,
-                  settingsEnabled: false,
                 },
               }));
 
@@ -939,6 +956,15 @@ function App() {
                 sounds={config.data.sounds}
                 playSound={(sound) => audioEngine.play(sound)}
                 loadBoards={loadBoards}
+                loadedBoard={config.data.boards.find(
+                  (b) => b.id === config.ui.loadedBoard,
+                )}
+                onSetLoadedBoard={(id) =>
+                  setConfig((prev) => ({
+                    ...prev,
+                    ui: { ...prev.ui, loadedBoard: id },
+                  }))
+                }
               />
             ) : (
               <TagManager tags={config.data.tags} loadTags={loadTags} />

@@ -35,11 +35,12 @@ export default function DropdownNotification({
   return (
     <div
       ref={notificationRef}
-      className={`${styles.notification} ${visible ? styles.show : ""}`}
+      className={`${styles.notification} ${visible ? styles.show : ""} ${styles[status]}`}
     >
-      <div className={`${styles["notification-bg"]} ${styles[status]}`} />
       <div className={styles["notification-body"]}>
+        <span className={styles.message}>{message}</span>
         <button
+          className={styles["close-button"]}
           onClick={(e) => {
             e.stopPropagation();
             bus.emit("remove-notification", id);
@@ -47,7 +48,6 @@ export default function DropdownNotification({
         >
           X
         </button>
-        <span>{message}</span>
       </div>
     </div>
   );

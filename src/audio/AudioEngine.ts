@@ -21,7 +21,20 @@ class AudioEngine {
     const filePath = await api.getSoundPath(sound.fileName);
     const buffer = await api.readSound(filePath);
 
-    const blob = new Blob([buffer as BlobPart], { type: "audio/*" });
+    const ext = sound.fileName.split(".").pop()?.toLowerCase();
+
+    const mime =
+      ext === "mp3"
+        ? "audio/mpeg"
+        : ext === "wav"
+          ? "audio/wav"
+          : ext === "ogg"
+            ? "audio/ogg"
+            : ext === "webm"
+              ? "audio/webm"
+              : "application/octet-stream";
+
+    const blob = new Blob([buffer as BlobPart], { type: mime });
     const url = URL.createObjectURL(blob);
 
     const audio = new Audio();
@@ -55,9 +68,24 @@ class AudioEngine {
       // -----------------------------------
       // Wait for metadata (not canplaythrough)
       // -----------------------------------
-      await new Promise<void>((res, rej) => {
-        audio.onloadedmetadata = () => res();
-        audio.onerror = rej;
+      await new Promise<void>((resolve, reject) => {
+        const cleanup = () => {
+          audio.removeEventListener("canplay", onReady);
+          audio.removeEventListener("error", onError);
+        };
+
+        const onReady = () => {
+          cleanup();
+          resolve();
+        };
+
+        const onError = () => {
+          cleanup();
+          reject(new Error("Audio failed to load"));
+        };
+
+        audio.addEventListener("canplay", onReady, { once: true });
+        audio.addEventListener("error", onError, { once: true });
       });
 
       // -----------------------------------
@@ -81,6 +109,14 @@ class AudioEngine {
       // -----------------------------------
       // Start playback immediately
       // -----------------------------------
+      console.log({
+        file: sound.fileName,
+        duration: audio.duration,
+        readyState: audio.readyState,
+        networkState: audio.networkState,
+        startTime: sound.startTime,
+      });
+
       const playPromise = audio.play();
       if (playPromise) await playPromise;
 
@@ -103,8 +139,8 @@ class AudioEngine {
       // -----------------------------------
       // Fade OUT (timed, async)
       // -----------------------------------
-      const duration =
-        (sound.endTime ?? audio.duration) - (sound.startTime ?? 0);
+      const realDuration = await this.getFiniteDuration(audio);
+      const duration = (sound.endTime ?? realDuration) - (sound.startTime ?? 0);
 
       if (fadeOut > 0) {
         const fadeStart = Math.max(0, duration - fadeOut) * 1000;
@@ -145,6 +181,29 @@ class AudioEngine {
     }
 
     this.active.clear();
+  }
+
+  private async getFiniteDuration(audio: HTMLAudioElement) {
+    if (Number.isFinite(audio.duration)) {
+      return audio.duration;
+    }
+
+    return new Promise<number>((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        reject(new Error("Could not determine audio duration"));
+      }, 3000);
+
+      const check = () => {
+        if (Number.isFinite(audio.duration)) {
+          clearTimeout(timeout);
+          resolve(audio.duration);
+        } else {
+          requestAnimationFrame(check);
+        }
+      };
+
+      check();
+    });
   }
 
   private async rebindAll() {

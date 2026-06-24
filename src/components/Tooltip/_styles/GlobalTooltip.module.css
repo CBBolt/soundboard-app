@@ -1,0 +1,21 @@
+.global-tooltip {
+  position: fixed;
+
+  z-index: 999999;
+
+  padding: 0.4rem 0.7rem;
+
+  background: rgba(20, 20, 20, 0.95);
+  color: white;
+
+  border-radius: 6px;
+
+  font-size: 0.85rem;
+  font-weight: 500;
+
+  pointer-events: none;
+
+  white-space: nowrap;
+
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import SaveIcon from "../../icons/SaveIcon";
 import Modal from "./Modal";
 import LoadingSpinner from "../LoadingSpinner";
@@ -17,11 +17,8 @@ export default function YoutubeLinkModal({
   onSave,
 }: Props) {
   const [url, setURL] = useState("");
-  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    if (progress >= 100) setLoading(false);
-  }, [progress]);
+  const loading = progress >= 0 && progress < 100;
 
   return (
     <Modal
@@ -42,7 +39,6 @@ export default function YoutubeLinkModal({
         style={{ position: "absolute", top: 10, right: 50 }}
         onClick={() => {
           onSave(url);
-          setLoading(true);
           setURL("");
         }}
       >

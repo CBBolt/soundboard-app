@@ -181,7 +181,7 @@ export default function TagManager({ tags, loadTags }: TagProps) {
         </button>
       </div>
 
-      <div style={{ flex: 1, overflowY: "auto" }}>
+      <div style={{ flex: 1, width: "100%", overflowY: "auto" }}>
         {tags
           .filter((t) =>
             t.name.toLowerCase().includes(config.filter.toLowerCase()),

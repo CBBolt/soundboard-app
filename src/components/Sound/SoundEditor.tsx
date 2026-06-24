@@ -3,10 +3,8 @@ import { useEffect, useState } from "react";
 import SoundClipEditor from "./SoundClipEditor";
 
 import SaveIcon from "../../icons/SaveIcon";
-import HotkeyIcon from "../../icons/HotkeyIcon";
 import Modal from "../Modal/Modal";
 import MusicNoteIcon from "../../icons/MusicNoteIcon";
-import QuestionIcon from "../../icons/QuestionIcon";
 import HotkeyListenerModal from "../Modal/HotkeyListenerModal";
 import HotkeyWrapper from "../Hotkey/HotkeyWrapper";
 import PencilIcon from "../../icons/PencilIcon";
@@ -34,7 +32,6 @@ type SoundSettings = {
   editSound: boolean;
   editIcon: boolean;
   editTags: boolean;
-  helper: boolean;
 };
 
 export default function SoundEditor({
@@ -52,7 +49,6 @@ export default function SoundEditor({
     removeHotkey: false,
     editSound: false,
     editIcon: false,
-    helper: false,
     editTags: false,
   });
 
@@ -267,28 +263,6 @@ export default function SoundEditor({
           />
         </Modal>
 
-        <Modal
-          isOpen={config.helper}
-          onClose={() => setConfig((prev) => ({ ...prev, helper: false }))}
-          header={
-            <>
-              <QuestionIcon className="icon fill" />
-              <h2>Sound Editor</h2>
-            </>
-          }
-        >
-          <div>
-            <div className="flex-gap">
-              <HotkeyIcon className="icon fill" />
-              Assign Hotkeys
-            </div>
-            <div className="flex-gap">
-              <MusicNoteIcon className="icon fill" />
-              Edit Sound
-            </div>
-          </div>
-        </Modal>
-
         <HotkeyListenerModal
           allHotkeys={allHotkeys}
           remove={config.removeHotkey}
@@ -342,15 +316,10 @@ export default function SoundEditor({
       >
         <div
           className="icon-btn"
-          onClick={() => setConfig((prev) => ({ ...prev, helper: true }))}
-        >
-          <QuestionIcon className="icon fill" />
-        </div>
-        <div
-          className="icon-btn"
           onClick={() =>
             setConfig((prev) => ({ ...prev, editSound: !prev.editSound }))
           }
+          data-tooltip="Edit Sound"
         >
           <MusicNoteIcon
             className="icon fill"

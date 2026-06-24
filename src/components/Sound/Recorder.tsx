@@ -55,6 +55,14 @@ export default function Recorder({
   const MAX_POINTS = 300;
   const VISUAL_GAIN = 5;
 
+  useEffect(() => {
+    setConfig((prev) => ({
+      ...prev,
+      devices,
+      selectedDevice: defaultInputDevice,
+    }));
+  }, [devices, defaultInputDevice]);
+
   // --------------------------------------------------
   // Waveform Drawing
   // --------------------------------------------------
@@ -120,24 +128,28 @@ export default function Recorder({
   // Cleanup
   // --------------------------------------------------
 
-  const cleanup = async () => {
+  const stopVisualization = () => {
     if (animationRef.current) {
       cancelAnimationFrame(animationRef.current);
-
       animationRef.current = null;
     }
+  };
 
+  const stopAudioGraph = async () => {
     streamRef.current?.getTracks().forEach((t) => t.stop());
-
     streamRef.current = null;
 
     analyserRef.current = null;
 
     if (audioCtxRef.current) {
       await audioCtxRef.current.close();
-
       audioCtxRef.current = null;
     }
+  };
+
+  const cleanup = async () => {
+    stopVisualization();
+    await stopAudioGraph();
   };
 
   // --------------------------------------------------
@@ -158,7 +170,7 @@ export default function Recorder({
         audio: config.selectedDevice
           ? {
               deviceId: {
-                exact: config.selectedDevice,
+                ideal: config.selectedDevice,
               },
 
               echoCancellation: false,
@@ -173,6 +185,7 @@ export default function Recorder({
       // Visualization
 
       const audioCtx = new AudioContext();
+      await audioCtx.resume();
 
       audioCtxRef.current = audioCtx;
 
@@ -206,6 +219,13 @@ export default function Recorder({
         }
       };
 
+      recorder.onerror = (e) => {
+        console.error("MediaRecorder error:", e);
+        setConfig((prev) => ({ ...prev, playing: false }));
+        playbackRef.current = null;
+        stopRecording();
+      };
+
       recorder.onstop = async () => {
         const blob = new Blob(chunksRef.current, {
           type: mimeType,
@@ -236,8 +256,10 @@ export default function Recorder({
         ...prev,
         recording: true,
       }));
-    } catch (err) {
+    } catch (err: any) {
       console.error("Recording failed:", err);
+      console.error("Constraint:", err?.constraint);
+      console.error("Name:", err?.name);
 
       await cleanup();
     }

@@ -16,7 +16,12 @@ export default function DefaultHeader({
   return (
     <div
       className="titlebar flex-gap"
-      style={{ position: onTop ? "fixed" : "relative", top: 0, zIndex: 5 }}
+      style={{
+        position: onTop ? "fixed" : "relative",
+        top: 0,
+        zIndex: 5,
+        width: onTop ? "100%" : "",
+      }}
     >
       <div className="grabber" style={{ top: -20, left: "50%", zIndex: 1000 }}>
         <Icon

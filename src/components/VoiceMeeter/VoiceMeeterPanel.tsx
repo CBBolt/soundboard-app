@@ -172,6 +172,7 @@ export default function VoiceMeeterPanel({
     return (
       <div
         className="icon-btn grey"
+        data-tooltip={config[channel].mute ? "Unmute Channel" : "Mute Channel"}
         onClick={() =>
           setConfig((prev) => {
             const next = !prev[channel].mute;
@@ -210,6 +211,9 @@ export default function VoiceMeeterPanel({
     return (
       <div
         className="icon-btn grey"
+        data-tooltip={
+          config[channel].a ? "Send to VoiceMeeter" : "Monitor Myself"
+        }
         onClick={() =>
           setConfig((prev) => {
             const next = !prev[channel].a;
@@ -277,7 +281,10 @@ export default function VoiceMeeterPanel({
             onClick={() => setConfig((prev) => ({ ...prev, expand: true }))}
           >
             <div className="flex-gap">
-              <GearIcon className="icon stroke sml" />
+              <GearIcon
+                className="icon stroke sml"
+                data-tooltip="Open VoiceMeeter Settings"
+              />
             </div>
           </button>
         </div>

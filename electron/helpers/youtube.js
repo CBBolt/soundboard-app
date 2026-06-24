@@ -23,6 +23,8 @@ export function downloadYoutube(mainWindow, url, outputTemplate) {
       url,
     ]);
 
+    proc.on("error", reject);
+
     let finalPath = "";
 
     proc.stdout.on("data", (data) => {
@@ -46,13 +48,15 @@ export function downloadYoutube(mainWindow, url, outputTemplate) {
       }
     });
 
+    let stderr = "";
+
     proc.stderr.on("data", (data) => {
-      // Optional: log warnings
-      console.warn(data.toString());
+      stderr += data.toString();
     });
 
     proc.on("close", async (code) => {
-      if (code !== 0) return reject(new Error("yt-dlp failed"));
+      if (code !== 0)
+        return reject(new Error(`yt-dlp download failed (${code})\n${stderr}`));
 
       mainWindow.webContents.send("youtube-download-progress", 100);
 
@@ -72,32 +76,40 @@ export function getYoutubeMetadata(url) {
 
   return new Promise((resolve, reject) => {
     const proc = spawn(ytDlpPath, [
+      "--dump-single-json",
       "--no-download",
-      "--print",
-      "%(duration)s",
-      "--print",
-      "%(title)s",
+      "--no-warnings",
       url,
     ]);
 
     let output = "";
+    let stderr = "";
 
-    proc.stdout.on("data", (data) => {
-      output += data.toString();
+    proc.stdout.on("data", (d) => {
+      output += d.toString();
     });
 
+    proc.stderr.on("data", (d) => {
+      stderr += d.toString();
+    });
+
+    proc.on("error", reject);
+
     proc.on("close", (code) => {
-      if (code !== 0) return reject(new Error("yt-dlp metadata failed"));
+      if (code !== 0) {
+        return reject(new Error(`yt-dlp metadata failed (${code})\n${stderr}`));
+      }
 
-      const [durationStr, title] = output
-        .split("\n")
-        .map((s) => s.trim())
-        .filter(Boolean);
+      try {
+        const json = JSON.parse(output);
 
-      resolve({
-        duration: Number(durationStr),
-        title,
-      });
+        resolve({
+          duration: json.duration,
+          title: json.title,
+        });
+      } catch (err) {
+        reject(new Error(`Failed to parse yt-dlp JSON\n\n${output}`));
+      }
     });
   });
 }
@@ -105,17 +117,28 @@ export function getYoutubeMetadata(url) {
 function getYtDlpPath() {
   const base = path.join(app.getAppPath(), "resources", "yt-dlp");
 
+  let executable;
+
   switch (os.platform()) {
     case "win32":
-      return path.join(base, "win", "yt-dlp.exe");
+      executable = path.join(base, "win", "yt-dlp.exe");
+      break;
 
     case "darwin":
-      return path.join(base, "mac", "yt-dlp");
+      executable = path.join(base, "mac", "yt-dlp");
+      break;
 
     case "linux":
-      return path.join(base, "linux", "yt-dlp");
+      executable = path.join(base, "linux", "yt-dlp");
+      break;
 
     default:
       throw new Error("Unsupported platform");
   }
+
+  if (!fs.existsSync(executable)) {
+    throw new Error(`yt-dlp executable not found: ${executable}`);
+  }
+
+  return executable;
 }

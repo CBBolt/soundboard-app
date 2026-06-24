@@ -1,3 +1,5 @@
+import { useEffect, useState } from "react";
+
 export const clampVolume = (v: number) => Math.max(0, Math.min(1, v));
 
 export const truncateText = (s: string, c: number = 20) =>
@@ -194,3 +196,24 @@ export const getVMConfig = async () => {
     output: { gain: outputGain.float_value, mute: outputMute.float_value },
   };
 };
+
+export function useContainerWidth(ref: React.RefObject<HTMLElement>) {
+  const [width, setWidth] = useState(0);
+
+  useEffect(() => {
+    if (!ref.current) return;
+
+    const el = ref.current;
+
+    const observer = new ResizeObserver((entries) => {
+      const entry = entries[0];
+      setWidth(entry.contentRect.width);
+    });
+
+    observer.observe(el);
+
+    return () => observer.disconnect();
+  }, [ref]);
+
+  return width;
+}

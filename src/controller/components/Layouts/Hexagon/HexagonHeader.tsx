@@ -2,7 +2,7 @@ import { Icon } from "@iconify/react";
 import HotkeyComponent from "../../../../components/Hotkey/HotkeyComponent";
 import SquareIcon from "../../../../icons/SquareIcon";
 import { useRef } from "react";
-import { useContainerWidth } from "../_lib/helpers";
+import { useContainerWidth } from "../../../../lib/helpers";
 
 type HeaderProps = {
   settings: Settings;

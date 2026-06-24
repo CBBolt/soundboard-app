@@ -19,6 +19,7 @@ type BoardComponentProps = {
   onSetBoard: (id: number) => void;
   onSave: (board: Board) => void;
   onDelete: (boardId: number) => void;
+  loadedBoard?: Board;
 };
 
 type BoardConfig = {
@@ -29,6 +30,7 @@ type BoardConfig = {
 
 export default function BoardComponent({
   board,
+  loadedBoard,
   sounds,
   playSound,
   onSetBoard,
@@ -54,14 +56,13 @@ export default function BoardComponent({
     }));
   }, [board]);
 
-  function moveItem<T>(array: T[], from: number, to: number) {
+  function moveItem<T>(array: T[], i: number, j: number) {
     const copy = [...array];
-
-    const [item] = copy.splice(from, 1);
-    copy.splice(to, 0, item);
-
+    [copy[i], copy[j]] = [copy[j], copy[i]];
     return copy;
   }
+
+  const displayItems = [...config.board.sounds, null];
 
   return (
     <>
@@ -101,19 +102,47 @@ export default function BoardComponent({
               }
             >
               {e === "BOARD" ? (
-                <SoundboardIcon className="icon stroke" />
+                <SoundboardIcon
+                  className="icon stroke"
+                  data-tooltip="Soundboard Layout"
+                />
               ) : e === "RADIAL" ? (
-                <RadialIcon className="icon fill" />
+                <RadialIcon
+                  className="icon fill"
+                  data-tooltip="Radial Layout"
+                />
               ) : e === "CONSTELLATION" ? (
-                <ConstellationIcon className="icon stroke" />
+                <ConstellationIcon
+                  className="icon stroke"
+                  data-tooltip="Constellation Layout"
+                />
               ) : (
-                <HexIcon className="icon fill" />
+                <HexIcon className="icon fill" data-tooltip="Hexagon Layout" />
               )}
             </button>
           ))}
           <div className="seperator vertical light" />
-          <button onClick={() => onSetBoard(board.id)}>
-            <LoadIcon className="icon fill stroke" />
+          <button
+            onClick={() =>
+              onSetBoard(
+                loadedBoard && loadedBoard.id === board.id ? -1 : board.id,
+              )
+            }
+          >
+            <LoadIcon
+              className="icon fill stroke"
+              style={{
+                transform:
+                  loadedBoard && loadedBoard.id === board.id
+                    ? "rotate(180deg)"
+                    : "",
+              }}
+              data-tooltip={
+                loadedBoard && loadedBoard.id === board.id
+                  ? "Unload Board from Controller"
+                  : "Load Board to Controller"
+              }
+            />
           </button>
           <button onClick={() => onSave(config.board)}>
             <SaveIcon className="icon fill" />
@@ -128,14 +157,17 @@ export default function BoardComponent({
         style={{
           gridTemplateColumns: "repeat(auto-fit, 100px)",
           width: "calc(100% - 10px)",
-          alignSelf: "start",
+          alignItems: "start",
           flex: 1,
           overflowY: "auto",
           padding: 5,
         }}
       >
-        {[...config.board.sounds, -1].map((soundId, i) => {
-          if (soundId === -1) {
+        {displayItems.map((soundId, i) => {
+          const isAddTile = soundId === null;
+
+          const dataIndex = i < config.board.sounds.length ? i : null;
+          if (isAddTile) {
             return (
               <div
                 className={styles.tile}
@@ -157,8 +189,8 @@ export default function BoardComponent({
           }
 
           const sound =
-            config.board.sounds && config.board.sounds[i]
-              ? sounds.find((s) => s.id === config.board.sounds[i])!
+            dataIndex !== null
+              ? sounds.find((s) => s.id === config.board.sounds[dataIndex])!
               : null;
 
           return (
@@ -180,18 +212,19 @@ export default function BoardComponent({
                     dropIndex: null,
                   })),
                 onDrop: () => {
-                  if (config.draggedIndex === null || config.draggedIndex === i)
-                    return;
+                  const from = config.draggedIndex;
+                  const to = i;
+
+                  if (from === null || from === to) return;
+
+                  // IMPORTANT: ignore drop onto "add tile"
+                  if (to === config.board.sounds.length) return;
 
                   setConfig((prev) => ({
                     ...prev,
                     board: {
                       ...prev.board,
-                      sounds: moveItem(
-                        prev.board.sounds,
-                        config.draggedIndex!,
-                        i,
-                      ),
+                      sounds: moveItem(prev.board.sounds, from, to),
                     },
                   }));
 
@@ -207,18 +240,19 @@ export default function BoardComponent({
               playSound={(sound) => playSound(sound)}
               setSound={(id) => {
                 setConfig((prev) => {
+                  const sounds = [...prev.board.sounds];
+
                   if (id === -1) {
                     return {
                       ...prev,
                       board: {
                         ...prev.board,
-                        sounds: prev.board.sounds.filter((_, idx) => idx !== i),
+                        sounds: sounds.filter((_, idx) => idx !== dataIndex),
                       },
                     };
                   }
 
-                  const sounds = [...prev.board.sounds];
-                  sounds[i] = id;
+                  sounds[dataIndex!] = id;
 
                   return {
                     ...prev,

@@ -26,6 +26,7 @@ export default function SoundLibraryItem({
     <div
       className="grid-gap grey"
       style={{
+        width: "calc(100% - 10px)",
         textAlign: "center",
         gridTemplateColumns: "0.1fr 1fr 1fr 1fr 0.5fr",
         borderRadius: 5,

@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import BoardTile from "./BoardTile";
 import BoardHeader from "./BoardHeader";
-import { useContainerWidth } from "../_lib/helpers";
+import { useContainerWidth } from "../../../../lib/helpers";
 
 type BoardLayoutProps = {
   settings: Settings;
@@ -34,7 +34,6 @@ export default function BoardLayout({ settings, sounds }: BoardLayoutProps) {
           width: "100%",
           padding: 5,
           overflow: "auto",
-          justifyContent: "center",
           alignContent: "start",
           gridTemplateColumns: `repeat(auto-fit, ${tileSize}px)`,
         }}

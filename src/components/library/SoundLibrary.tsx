@@ -121,9 +121,10 @@ export default function SoundLibrary({
         </div>
       </div>
       <div
-        className="grid-gap"
+        className="flex-gap"
         style={{
           flex: "1",
+          flexDirection: "column",
           overflowY: "auto",
           textAlign: "start",
           alignItems: "start",

@@ -42,7 +42,13 @@ export default function ActionsBar({
         <span style={{ fontSize: "small" }}>V 1.1.0</span>
       </div>
       <div className="flex-gap">
-        <button onClick={toggleOverlay} className="grey">
+        <button
+          onClick={toggleOverlay}
+          className="grey"
+          data-tooltip={
+            overlay ? "Close Controller Overlay" : "Open Controller Overlay"
+          }
+        >
           <OverlayIcon
             className="icon fill sml"
             style={{
@@ -52,7 +58,7 @@ export default function ActionsBar({
           />
         </button>
         <HoverDropdown
-          label={<QuestionIcon className="icon sml fill" />}
+          label={<QuestionIcon className="icon sml fill" data-tooltip="Help" />}
           items={[
             {
               label: (
@@ -89,7 +95,7 @@ export default function ActionsBar({
             },
           ]}
         />
-        <button onClick={showSettings}>
+        <button onClick={showSettings} data-tooltip="Settings">
           <GearIcon className="icon sml stroke" />
         </button>
         <button onClick={stopAll}>

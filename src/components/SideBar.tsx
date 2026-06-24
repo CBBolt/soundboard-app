@@ -1,7 +1,9 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import HeadphoneIcon from "../icons/HeadphoneIcon";
 import VoiceMeeterPanel from "./VoiceMeeter/VoiceMeeterPanel";
 import VMDeviceSelector from "./VoiceMeeter/VMDeviceSelector";
+import LoadIcon from "../icons/LoadIcon";
+import { useContainerWidth } from "../lib/helpers";
 
 type SidebarItem = {
   id: string;
@@ -14,6 +16,7 @@ type SidebarProps = {
   curItem: "BOARD" | "TAG" | "SOUND";
   items: SidebarItem[];
   defaultOpen?: boolean;
+  loadedBoard?: Board;
   voiceMeeter: {
     currentInput: VMAudioDevice;
     currentOuput: VMAudioDevice;
@@ -39,15 +42,20 @@ export default function SideBar({
   curItem,
   items,
   defaultOpen = false,
+  loadedBoard,
   voiceMeeter,
 }: SidebarProps) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
+  const ref = useRef<HTMLDivElement>(null!);
+  const width = useContainerWidth(ref);
+
   return (
     <aside
+      ref={ref}
       style={{
         position: "relative",
-        width: isOpen ? "40%" : 40,
+        width: isOpen ? "300px" : 40,
         transition: "width 0.2s ease",
         borderRight: "1px solid #ddd",
         background: "rgba(0, 0, 0, 0.5)",
@@ -74,7 +82,7 @@ export default function SideBar({
               const content = (
                 <>
                   {item.icon && <span>{item.icon}</span>}
-                  {isOpen && <span>{item.label}</span>}
+                  {width > 200 && <span>{item.label}</span>}
                 </>
               );
 
@@ -101,35 +109,55 @@ export default function SideBar({
           </nav>
 
           <div
-            className="flex-gap"
+            className="grid-gap"
             style={{ position: "absolute", bottom: 10 }}
           >
-            <button className="icon-btn grey" onClick={voiceMeeter.onToggle}>
-              <HeadphoneIcon
-                className="icon fill"
+            {loadedBoard && (
+              <div
+                className="flex-gap"
                 style={{
-                  fill: !voiceMeeter.toVoiceMeeter ? "var(--base-color)" : "",
-                  stroke: !voiceMeeter.toVoiceMeeter ? "white" : "",
+                  border: "2px solid white",
+                  padding: 5,
+                  borderRadius: 5,
                 }}
-              />
-            </button>
-            {voiceMeeter.toVoiceMeeter ? (
-              <VoiceMeeterPanel
-                outputDevices={voiceMeeter.outputDevices}
-                selectedOutputDevice={voiceMeeter.currentOuput}
-                inputDevices={voiceMeeter.inputDevices}
-                selectedInputDevice={voiceMeeter.currentInput}
-                loadVMConfig={voiceMeeter.getVMConfig}
-                onSave={(data) => voiceMeeter.onVoiceMeeterChange(data)}
-                loadDevices={voiceMeeter.loadDevices}
-              />
-            ) : (
-              <VMDeviceSelector
-                currentDevice={voiceMeeter.currentLocalOutput}
-                devices={voiceMeeter.outputDevices}
-                onChange={(value: string) => voiceMeeter.onLocalChange(value)}
-              />
+              >
+                <LoadIcon className="icon fill stroke" />
+                {loadedBoard.name}
+              </div>
             )}
+            <div className="flex-gap">
+              <button className="icon-btn grey" onClick={voiceMeeter.onToggle}>
+                <HeadphoneIcon
+                  className="icon fill"
+                  style={{
+                    fill: !voiceMeeter.toVoiceMeeter ? "var(--base-color)" : "",
+                    stroke: !voiceMeeter.toVoiceMeeter ? "white" : "",
+                  }}
+                  data-tooltip={
+                    voiceMeeter.toVoiceMeeter
+                      ? "Switch to Local Output"
+                      : "Switch to VoiceMeeter Output"
+                  }
+                />
+              </button>
+              {voiceMeeter.toVoiceMeeter ? (
+                <VoiceMeeterPanel
+                  outputDevices={voiceMeeter.outputDevices}
+                  selectedOutputDevice={voiceMeeter.currentOuput}
+                  inputDevices={voiceMeeter.inputDevices}
+                  selectedInputDevice={voiceMeeter.currentInput}
+                  loadVMConfig={voiceMeeter.getVMConfig}
+                  onSave={(data) => voiceMeeter.onVoiceMeeterChange(data)}
+                  loadDevices={voiceMeeter.loadDevices}
+                />
+              ) : (
+                <VMDeviceSelector
+                  currentDevice={voiceMeeter.currentLocalOutput}
+                  devices={voiceMeeter.outputDevices}
+                  onChange={(value: string) => voiceMeeter.onLocalChange(value)}
+                />
+              )}
+            </div>
           </div>
         </>
       )}

@@ -45,9 +45,15 @@ export function registerSoundHandlers(
   });
 
   ipcMain.handle("save-recording", async (_, buffer, metadata) => {
+    const extension = metadata.mimeType?.includes("webm")
+      ? ".webm"
+      : metadata.mimeType?.includes("wav")
+        ? ".wav"
+        : ".bin";
+
     saveSoundFile(soundsFolderPath, soundsPath, {
       buffer,
-      fileName: `recording-${Date.now()}.wav`,
+      fileName: `recording-${Date.now()}${extension}`,
       metadata,
     });
   });
@@ -55,7 +61,21 @@ export function registerSoundHandlers(
   ipcMain.handle("add-youtube-audio", async (_, url) => {
     const outputTemplate = path.join(soundsFolderPath, "%(id)s.%(ext)s");
 
-    const meta = await getYoutubeMetadata(url);
+    let meta;
+
+    try {
+      meta = await getYoutubeMetadata(url);
+    } catch (err) {
+      console.error(err);
+
+      throw new Error(
+        err instanceof Error
+          ? err.message
+          : "Unable to retrieve media metadata",
+      );
+
+      return null;
+    }
 
     const filePath = await downloadYoutube(mainWindow, url, outputTemplate);
 

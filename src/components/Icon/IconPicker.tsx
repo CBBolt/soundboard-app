@@ -54,10 +54,11 @@ export default function IconPicker({ onSelect }: PickerProps) {
       <div
         className="grid-gap"
         style={{
-          height: 200,
+          alignItems: "start",
+          height: "200px",
           overflowY: "auto",
           margin: "10px 0",
-          gridTemplateColumns: "repeat(10, 1fr)",
+          gridTemplateColumns: "repeat(auto-fit, minmax(50px, 1fr))",
         }}
       >
         {filtered.slice(0, MAX_VISIBLE).map((icon) => (
