@@ -9,18 +9,22 @@ import TriangeIcon from "../../icons/TriangleIcon";
 
 type ItemProps = {
   sound: Sound;
-  playSound: (sound: Sound) => void;
-  onEdit: (sound: Sound) => void;
-  onDelete: (id: number) => void;
+  full?: boolean;
+  playSound?: (sound: Sound) => void;
+  onEdit?: (sound: Sound) => void;
+  onDelete?: (id: number) => void;
+  onClick?: (sound: Sound) => void;
 };
 
 const MAX_TAGS = 3;
 
 export default function SoundLibraryItem({
   sound,
+  full = true,
   playSound,
   onEdit,
   onDelete,
+  onClick,
 }: ItemProps) {
   return (
     <div
@@ -31,7 +35,9 @@ export default function SoundLibraryItem({
         gridTemplateColumns: "0.1fr 1fr 1fr 1fr 0.5fr",
         borderRadius: 5,
         padding: 5,
+        cursor: !full ? "pointer" : "",
       }}
+      onClick={() => onClick?.(sound)}
     >
       <div
         style={{
@@ -80,17 +86,19 @@ export default function SoundLibraryItem({
       ) : (
         <div />
       )}
-      <div className="flex-gap">
-        <button onClick={() => playSound(sound)}>
-          <TriangeIcon className="icon fill sml" />
-        </button>
-        <button onClick={() => onEdit(sound)}>
-          <PencilIcon className="icon fill sml" />
-        </button>
-        <button onClick={() => onDelete(sound.id)}>
-          <TrashIcon className="icon stroke sml" />
-        </button>
-      </div>
+      {full && (
+        <div className="flex-gap">
+          <button onClick={() => playSound?.(sound)}>
+            <TriangeIcon className="icon fill sml" />
+          </button>
+          <button onClick={() => onEdit?.(sound)}>
+            <PencilIcon className="icon fill sml" />
+          </button>
+          <button onClick={() => onDelete?.(sound.id)}>
+            <TrashIcon className="icon stroke sml" />
+          </button>
+        </div>
+      )}
     </div>
   );
 }

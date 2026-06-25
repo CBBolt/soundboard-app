@@ -3,6 +3,8 @@ import { readData, writeData } from "../helpers/data.js";
 const defaultSettings = {
   baseColor: "#ffffff",
   stopHotkey: { key: "esc", shift: true },
+  baseTutorial: false,
+  vmTutorial: false,
 };
 
 export function readSettings(settingsPath) {

@@ -50,6 +50,8 @@ declare global {
   type Settings = {
     baseColor: string;
     stopHotkey: Hotkey;
+    baseTutorial: boolean;
+    vmTutorial: boolean;
     controllerToggleHotkey: Hotkey;
     defaultInputDevice?: VMAudioDevice;
     defaultOutputDevice?: VMAudioDevice;
@@ -130,7 +132,7 @@ declare global {
 
       // Boards
       getBoards: () => Board[];
-      addBoard: (board: Partial<Board>) => void;
+      addBoard: (board: Partial<Board>) => Board;
       updateBoard: (data: Partial<Board>) => void;
       deleteBoard: (id: number) => void;
 

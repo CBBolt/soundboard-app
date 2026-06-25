@@ -12,20 +12,24 @@ import TagIcon from "../../icons/TagIcon";
 type LibraryProps = {
   sounds: Sound[];
   allTags: Tag[];
-  playSound: (sound: Sound) => void;
-  onEdit: (sound: Sound) => void;
-  onDelete: (id: number) => void;
-  addSound: () => void;
-  addYoutube: () => void;
-  startRecord: () => void;
+  full?: boolean;
+  playSound?: (sound: Sound) => void;
+  onEdit?: (sound: Sound) => void;
+  onDelete?: (id: number) => void;
+  onClick?: (sound: Sound) => void;
+  addSound?: () => void;
+  addYoutube?: () => void;
+  startRecord?: () => void;
 };
 
 export default function SoundLibrary({
   sounds,
   allTags,
+  full = true,
   playSound,
   onEdit,
   onDelete,
+  onClick,
   addSound,
   addYoutube,
   startRecord,
@@ -50,44 +54,47 @@ export default function SoundLibrary({
       <div
         className="grid-gap"
         style={{
-          gridTemplateColumns: "0.1fr 1fr",
+          gridTemplateColumns: full ? "0.1fr 1fr" : "1fr",
         }}
       >
-        <HoverDropdown
-          label={<PlusIcon className="icon fill" />}
-          items={[
-            {
-              label: (
-                <div className="flex-gap">
-                  <FolderIcon className="icon sml stroke" />
-                  <span>From File</span>
-                </div>
-              ),
-              button: true,
-              onClick: addSound,
-            },
-            {
-              label: (
-                <div className="flex-gap">
-                  <CircleIcon className="icon sml fill" />
-                  <span>Record New</span>
-                </div>
-              ),
-              button: true,
-              onClick: startRecord,
-            },
-            {
-              label: (
-                <div className="flex-gap">
-                  <TriangeIcon className="icon sml fill" />
-                  <span>From YouTube</span>
-                </div>
-              ),
-              button: true,
-              onClick: addYoutube,
-            },
-          ]}
-        />
+        {full && (
+          <HoverDropdown
+            data-tour="add-sound-modal"
+            label={<PlusIcon className="icon fill" data-tour="add-sound" />}
+            items={[
+              {
+                label: (
+                  <div className="flex-gap">
+                    <FolderIcon className="icon sml stroke" />
+                    <span>From File</span>
+                  </div>
+                ),
+                button: true,
+                onClick: addSound,
+              },
+              {
+                label: (
+                  <div className="flex-gap">
+                    <CircleIcon className="icon sml fill" />
+                    <span>Record New</span>
+                  </div>
+                ),
+                button: true,
+                onClick: startRecord,
+              },
+              {
+                label: (
+                  <div className="flex-gap">
+                    <TriangeIcon className="icon sml fill" />
+                    <span>From YouTube</span>
+                  </div>
+                ),
+                button: true,
+                onClick: addYoutube,
+              },
+            ]}
+          />
+        )}
 
         <div className="flex-gap" style={{ justifyContent: "end" }}>
           <div className="flex-gap">
@@ -138,6 +145,8 @@ export default function SoundLibrary({
             playSound={playSound}
             onEdit={onEdit}
             onDelete={onDelete}
+            onClick={onClick}
+            full={full}
           />
         ))}
       </div>

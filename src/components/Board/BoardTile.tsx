@@ -6,9 +6,11 @@ import TrashIcon from "../../icons/TrashIcon";
 import Marquee from "../Marquee/Marquee";
 import { Icon } from "@iconify/react";
 import MusicNoteIcon from "../../icons/MusicNoteIcon";
+import SoundLibrary from "../Library/SoundLibrary";
 
 type TileProps = {
   sounds: Sound[];
+  allTags: Tag[];
   sound: Sound | null;
   drag: {
     dragged: boolean;
@@ -24,6 +26,7 @@ type TileProps = {
 
 export default function BoardTile({
   sounds,
+  allTags,
   sound,
   drag,
   playSound,
@@ -43,19 +46,15 @@ export default function BoardTile({
           </div>
         }
       >
-        <div>
-          {sounds.map((s) => (
-            <button
-              key={s.id}
-              onClick={() => {
-                setSound(s.id);
-                setEdit(false);
-              }}
-            >
-              {s.name}
-            </button>
-          ))}
-        </div>
+        <SoundLibrary
+          sounds={sounds}
+          allTags={allTags}
+          full={false}
+          onClick={(s) => {
+            setSound(s.id);
+            setEdit(false);
+          }}
+        />
       </Modal>
 
       <div

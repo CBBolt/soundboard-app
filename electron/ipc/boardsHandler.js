@@ -13,7 +13,8 @@ export function registerBoardsHandlers(boardsPath) {
   });
 
   ipcMain.handle("add-board", (_, board) => {
-    addBoard(boardsPath, board);
+    const newBoard = addBoard(boardsPath, board);
+    return newBoard;
   });
 
   ipcMain.handle("update-board", (_, partialSettings) => {

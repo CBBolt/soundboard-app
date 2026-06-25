@@ -48,6 +48,7 @@ export default function ActionsBar({
           data-tooltip={
             overlay ? "Close Controller Overlay" : "Open Controller Overlay"
           }
+          data-tour="overlay-controller"
         >
           <OverlayIcon
             className="icon fill sml"
@@ -58,7 +59,13 @@ export default function ActionsBar({
           />
         </button>
         <HoverDropdown
-          label={<QuestionIcon className="icon sml fill" data-tooltip="Help" />}
+          label={
+            <QuestionIcon
+              className="icon sml fill"
+              data-tooltip="Help"
+              data-tour="help"
+            />
+          }
           items={[
             {
               label: (
@@ -89,13 +96,18 @@ export default function ActionsBar({
               ),
             },
             {
-              label: <>Getting Started</>,
+              label: <>Help</>,
               button: true,
+              dataTour: "help-btn",
               onClick: instructions,
             },
           ]}
         />
-        <button onClick={showSettings} data-tooltip="Settings">
+        <button
+          onClick={showSettings}
+          data-tooltip="Settings"
+          data-tour="settings"
+        >
           <GearIcon className="icon sml stroke" />
         </button>
         <button onClick={stopAll}>

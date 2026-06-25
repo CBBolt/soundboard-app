@@ -3,15 +3,16 @@ import { useEffect, useRef, useState } from "react";
 type DropdownItem = {
   label: React.ReactNode;
   button?: boolean;
+  dataTour?: string;
   onClick?: () => void;
-};
+} & React.HTMLAttributes<HTMLDivElement>;
 
 type DropdownProps = {
   label: React.ReactNode;
   items: DropdownItem[];
 };
 
-export default function Dropdown({ label, items }: DropdownProps) {
+export default function Dropdown({ label, items, ...props }: DropdownProps) {
   const [open, setOpen] = useState(false);
 
   const rootRef = useRef<HTMLDivElement | null>(null);
@@ -56,6 +57,7 @@ export default function Dropdown({ label, items }: DropdownProps) {
 
       {open && (
         <div
+          {...props}
           style={{
             position: "absolute",
 
@@ -77,7 +79,7 @@ export default function Dropdown({ label, items }: DropdownProps) {
           }}
         >
           {items.map((item, i) => (
-            <div key={i}>
+            <div key={i} data-tour={item.dataTour ?? ""}>
               {item.button ? (
                 <button
                   key={i}

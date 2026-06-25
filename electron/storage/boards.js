@@ -10,6 +10,8 @@ export function addBoard(boardsPath, board) {
   boards.push({ id: Date.now(), ...board });
 
   writeData(boardsPath, boards);
+
+  return { id: Date.now(), ...board };
 }
 
 export function updateBoard(boardsPath, updated) {

@@ -11,6 +11,7 @@ import LoadIcon from "../../icons/LoadIcon";
 type BoardProps = {
   boards: Board[];
   sounds: Sound[];
+  allTags: Tag[];
   playSound: (sound: Sound) => void;
   loadBoards: () => void;
   loadedBoard?: Board;
@@ -25,6 +26,7 @@ type BoardConfig = {
 export default function BoardManager({
   boards,
   sounds,
+  allTags,
   playSound,
   loadBoards,
   loadedBoard,
@@ -38,25 +40,34 @@ export default function BoardManager({
   const curBoard = boards.find((b) => b.id === config.curBoardId);
 
   useEffect(() => {
-    if (boards.length === 0) return;
-
-    const loadedBoardExists =
-      loadedBoard && boards.some((b) => b.id === loadedBoard.id);
-
-    const nextBoardId = loadedBoardExists ? loadedBoard.id : boards[0].id;
+    if (!boards.length) return;
 
     setConfig((prev) => {
-      if (prev.curBoardId === nextBoardId) return prev;
+      if (boards.some((b) => b.id === prev.curBoardId)) {
+        return prev;
+      }
+
+      if (loadedBoard && boards.some((b) => b.id === loadedBoard.id)) {
+        return {
+          ...prev,
+          curBoardId: loadedBoard.id,
+        };
+      }
 
       return {
         ...prev,
-        curBoardId: nextBoardId,
+        curBoardId: boards[0].id,
       };
     });
   }, [boards, loadedBoard]);
 
   return (
-    <>
+    <div
+      className="flex-gap"
+      style={{ flexDirection: "column", flex: "1", height: "100%" }}
+      data-tour="boards-section"
+      tour-cond={boards.length}
+    >
       <Modal
         isOpen={config.deleteId > 0}
         onClose={() => setConfig((prev) => ({ ...prev, deleteId: -1 }))}
@@ -105,13 +116,16 @@ export default function BoardManager({
             }
           />
           <button
+            data-tour="add-board"
             onClick={async () => {
               const newBoard: Partial<Board> = {
                 name: "New Board",
                 layout: "BOARD",
               };
 
-              await window.electronAPI.addBoard(newBoard);
+              const addBoard = await window.electronAPI.addBoard(newBoard);
+
+              setConfig((prev) => ({ ...prev, curBoardId: addBoard.id }));
 
               await loadBoards();
             }}
@@ -126,6 +140,7 @@ export default function BoardManager({
           board={curBoard}
           loadedBoard={loadedBoard}
           sounds={sounds}
+          allTags={allTags}
           playSound={playSound}
           onSetBoard={(id) => {
             window.electronAPI.sendData({
@@ -154,6 +169,6 @@ export default function BoardManager({
       ) : (
         <span>No Board Selected</span>
       )}
-    </>
+    </div>
   );
 }

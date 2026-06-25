@@ -234,7 +234,7 @@ button,
   display: inline-flex;
 
   font: inherit;
-  color: inherit;
+  color: var(--text);
   font-weight: 600;
 
   background: oklch(from var(--accent) calc(l * 1.1) c h);

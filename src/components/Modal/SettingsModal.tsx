@@ -98,7 +98,7 @@ export default function SettingsModal({
           style={{ position: "absolute", top: 10, right: 50 }}
           onClick={() => onSave(config.settings!)}
         >
-          <SaveIcon className="icon fill" />
+          <SaveIcon className="icon fill" data-tour="settings-save" />
         </div>
 
         <Modal

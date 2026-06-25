@@ -8,6 +8,7 @@ type Props = {
 
 import WarningIcon from "../../icons/WarningIcon";
 import styles from "../../styles/Modal.module.css";
+import { useTutorial } from "../../tutorial/TutorialContext";
 
 export default function Modal({
   isOpen,
@@ -16,13 +17,16 @@ export default function Modal({
   header,
   children,
 }: Props) {
+  const { state } = useTutorial();
+  const isTutorialLocked = state?.active;
+
   if (!isOpen) return null;
 
   return (
     <div
       className={styles["modal-overlay"]}
       onClick={() => {
-        if (locked?.lockedCondition) return;
+        if (locked?.lockedCondition || isTutorialLocked) return;
         onClose();
       }}
     >
@@ -34,7 +38,7 @@ export default function Modal({
           <button
             className={styles["modal-close"]}
             onClick={() => {
-              if (locked?.lockedCondition) return;
+              if (locked?.lockedCondition || isTutorialLocked) return;
               onClose();
             }}
           >

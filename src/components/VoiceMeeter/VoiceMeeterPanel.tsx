@@ -204,8 +204,10 @@ export default function VoiceMeeterPanel({
     smaller: boolean = false,
   ): React.ReactNode => {
     const style: React.CSSProperties = {
-      fill: config[channel].a ? "var(--base-color)" : "",
-      stroke: "white",
+      fill: config[channel].a
+        ? "oklch(from var(--base-color) calc(l * 0.75) c h)"
+        : "",
+      stroke: "var(--text)",
     };
 
     return (
@@ -247,12 +249,14 @@ export default function VoiceMeeterPanel({
   return (
     <>
       <div
+        data-tour="vm-panel-devices"
         style={{
           display: "grid",
           gridTemplateColumns: "0.5fr 1fr",
           gap: 10,
           position: "relative",
           background: "rgba(0, 0, 0, 0.75)",
+          color: "white",
           boxShadow: "black 1px 1px 10px 1px",
           padding: 2,
           borderRadius: 5,
@@ -280,7 +284,7 @@ export default function VoiceMeeterPanel({
           <button
             onClick={() => setConfig((prev) => ({ ...prev, expand: true }))}
           >
-            <div className="flex-gap">
+            <div className="flex-gap" data-tour="vm-panel-settings">
               <GearIcon
                 className="icon stroke sml"
                 data-tooltip="Open VoiceMeeter Settings"
@@ -299,7 +303,7 @@ export default function VoiceMeeterPanel({
           </>
         }
       >
-        <div className="flex-gap">
+        <div className="flex-gap" data-tour="vm-panel-modal">
           <div style={{ display: "grid", gap: 10 }}>
             <div className="flex-gap">
               <div className="flex-gap">
@@ -483,6 +487,7 @@ export default function VoiceMeeterPanel({
           }}
         >
           <button
+            data-tour="vm-modal-help"
             onClick={() => setConfig((prev) => ({ ...prev, helper: true }))}
           >
             <QuestionIcon className="icon fill" />

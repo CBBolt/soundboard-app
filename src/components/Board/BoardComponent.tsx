@@ -15,6 +15,7 @@ import LoadIcon from "../../icons/LoadIcon";
 type BoardComponentProps = {
   board: Board;
   sounds: Sound[];
+  allTags: Tag[];
   playSound: (sound: Sound) => void;
   onSetBoard: (id: number) => void;
   onSave: (board: Board) => void;
@@ -32,6 +33,7 @@ export default function BoardComponent({
   board,
   loadedBoard,
   sounds,
+  allTags,
   playSound,
   onSetBoard,
   onSave,
@@ -69,6 +71,7 @@ export default function BoardComponent({
       <div
         className="grid-gap"
         style={{ margin: "10px 0px", gridTemplateColumns: "1fr 1fr" }}
+        data-tour="board-edit-bar"
       >
         <input
           style={{ width: "75%" }}
@@ -152,13 +155,14 @@ export default function BoardComponent({
           </button>
         </div>
       </div>
+
+      <div className="seperator" style={{ margin: 0 }} />
+
       <div
         className="grid-gap"
         style={{
           gridTemplateColumns: "repeat(auto-fit, 100px)",
           width: "calc(100% - 10px)",
-          alignItems: "start",
-          flex: 1,
           overflowY: "auto",
           padding: 5,
         }}
@@ -171,6 +175,7 @@ export default function BoardComponent({
             return (
               <div
                 className={styles.tile}
+                data-tour="board-add-sound"
                 style={{ border: "1px dashed rgba(255, 255, 255, 0.5)" }}
                 key="add"
                 onClick={() => {
@@ -235,6 +240,7 @@ export default function BoardComponent({
                   }));
                 },
               }}
+              allTags={allTags}
               sounds={sounds}
               sound={sound}
               playSound={(sound) => playSound(sound)}

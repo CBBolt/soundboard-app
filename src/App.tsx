@@ -20,7 +20,6 @@ import NotificationManager from "./components/Notifications/NotificationManager"
 import TrashIcon from "./icons/TrashIcon";
 import MusicNoteIcon from "./icons/MusicNoteIcon";
 import CircleIcon from "./icons/CircleIcon";
-import QuestionIcon from "./icons/QuestionIcon";
 import YoutubeLinkModal from "./components/Modal/YoutubeLinkModal";
 import Splashscreen from "./components/SplashScreen";
 import SoundLibrary from "./components/Library/SoundLibrary";
@@ -30,14 +29,16 @@ import SideBar from "./components/SideBar";
 import SoundboardIcon from "./icons/SoundboardIcon";
 import TagIcon from "./icons/TagIcon";
 import GlobalTooltip from "./components/Tooltip/GlobalTooltip";
+import { useTutorial } from "./tutorial/TutorialContext";
+import { baseTutorial, vmTutorial } from "./tutorial/tutorials/tutorialSteps";
 
 /*
 
 TODO:
- - Updated Instructions / interactive tutorial
+- VM Links (Help)
+- Full run through
 
 CLEANUP:
-
  - Component Cleanup
 
 */
@@ -131,6 +132,7 @@ function App() {
     },
   });
 
+  const { startFlow } = useTutorial();
   const bus = useEventBus();
   const api = window.electronAPI;
 
@@ -251,8 +253,17 @@ function App() {
     document.documentElement.style.setProperty("--base-color", color);
     document.documentElement.style.setProperty("--text", text);
 
-    // Resolve input device
+    //Tutorials
+    if (!settings.baseTutorial) {
+      console.log("start tutorial");
+      startFlow(baseTutorial, "baseTutorial");
+      await api.updateSettings({ baseTutorial: true });
+    } else if (settings.baseTutorial && !settings.vmTutorial) {
+      startFlow(vmTutorial, "vmTutorial");
+      await api.updateSettings({ vmTutorial: true });
+    }
 
+    // Resolve input device
     const selectedInputDevice: VMAudioDevice =
       settings.defaultInputDevice &&
       inputs.some((d) => d.id === settings.defaultInputDevice?.id)
@@ -264,7 +275,6 @@ function App() {
           };
 
     // Resolve VM output device
-
     const vmOutputDevice: VMAudioDevice =
       settings.defaultOutputDevice &&
       outputs.some((d) => d.id === settings.defaultOutputDevice?.id)
@@ -276,7 +286,6 @@ function App() {
           };
 
     // Resolve local output device
-
     const localOutputDevice =
       settings.defaultLocalOutputDevice &&
       outputs.some((d) => d.id === settings.defaultLocalOutputDevice)
@@ -286,7 +295,6 @@ function App() {
     audioEngine.setDevice(localOutputDevice);
 
     // Apply to VoiceMeeter
-
     await api.setVMCommand({
       cmd: "set_string",
       param: `Strip[1].Device.${selectedInputDevice.driver}`,
@@ -902,16 +910,6 @@ function App() {
             height: "calc(100% - 10px)",
           }}
         >
-          {config.data.sounds.length === 0 && (
-            <div>
-              No sounds saved yet.
-              <div>
-                Not sure where to start? Click the{" "}
-                <QuestionIcon className="icon sml fill" /> to get started!
-              </div>
-            </div>
-          )}
-
           <div
             className="flex-gap"
             style={{
@@ -952,6 +950,7 @@ function App() {
               />
             ) : config.ui.tab === "BOARD" ? (
               <BoardManager
+                allTags={config.data.tags}
                 boards={config.data.boards}
                 sounds={config.data.sounds}
                 playSound={(sound) => audioEngine.play(sound)}

@@ -52,6 +52,8 @@ export default function SideBar({
 
   return (
     <aside
+      data-tour="sidebar-menu"
+      tour-cond={curItem}
       ref={ref}
       style={{
         position: "relative",
@@ -65,6 +67,8 @@ export default function SideBar({
     >
       <button
         onClick={() => setIsOpen((open) => !open)}
+        data-tour="sidebar-button"
+        tour-cond={isOpen ? "open" : "closed"}
         style={{
           width: "100%",
           padding: "12px",
@@ -89,6 +93,7 @@ export default function SideBar({
               return (
                 <button
                   key={item.id}
+                  data-tour={`${item.id}-button`}
                   onClick={item.onClick}
                   style={{
                     width: "100%",
@@ -125,19 +130,26 @@ export default function SideBar({
                 {loadedBoard.name}
               </div>
             )}
-            <div className="flex-gap">
-              <button className="icon-btn grey" onClick={voiceMeeter.onToggle}>
+            <div className="flex-gap" data-tour="vm-panel">
+              <button
+                className="icon-btn grey"
+                onClick={voiceMeeter.onToggle}
+                data-tooltip={
+                  voiceMeeter.toVoiceMeeter
+                    ? "Switch to Local Output"
+                    : "Switch to VoiceMeeter Output"
+                }
+                data-tour="vm-toggle"
+                tour-cond={voiceMeeter.toVoiceMeeter ? "vm" : "local"}
+              >
                 <HeadphoneIcon
                   className="icon fill"
                   style={{
-                    fill: !voiceMeeter.toVoiceMeeter ? "var(--base-color)" : "",
-                    stroke: !voiceMeeter.toVoiceMeeter ? "white" : "",
+                    fill: !voiceMeeter.toVoiceMeeter
+                      ? "oklch(from var(--base-color) calc(l * 0.75) c h)"
+                      : "",
+                    stroke: !voiceMeeter.toVoiceMeeter ? "var(--text)" : "",
                   }}
-                  data-tooltip={
-                    voiceMeeter.toVoiceMeeter
-                      ? "Switch to Local Output"
-                      : "Switch to VoiceMeeter Output"
-                  }
                 />
               </button>
               {voiceMeeter.toVoiceMeeter ? (

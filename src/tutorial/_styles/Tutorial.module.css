@@ -1,0 +1,42 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+}
+
+/* THE CUTOUT */
+.highlight {
+  position: absolute;
+  border-radius: 10px;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.65);
+  outline: 2px solid oklch(from var(--base-color) calc(l * 0.3) c h);
+  pointer-events: none;
+}
+
+.tooltip {
+  position: absolute;
+
+  min-width: 300px;
+  max-width: min(450px, 90vw);
+
+  background: #111;
+
+  padding: 12px;
+  border-radius: 8px;
+
+  pointer-events: auto;
+
+  font-size: 0.875rem;
+  line-height: 1.4;
+
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  word-break: break-word;
+
+  box-shadow: 0 8px 24px rgb(0 0 0 / 40%);
+}
+
+.tooltip > p {
+  color: white;
+}
