@@ -1,13 +1,15 @@
 import { useEffect, useRef, useState } from "react";
-import TriangeIcon from "../../icons/TriangleIcon";
-import SquareIcon from "../../icons/SquareIcon";
 import { WaveformEditor } from "../../lib/waveformEditor";
 
-import styles from "../../styles/SoundClipEditor.module.css";
 import VolumeSlider from "../VolumeSlider";
-import QuestionIcon from "../../icons/QuestionIcon";
 import Modal from "../Modal/Modal";
 import LoadingSpinner from "../LoadingSpinner";
+
+import TriangeIcon from "../../icons/TriangleIcon";
+import SquareIcon from "../../icons/SquareIcon";
+import QuestionIcon from "../../icons/QuestionIcon";
+
+import styles from "../../styles/SoundClipEditor.module.css";
 
 type Props = {
   show: boolean;

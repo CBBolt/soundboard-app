@@ -8,8 +8,28 @@ const defaultSettings = {
   vmTutorial: false,
 };
 
+function applyDefaults(value, defaults) {
+  if (value == null) {
+    return structuredClone(defaults);
+  }
+
+  if (typeof defaults !== "object" || defaults === null) {
+    return value;
+  }
+
+  const result = { ...value };
+
+  for (const key of Object.keys(defaults)) {
+    result[key] = applyDefaults(value[key], defaults[key]);
+  }
+
+  return result;
+}
+
 export function readSettings(settingsPath) {
-  return readData(settingsPath, defaultSettings);
+  const settings = readData(settingsPath, defaultSettings);
+
+  return applyDefaults(settings, defaultSettings);
 }
 
 export function updateSettings(settingsPath, settings) {

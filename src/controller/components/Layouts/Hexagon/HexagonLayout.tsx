@@ -1,8 +1,10 @@
 import { useRef, useState } from "react";
-import styles from "./_styles/Hexagon.module.css";
+import { useContainerWidth } from "../../../../lib/helpers";
+
 import HexagonTile from "./HexagaonTile";
 import HexagonHeader from "./HexagonHeader";
-import { useContainerWidth } from "../../../../lib/helpers";
+
+import styles from "./_styles/Hexagon.module.css";
 
 type HexagonLayoutProps = {
   sounds: (Sound | null)[];

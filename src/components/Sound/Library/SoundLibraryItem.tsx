@@ -1,11 +1,12 @@
+import Marquee from "../../Marquee/Marquee";
+import HotkeyComponent from "../../Hotkey/HotkeyComponent";
+import TagComponent from "../../Tag/TagComponent";
+
 import { Icon } from "@iconify/react";
-import MusicNoteIcon from "../../icons/MusicNoteIcon";
-import PencilIcon from "../../icons/PencilIcon";
-import TrashIcon from "../../icons/TrashIcon";
-import HotkeyComponent from "../Hotkey/HotkeyComponent";
-import TagComponent from "../Tag/TagComponent";
-import Marquee from "../Marquee/Marquee";
-import TriangeIcon from "../../icons/TriangleIcon";
+import MusicNoteIcon from "../../../icons/MusicNoteIcon";
+import PencilIcon from "../../../icons/PencilIcon";
+import TrashIcon from "../../../icons/TrashIcon";
+import TriangeIcon from "../../../icons/TriangleIcon";
 
 type ItemProps = {
   sound: Sound;

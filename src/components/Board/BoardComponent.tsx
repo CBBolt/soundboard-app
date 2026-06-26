@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
+
 import TrashIcon from "../../icons/TrashIcon";
-import { boardLayoutTypes } from "./_types/board";
 import SaveIcon from "../../icons/SaveIcon";
 import BoardTile from "./BoardTile";
 import RadialIcon from "../../icons/RadialIcon";
@@ -8,9 +8,11 @@ import HexIcon from "../../icons/HexIcon";
 import ConstellationIcon from "../../icons/ConstellationIcon";
 import SoundboardIcon from "../../icons/SoundboardIcon";
 import PlusIcon from "../../icons/PlusIcon";
+import LoadIcon from "../../icons/LoadIcon";
+
+import { boardLayoutTypes } from "./_types/board";
 
 import styles from "./_styles/BoardTile.module.css";
-import LoadIcon from "../../icons/LoadIcon";
 
 type BoardComponentProps = {
   board: Board;

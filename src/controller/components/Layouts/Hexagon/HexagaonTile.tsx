@@ -1,9 +1,10 @@
-import { Icon } from "@iconify/react";
-import MusicNoteIcon from "../../../../icons/MusicNoteIcon";
+import HotkeyComponent from "../../../../components/Hotkey/HotkeyComponent";
 import Marquee from "../../../../components/Marquee/Marquee";
 
+import { Icon } from "@iconify/react";
+import MusicNoteIcon from "../../../../icons/MusicNoteIcon";
+
 import styles from "./_styles/Hexagon.module.css";
-import HotkeyComponent from "../../../../components/Hotkey/HotkeyComponent";
 
 type TilePrpos = {
   sound: Sound | null;

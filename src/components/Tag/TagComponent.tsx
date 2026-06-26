@@ -1,6 +1,7 @@
+import { getContrastTextColor } from "../../lib/helpers";
+
 import PencilIcon from "../../icons/PencilIcon";
 import TrashIcon from "../../icons/TrashIcon";
-import { getContrastTextColor } from "../../lib/helpers";
 
 import styles from "./_styles/Tag.module.css";
 

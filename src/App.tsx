@@ -7,6 +7,12 @@ import {
   getDevices,
   getVMConfig,
 } from "./lib/helpers";
+import { useTutorial } from "./tutorial/TutorialContext";
+import {
+  baseTutorial,
+  vmReminder,
+  vmTutorial,
+} from "./tutorial/tutorials/tutorialSteps";
 
 import { audioEngine } from "./audio/AudioEngine";
 
@@ -17,32 +23,26 @@ import ActionsBar from "./components/ActionsBar";
 import InstructionModal from "./components/Modal/InstructionModal";
 import SettingsModal from "./components/Modal/SettingsModal";
 import NotificationManager from "./components/Notifications/NotificationManager";
+import YoutubeLinkModal from "./components/Modal/YoutubeLinkModal";
+import BoardManager from "./components/Board/BoardManager";
+import TagManager from "./components/Tag/TagManager";
+import SideBar from "./components/SideBar";
+import GlobalTooltip from "./components/Tooltip/GlobalTooltip";
+import SoundLibrary from "./components/Sound/Library/SoundLibrary";
+
+import Splashscreen from "./components/SplashScreen";
 
 import TrashIcon from "./icons/TrashIcon";
 import MusicNoteIcon from "./icons/MusicNoteIcon";
 import CircleIcon from "./icons/CircleIcon";
-import YoutubeLinkModal from "./components/Modal/YoutubeLinkModal";
-import Splashscreen from "./components/SplashScreen";
-import SoundLibrary from "./components/Library/SoundLibrary";
-import BoardManager from "./components/Board/BoardManager";
-import TagManager from "./components/Tag/TagManager";
-import SideBar from "./components/SideBar";
 import SoundboardIcon from "./icons/SoundboardIcon";
 import TagIcon from "./icons/TagIcon";
-import GlobalTooltip from "./components/Tooltip/GlobalTooltip";
-import { useTutorial } from "./tutorial/TutorialContext";
-import {
-  baseTutorial,
-  vmReminder,
-  vmTutorial,
-} from "./tutorial/tutorials/tutorialSteps";
 
 /*
 
 CLEANUP:
+ - Icon Picker
  - Component Cleanup
- - Notifications anywhere console.log / error / warn
-
 */
 
 // #region Types

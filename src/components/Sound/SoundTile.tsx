@@ -1,10 +1,11 @@
 import { getContrastTextColor } from "../../lib/helpers";
 
+import HotkeyComponent from "../Hotkey/HotkeyComponent";
+
 import PencilIcon from "../../icons/PencilIcon";
 import TrashIcon from "../../icons/TrashIcon";
 
 import styles from "../../styles/SoundTile.module.css";
-import HotkeyComponent from "../Hotkey/HotkeyComponent";
 
 type Props = {
   sound: Sound;

@@ -1,13 +1,14 @@
 import { useState } from "react";
 import SoundLibraryItem from "./SoundLibraryItem";
-import HoverDropdown from "../HoverDropdown";
-import TriangeIcon from "../../icons/TriangleIcon";
-import PlusIcon from "../../icons/PlusIcon";
-import FolderIcon from "../../icons/FolderIcon";
-import CircleIcon from "../../icons/CircleIcon";
-import Carousel from "../Carousel/Carousel";
-import MagnifyGlassIcon from "../../icons/MagnifyGlassIcon";
-import TagIcon from "../../icons/TagIcon";
+import HoverDropdown from "../../HoverDropdown";
+import Carousel from "../../Carousel/Carousel";
+
+import TriangeIcon from "../../../icons/TriangleIcon";
+import PlusIcon from "../../../icons/PlusIcon";
+import FolderIcon from "../../../icons/FolderIcon";
+import CircleIcon from "../../../icons/CircleIcon";
+import MagnifyGlassIcon from "../../../icons/MagnifyGlassIcon";
+import TagIcon from "../../../icons/TagIcon";
 
 type LibraryProps = {
   sounds: Sound[];

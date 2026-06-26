@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
+import { useContainerWidth } from "../../../../lib/helpers";
 import BoardTile from "./BoardTile";
 import BoardHeader from "./BoardHeader";
-import { useContainerWidth } from "../../../../lib/helpers";
 
 type BoardLayoutProps = {
   settings: Settings;

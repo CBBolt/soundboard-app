@@ -1,9 +1,10 @@
+import HotkeyComponent from "./Hotkey/HotkeyComponent";
+import HoverDropdown from "./HoverDropdown";
+
 import GearIcon from "../icons/GearIcon";
 import OverlayIcon from "../icons/OverlayIcon";
 import QuestionIcon from "../icons/QuestionIcon";
 import SquareIcon from "../icons/SquareIcon";
-import HotkeyComponent from "./Hotkey/HotkeyComponent";
-import HoverDropdown from "./HoverDropdown";
 
 type Props = {
   settings: Settings | undefined;
@@ -39,7 +40,7 @@ export default function ActionsBar({
     >
       <div>
         <h1 style={{ marginBottom: 0 }}>Soundboard</h1>
-        <span style={{ fontSize: "small" }}>V 1.1.0</span>
+        <span style={{ fontSize: "small" }}>V 2.0.0</span>
       </div>
       <div className="flex-gap">
         <button

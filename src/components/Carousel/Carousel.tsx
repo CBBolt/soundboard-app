@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 
-import styles from "./_styles/Carousel.module.css";
 import { getContrastTextColor } from "../../lib/helpers";
+
+import styles from "./_styles/Carousel.module.css";
 
 type CarouselProps<T extends { id: number; name: string; color?: string }> = {
   items: T[];

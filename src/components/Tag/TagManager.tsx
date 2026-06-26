@@ -1,8 +1,10 @@
 import { useState } from "react";
+import { useEventBus } from "../../contexts/GlobalEventContext";
 
 import TagComponent from "./TagComponent";
-import PlusIcon from "../../icons/PlusIcon";
 import Modal from "../Modal/Modal";
+
+import PlusIcon from "../../icons/PlusIcon";
 import SaveIcon from "../../icons/SaveIcon";
 import PencilIcon from "../../icons/PencilIcon";
 import TrashIcon from "../../icons/TrashIcon";
@@ -27,6 +29,7 @@ export default function TagManager({ tags, loadTags }: TagProps) {
     editTag: null,
     deleteId: -1,
   });
+  const bus = useEventBus();
 
   return (
     <>
@@ -45,6 +48,10 @@ export default function TagManager({ tags, loadTags }: TagProps) {
           onClick={() => {
             window.electronAPI.deleteTag(config.deleteId);
             setConfig((prev) => ({ ...prev, deleteId: -1 }));
+            bus.emit("new-notification", {
+              status: "INFO",
+              message: "Tag Deleted!",
+            });
             loadTags();
           }}
         >
@@ -66,6 +73,10 @@ export default function TagManager({ tags, loadTags }: TagProps) {
           className="icon-btn"
           style={{ position: "absolute", top: 10, right: 50 }}
           onClick={() => {
+            bus.emit("new-notification", {
+              status: "INFO",
+              message: "Tag Updated!",
+            });
             window.electronAPI.updateTag(config.editTag!);
             setConfig((prev) => ({ ...prev, editTag: null }));
             loadTags();
@@ -119,6 +130,10 @@ export default function TagManager({ tags, loadTags }: TagProps) {
           className="icon-btn"
           style={{ position: "absolute", top: 10, right: 50 }}
           onClick={() => {
+            bus.emit("new-notification", {
+              status: "INFO",
+              message: "Tag Added!",
+            });
             window.electronAPI.addTag(config.addTag as Tag);
             setConfig((prev) => ({ ...prev, addTag: null }));
             loadTags();

@@ -1,7 +1,8 @@
-import { Icon } from "@iconify/react";
-import MusicNoteIcon from "../../../../icons/MusicNoteIcon";
 import HotkeyComponent from "../../../../components/Hotkey/HotkeyComponent";
 import Marquee from "../../../../components/Marquee/Marquee";
+
+import { Icon } from "@iconify/react";
+import MusicNoteIcon from "../../../../icons/MusicNoteIcon";
 
 import styles from "./_styles/Radial.module.css";
 

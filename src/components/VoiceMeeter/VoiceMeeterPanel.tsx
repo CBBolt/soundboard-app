@@ -1,15 +1,18 @@
 import { useEffect, useState } from "react";
+import { truncateText } from "../../lib/helpers";
+import { useEventBus } from "../../contexts/GlobalEventContext";
+
 import Modal from "../Modal/Modal";
+import VolumeSlider from "../VolumeSlider";
+import VMDeviceDriverSelector from "./VMDeviceDriverSelector";
+
 import RefreshIcon from "../../icons/RefreshIcon";
 import MicIcon from "../../icons/MicIcon";
 import SpeakerIcon from "../../icons/SpeakerIcon";
-import VolumeSlider from "../VolumeSlider";
 import MusicNoteIcon from "../../icons/MusicNoteIcon";
-import VMDeviceDriverSelector from "./VMDeviceDriverSelector";
 import HeadphoneIcon from "../../icons/HeadphoneIcon";
 import QuestionIcon from "../../icons/QuestionIcon";
 import GearIcon from "../../icons/GearIcon";
-import { truncateText } from "../../lib/helpers";
 
 type VoiceMeeterProps = {
   outputDevices: AudioDevice[];
@@ -73,6 +76,8 @@ export default function VoiceMeeterPanel({
     },
   });
 
+  const bus = useEventBus();
+
   useEffect(() => {
     const load = async () => {
       const config = await loadVMConfig();
@@ -128,6 +133,11 @@ export default function VoiceMeeterPanel({
     };
 
     if (!update.success) {
+      bus.emit("new-notification", {
+        status: "ERROR",
+        message: `Failed To Send VoiceMeeter Command!\n${JSON.stringify(update.message)}`,
+      });
+
       console.error(update.message);
       return;
     }

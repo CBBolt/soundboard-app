@@ -1,6 +1,7 @@
 import { createContext, useContext, useState } from "react";
-import type { TutorialFlow, TutorialStep } from "./_types/tutorial";
 import { evaluateCondition } from "./tutorials/helpers";
+
+import type { TutorialFlow, TutorialStep } from "./_types/tutorial";
 
 type TutorialState = {
   active: boolean;

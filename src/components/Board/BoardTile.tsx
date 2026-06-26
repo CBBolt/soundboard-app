@@ -1,12 +1,15 @@
 import { useState } from "react";
-import PlusIcon from "../../icons/PlusIcon";
-import styles from "./_styles/BoardTile.module.css";
+
 import Modal from "../Modal/Modal";
-import TrashIcon from "../../icons/TrashIcon";
 import Marquee from "../Marquee/Marquee";
-import { Icon } from "@iconify/react";
+import SoundLibrary from "../Sound/Library/SoundLibrary";
+
 import MusicNoteIcon from "../../icons/MusicNoteIcon";
-import SoundLibrary from "../Library/SoundLibrary";
+import PlusIcon from "../../icons/PlusIcon";
+import TrashIcon from "../../icons/TrashIcon";
+import { Icon } from "@iconify/react";
+
+import styles from "./_styles/BoardTile.module.css";
 
 type TileProps = {
   sounds: Sound[];

@@ -1,8 +1,11 @@
-import { Icon } from "@iconify/react";
-import styles from "./_styles/Radial.module.css";
 import { useState } from "react";
-import SquareIcon from "../../../../icons/SquareIcon";
+
 import HotkeyComponent from "../../../../components/Hotkey/HotkeyComponent";
+
+import { Icon } from "@iconify/react";
+import SquareIcon from "../../../../icons/SquareIcon";
+
+import styles from "./_styles/Radial.module.css";
 
 type RadialControlProps = {
   settings: Settings;

@@ -1,6 +1,7 @@
+import HotkeyComponent from "./HotkeyComponent";
+
 import HotkeyIcon from "../../icons/HotkeyIcon";
 import TrashIcon from "../../icons/TrashIcon";
-import HotkeyComponent from "./HotkeyComponent";
 
 type Props = {
   hotkey: Hotkey | undefined;

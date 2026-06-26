@@ -1,5 +1,6 @@
-import { Icon } from "@iconify/react";
 import HotkeyComponent from "../../../components/Hotkey/HotkeyComponent";
+
+import { Icon } from "@iconify/react";
 import SquareIcon from "../../../icons/SquareIcon";
 
 type HeaderProps = {

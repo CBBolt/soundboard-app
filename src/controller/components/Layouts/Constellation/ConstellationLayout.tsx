@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import styles from "./_styles/Constellation.module.css";
+import DefaultHeader from "../DefaultHeader";
+
 import { Icon } from "@iconify/react";
 import MusicNoteIcon from "../../../../icons/MusicNoteIcon";
-import DefaultHeader from "../DefaultHeader";
+
+import styles from "./_styles/Constellation.module.css";
 
 type ConstellationLayoutProps = {
   settings: Settings;

@@ -106,17 +106,6 @@ class AudioEngine {
 
       const targetVolume = gain;
 
-      // -----------------------------------
-      // Start playback immediately
-      // -----------------------------------
-      console.log({
-        file: sound.fileName,
-        duration: audio.duration,
-        readyState: audio.readyState,
-        networkState: audio.networkState,
-        startTime: sound.startTime,
-      });
-
       const playPromise = audio.play();
       if (playPromise) await playPromise;
 

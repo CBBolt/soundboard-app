@@ -1,9 +1,10 @@
+import Marquee from "../../../../components/Marquee/Marquee";
+import HotkeyComponent from "../../../../components/Hotkey/HotkeyComponent";
+
 import { Icon } from "@iconify/react";
 import MusicNoteIcon from "../../../../icons/MusicNoteIcon";
-import Marquee from "../../../../components/Marquee/Marquee";
 
 import styles from "./_styles/BoardTile.module.css";
-import HotkeyComponent from "../../../../components/Hotkey/HotkeyComponent";
 
 type TilePrpos = {
   sound: Sound | null;

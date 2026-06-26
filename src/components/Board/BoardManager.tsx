@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
+import { useEventBus } from "../../contexts/GlobalEventContext";
 
 import BoardComponent from "./BoardComponent";
-import PlusIcon from "../../icons/PlusIcon";
-// import BoardScroller from "./BoardScroller";
 import Modal from "../Modal/Modal";
-import TrashIcon from "../../icons/TrashIcon";
 import Carousel from "../Carousel/Carousel";
+
+import PlusIcon from "../../icons/PlusIcon";
+import TrashIcon from "../../icons/TrashIcon";
 import LoadIcon from "../../icons/LoadIcon";
 
 type BoardProps = {
@@ -32,6 +33,7 @@ export default function BoardManager({
   loadedBoard,
   onSetLoadedBoard,
 }: BoardProps) {
+  const bus = useEventBus();
   const [config, setConfig] = useState<BoardConfig>({
     curBoardId: -1,
     deleteId: 0,
@@ -87,6 +89,12 @@ export default function BoardManager({
               curBoardId: boards.length > 0 ? boards[0].id : -1,
               deleteId: -1,
             }));
+
+            bus.emit("new-notification", {
+              status: "INFO",
+              message: "Board Deleted!",
+            });
+
             loadBoards();
           }}
         >
@@ -123,6 +131,11 @@ export default function BoardManager({
                 layout: "BOARD",
               };
 
+              bus.emit("new-notification", {
+                status: "INFO",
+                message: "Board Added!",
+              });
+
               const addBoard = await window.electronAPI.addBoard(newBoard);
 
               setConfig((prev) => ({ ...prev, curBoardId: addBoard.id }));
@@ -148,16 +161,25 @@ export default function BoardManager({
               data: id > 0 ? curBoard : null,
             });
 
+            bus.emit("new-notification", {
+              status: "INFO",
+              message: id > 0 ? "Board Loaded!" : "Board Unloaded!",
+            });
+
             onSetLoadedBoard(id);
           }}
           onSave={(board) => {
-            console.log(loadedBoard, board, curBoard);
             if (loadedBoard && loadedBoard.id === curBoard.id) {
               window.electronAPI.sendData({
                 message: "board_data",
                 data: board,
               });
             }
+
+            bus.emit("new-notification", {
+              status: "INFO",
+              message: "Board Updated!",
+            });
 
             window.electronAPI.updateBoard(board);
             loadBoards();

@@ -1,9 +1,11 @@
 import { useRef, useState } from "react";
-import HeadphoneIcon from "../icons/HeadphoneIcon";
+import { useContainerWidth } from "../lib/helpers";
+
 import VoiceMeeterPanel from "./VoiceMeeter/VoiceMeeterPanel";
 import VMDeviceSelector from "./VoiceMeeter/VMDeviceSelector";
+
 import LoadIcon from "../icons/LoadIcon";
-import { useContainerWidth } from "../lib/helpers";
+import HeadphoneIcon from "../icons/HeadphoneIcon";
 
 type SidebarItem = {
   id: string;

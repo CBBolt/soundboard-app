@@ -1,19 +1,19 @@
 import { useEffect, useState } from "react";
 
 import SoundClipEditor from "./SoundClipEditor";
+import IconPicker from "../Icon/IconPicker";
+import Modal from "../Modal/Modal";
+import HotkeyListenerModal from "../Modal/HotkeyListenerModal";
+import TagComponent from "../Tag/TagComponent";
 
 import SaveIcon from "../../icons/SaveIcon";
-import Modal from "../Modal/Modal";
 import MusicNoteIcon from "../../icons/MusicNoteIcon";
-import HotkeyListenerModal from "../Modal/HotkeyListenerModal";
 import HotkeyWrapper from "../Hotkey/HotkeyWrapper";
 import PencilIcon from "../../icons/PencilIcon";
 import ArrowIcon from "../../icons/ArrowIcon";
-import TagComponent from "../Tag/TagComponent";
 import TagIcon from "../../icons/TagIcon";
-import { Icon } from "@iconify/react";
 import TrashIcon from "../../icons/TrashIcon";
-import IconPicker from "../Icon/IconPicker";
+import { Icon } from "@iconify/react";
 
 type Props = {
   sound: Sound;

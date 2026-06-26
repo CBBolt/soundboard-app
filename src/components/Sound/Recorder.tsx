@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useEventBus } from "../../contexts/GlobalEventContext";
 
 import SquareIcon from "../../icons/SquareIcon";
 import CircleIcon from "../../icons/CircleIcon";
@@ -40,6 +41,8 @@ export default function Recorder({
     recordedDuration: 0,
     recordedMimeType: "",
   });
+
+  const bus = useEventBus();
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -221,6 +224,12 @@ export default function Recorder({
 
       recorder.onerror = (e) => {
         console.error("MediaRecorder error:", e);
+
+        bus.emit("new-notification", {
+          status: "ERROR",
+          message: "Error Recording Sound!",
+        });
+
         setConfig((prev) => ({ ...prev, playing: false }));
         playbackRef.current = null;
         stopRecording();
@@ -260,6 +269,11 @@ export default function Recorder({
       console.error("Recording failed:", err);
       console.error("Constraint:", err?.constraint);
       console.error("Name:", err?.name);
+
+      bus.emit("new-notification", {
+        status: "ERROR",
+        message: "Recording Failed!",
+      });
 
       await cleanup();
     }
