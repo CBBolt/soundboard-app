@@ -6,6 +6,7 @@ export type TutorialStep = {
   advance?: "next-button" | "click-target" | "auto";
   delayMs?: number;
   condition?: TutorialCondition[];
+  closeModal?: boolean;
 };
 
 export type TutorialCondition =

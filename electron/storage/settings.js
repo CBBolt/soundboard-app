@@ -3,6 +3,7 @@ import { readData, writeData } from "../helpers/data.js";
 const defaultSettings = {
   baseColor: "#ffffff",
   stopHotkey: { key: "esc", shift: true },
+  controllerToggleHotkey: { key: "a", ctrl: true },
   baseTutorial: false,
   vmTutorial: false,
 };

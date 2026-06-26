@@ -94,7 +94,7 @@ export default function InstructionModal({ VBDetected, show, onClose }: Props) {
         );
       case "VOICE":
         return (
-          <div>
+          <div data-tour="vm-instructions">
             <ol>
               <li>
                 Install VoiceMeeter and VB Cable:
@@ -122,29 +122,34 @@ export default function InstructionModal({ VBDetected, show, onClose }: Props) {
                 </ol>
               </li>
               <li>Restart your computer</li>
-              <li>
-                Open the sound panel to disable unneeded devices:
-                <button
-                  onClick={async () => window.electronAPI.disableVBAudio()}
-                  style={{ marginLeft: 10 }}
-                >
-                  Open Sound Panel
-                </button>
-                <br />
-                <ol type="a">
-                  <li>
-                    In <strong>Playback</strong> tab disable all VoiceMeeter
-                    Devices (right click &gt; disable) until just{" "}
-                    <strong>Voicemeeter In 1</strong> is enabled
-                  </li>
-                  <li>
-                    In <strong>Recording</strong> tab disable all VoiceMeeter
-                    Devices (right click &gt; disable) until just{" "}
-                    <strong>Voicemeeter Out A1</strong> and{" "}
-                    <strong>Voicemeeter Out B1</strong> are enabled
-                  </li>
-                </ol>
-              </li>
+              {VBDetected.voicemeeter ? (
+                <li>Come back here after you restart to continue</li>
+              ) : (
+                <li>
+                  Open the sound panel to disable unneeded devices:
+                  <button
+                    data-tour="sound-panel-btn"
+                    onClick={async () => window.electronAPI.disableVBAudio()}
+                    style={{ marginLeft: 10 }}
+                  >
+                    Open Sound Panel
+                  </button>
+                  <br />
+                  <ol type="a">
+                    <li>
+                      In <strong>Playback</strong> tab disable all VoiceMeeter
+                      Devices (right click &gt; disable) until just{" "}
+                      <strong>Voicemeeter In 1</strong> is enabled
+                    </li>
+                    <li>
+                      In <strong>Recording</strong> tab disable all VoiceMeeter
+                      Devices (right click &gt; disable) until just{" "}
+                      <strong>Voicemeeter Out A1</strong> and{" "}
+                      <strong>Voicemeeter Out B1</strong> are enabled
+                    </li>
+                  </ol>
+                </li>
+              )}
             </ol>
           </div>
         );
@@ -189,10 +194,12 @@ export default function InstructionModal({ VBDetected, show, onClose }: Props) {
           </button>
         </div>
 
-        <div className="panel">
-          {VBDetected.vbCable && <div>VB Cable Installed!</div>}
-          {VBDetected.voicemeeter && <div>VoiceMeeter Installed!</div>}
-        </div>
+        {(VBDetected.vbCable || VBDetected.voicemeeter) && (
+          <div className="panel">
+            {VBDetected.vbCable && <div>VB Cable Installed!</div>}
+            {VBDetected.voicemeeter && <div>VoiceMeeter Installed!</div>}
+          </div>
+        )}
 
         <div className="seperator" />
 

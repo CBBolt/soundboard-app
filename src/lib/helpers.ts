@@ -96,43 +96,67 @@ export function fuzzyMatchDevices(
   });
 }
 
+export async function checkVM() {
+  const vb = await window.electronAPI.detectVBAudio();
+
+  const VBDetected = { vbCable: false, voicemeeter: false };
+
+  for (const v of vb) {
+    let name = v.FriendlyName.toLowerCase();
+    if (name.includes("cable")) VBDetected.vbCable = true;
+    if (name.includes("voicemeeter")) VBDetected.voicemeeter = true;
+  }
+
+  return VBDetected;
+}
+
 export async function getDevices() {
   const api = window.electronAPI;
   let vmInputs: AudioDevice[] = [];
   let vmOutputs: AudioDevice[] = [];
+
+  const vb = await checkVM();
 
   try {
     const devices = await navigator.mediaDevices.enumerateDevices();
 
     const outputs = devices.filter((d) => d.kind === "audiooutput");
 
-    const vmOutputDevices = await api.setVMCommand({
-      cmd: "output_devices",
-    });
+    if (vb.voicemeeter) {
+      const vmOutputDevices = await api.setVMCommand({
+        cmd: "output_devices",
+      });
 
-    if (!vmOutputDevices.success) {
-      throw new Error("Failure getting VM Output Devices");
+      if (!vmOutputDevices.success) {
+        throw new Error("Failure getting VM Output Devices");
+      }
+
+      vmOutputs = fuzzyMatchDevices(
+        vmOutputDevices.string_value!.split(", "),
+        outputs,
+      );
+    } else {
+      vmOutputs = outputs.map((o) => ({ id: o.deviceId, label: o.label }));
     }
-
-    vmOutputs = fuzzyMatchDevices(
-      vmOutputDevices.string_value!.split(", "),
-      outputs,
-    );
 
     const inputs = devices.filter((d) => d.kind === "audioinput");
 
-    const vmInputDevices = await api.setVMCommand({
-      cmd: "input_devices",
-    });
+    if (vb.voicemeeter) {
+      const vmInputDevices = await api.setVMCommand({
+        cmd: "input_devices",
+      });
 
-    if (!vmInputDevices.success) {
-      throw new Error("Failure getting VM Input Devices");
+      if (!vmInputDevices.success) {
+        throw new Error("Failure getting VM Input Devices");
+      }
+
+      vmInputs = fuzzyMatchDevices(
+        vmInputDevices.string_value!.split(", "),
+        inputs,
+      );
+    } else {
+      vmInputs = inputs.map((o) => ({ id: o.deviceId, label: o.label }));
     }
-
-    vmInputs = fuzzyMatchDevices(
-      vmInputDevices.string_value!.split(", "),
-      inputs,
-    );
   } catch (err) {
     console.error("Failed loading devices", err);
   }
@@ -145,6 +169,9 @@ export async function getDevices() {
 
 export const getVMConfig = async () => {
   const api = window.electronAPI;
+
+  const vb = await checkVM();
+  if (!vb.voicemeeter) return;
 
   const inputA = await api.setVMCommand({
     cmd: "get_float",

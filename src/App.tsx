@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useEventBus } from "./contexts/GlobalEventContext";
 import {
+  checkVM,
   getAudioDuration,
   getContrastTextColor,
   getDevices,
@@ -30,16 +31,17 @@ import SoundboardIcon from "./icons/SoundboardIcon";
 import TagIcon from "./icons/TagIcon";
 import GlobalTooltip from "./components/Tooltip/GlobalTooltip";
 import { useTutorial } from "./tutorial/TutorialContext";
-import { baseTutorial, vmTutorial } from "./tutorial/tutorials/tutorialSteps";
+import {
+  baseTutorial,
+  vmReminder,
+  vmTutorial,
+} from "./tutorial/tutorials/tutorialSteps";
 
 /*
 
-TODO:
-- VM Links (Help)
-- Full run through
-
 CLEANUP:
  - Component Cleanup
+ - Notifications anywhere console.log / error / warn
 
 */
 
@@ -139,29 +141,23 @@ function App() {
   // #region Loaders
 
   const detectVBAudio = async () => {
-    const vb = await api.detectVBAudio();
-
-    const VBDetected = { vbCable: false, voicemeeter: false };
-
-    for (const v of vb) {
-      let name = v.FriendlyName.toLowerCase();
-      if (name.includes("cable")) VBDetected.vbCable = true;
-      if (name.includes("voicemeeter")) VBDetected.voicemeeter = true;
-    }
+    const vb = await checkVM();
 
     setConfig((prev) => ({
       ...prev,
       ui: {
         ...prev.ui,
-        VBDetected,
+        vb,
       },
     }));
 
-    await api.setVMCommand({
-      cmd: "set_string",
-      param: "Strip[0].Device.WDM",
-      string_value: "CABLE Output (VB-Audio Virtual Cable)",
-    });
+    if (vb.voicemeeter) {
+      await api.setVMCommand({
+        cmd: "set_string",
+        param: "Strip[0].Device.WDM",
+        string_value: "CABLE Output (VB-Audio Virtual Cable)",
+      });
+    }
   };
 
   // Load saved sounds
@@ -244,9 +240,9 @@ function App() {
   const initialize = async () => {
     const { inputs, outputs } = await getDevices();
     const settings = await api.readSettings();
+    const vb = await checkVM();
 
     // Colors
-
     const color = settings.baseColor;
     const text = getContrastTextColor(color);
 
@@ -255,10 +251,15 @@ function App() {
 
     //Tutorials
     if (!settings.baseTutorial) {
-      console.log("start tutorial");
       startFlow(baseTutorial, "baseTutorial");
       await api.updateSettings({ baseTutorial: true });
-    } else if (settings.baseTutorial && !settings.vmTutorial) {
+    } else if (settings.baseTutorial && !vb.voicemeeter) {
+      startFlow(vmReminder, "vmReminder");
+    } else if (
+      settings.baseTutorial &&
+      !settings.vmTutorial &&
+      vb.voicemeeter
+    ) {
       startFlow(vmTutorial, "vmTutorial");
       await api.updateSettings({ vmTutorial: true });
     }
@@ -294,18 +295,20 @@ function App() {
 
     audioEngine.setDevice(localOutputDevice);
 
-    // Apply to VoiceMeeter
-    await api.setVMCommand({
-      cmd: "set_string",
-      param: `Strip[1].Device.${selectedInputDevice.driver}`,
-      string_value: selectedInputDevice.name,
-    });
+    if (vb.voicemeeter) {
+      // Apply to VoiceMeeter
+      await api.setVMCommand({
+        cmd: "set_string",
+        param: `Strip[1].Device.${selectedInputDevice.driver}`,
+        string_value: selectedInputDevice.name,
+      });
 
-    await api.setVMCommand({
-      cmd: "set_string",
-      param: `Bus[0].Device.${vmOutputDevice.driver}`,
-      string_value: vmOutputDevice.name,
-    });
+      await api.setVMCommand({
+        cmd: "set_string",
+        param: `Bus[0].Device.${vmOutputDevice.driver}`,
+        string_value: vmOutputDevice.name,
+      });
+    }
 
     setConfig((prev) => ({
       ...prev,
@@ -594,7 +597,11 @@ function App() {
                 );
 
                 if (!vbCableInput) {
-                  console.error("VB Cable Input not found");
+                  console.warn("VB Cable Input not found");
+                  bus.emit("new-notification", {
+                    status: "WARNING",
+                    message: "Voice Meeter Not Installed!",
+                  });
                   return;
                 }
 

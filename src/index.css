@@ -74,6 +74,12 @@ p {
   margin: 0;
 }
 
+a {
+  background-color: var(--base-color);
+  color: var(--text);
+  border-radius: 5px;
+}
+
 select {
   background-image:
     linear-gradient(

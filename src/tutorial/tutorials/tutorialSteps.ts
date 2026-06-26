@@ -42,6 +42,7 @@ export const sounds: Record<string, TutorialFlow> = {
       {
         id: "5",
         text: "Here you can add a sound via file, link, or record your own!",
+        placement: "left",
         target: "[data-tour='add-sound-modal']",
         advance: "click-target",
       },
@@ -302,8 +303,62 @@ export const vmTutorial = {
           id: "1",
           text: "Now that you have VoiceMeeter & VB Cable installed, let's go over how to use it in this app",
         },
+        {
+          id: "2",
+          text: "First, let's continue the setup",
+          target: "[data-tour='help']",
+          advance: "click-target",
+        },
+        {
+          id: "3",
+          text: "Go to the help button",
+          target: "[data-tour='help-btn']",
+          advance: "click-target",
+        },
+        {
+          id: "4",
+          text: "Then setup",
+          target: "[data-tour='vm-setup-btn']",
+          advance: "click-target",
+        },
+        {
+          id: "5",
+          text: "Click here to open the sound panel",
+          target: "[data-tour='sound-panel-btn']",
+          advance: "click-target",
+        },
+        {
+          id: "6",
+          text: "Follow the instructions on disabling devices. This can be done later if needed!",
+          target: "[data-tour='vm-instructions']",
+          placement: "top",
+        },
+        {
+          id: "7",
+          text: "Go ahead and close the setup",
+          placement: "left",
+          target: "[data-tour='modal-close-btn']",
+          advance: "click-target",
+          closeModal: true,
+        },
       ],
     },
     vmUse.vmUse,
+  ),
+};
+
+export const vmReminder = {
+  vmReminder: createFlow(
+    "vmReminder",
+    {
+      id: "reminder",
+      steps: [
+        {
+          id: "1",
+          text: "VoiceMeeter and VB Cable are not installed. Click skip if you aren't using it or click next to follow how to get it installed",
+        },
+      ],
+    },
+    vmSetup.vmSetup,
   ),
 };

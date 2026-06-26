@@ -27,17 +27,24 @@ export default function ControllerApp() {
     await loadSounds();
   };
 
-  const getSoundsFromId = (soundIds: number[]) =>
-    soundIds.map((s) => sounds.find((sound) => s === sound.id) ?? null);
+  const getSoundsFromId = (soundIds: number[]) => {
+    if (!sounds.length || !soundIds) return [];
+    else {
+      return soundIds.map(
+        (s) => sounds.find((sound) => s === sound.id) ?? null,
+      );
+    }
+  };
 
   const renderBody = () => {
-    if (!boardData || !settings)
+    if (!boardData || !settings) {
       return (
         <div className="grid-gap">
           <DefaultHeader settings={settings!} stop={false} />
           <div>No Board Loaded</div>
         </div>
       );
+    }
 
     const boardSounds = getSoundsFromId(boardData.sounds);
     const key = `${boardData.id}-${boardData.layout}`;

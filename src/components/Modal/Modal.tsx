@@ -18,7 +18,18 @@ export default function Modal({
   children,
 }: Props) {
   const { state } = useTutorial();
-  const isTutorialLocked = state?.active;
+
+  const flow = state.flows[state.currentFlowId];
+  let canClose = false;
+
+  if (flow) {
+    const currentStep = flow.steps[state.stepIndex];
+    const previousStep = flow.steps[state.stepIndex - 1];
+
+    canClose = Boolean(currentStep?.closeModal || previousStep?.closeModal);
+  }
+
+  const isTutorialLocked = state.active && !canClose;
 
   if (!isOpen) return null;
 
@@ -36,6 +47,7 @@ export default function Modal({
       >
         {!locked?.lockedCondition && (
           <button
+            data-tour="modal-close-btn"
             className={styles["modal-close"]}
             onClick={() => {
               if (locked?.lockedCondition || isTutorialLocked) return;

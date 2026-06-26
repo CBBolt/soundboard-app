@@ -172,7 +172,7 @@ export default function TutorialOverlay() {
 
   return (
     <div className={styles.overlay}>
-      {hasTarget && (
+      {hasTarget ? (
         <div
           className={styles.highlight}
           style={{
@@ -182,6 +182,8 @@ export default function TutorialOverlay() {
             height: rect.height + 16,
           }}
         />
+      ) : (
+        <div className={styles.dim} />
       )}
 
       <div className={`${styles.tooltip} grid-gap`} style={tooltipStyle}>

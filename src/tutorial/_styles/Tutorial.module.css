@@ -14,6 +14,13 @@
   pointer-events: none;
 }
 
+.dim {
+  position: absolute;
+  border-radius: 10px;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.65);
+  pointer-events: none;
+}
+
 .tooltip {
   position: absolute;
 

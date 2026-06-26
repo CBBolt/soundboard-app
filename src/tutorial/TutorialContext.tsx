@@ -37,8 +37,6 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
     flows: Record<string, TutorialFlow>,
     startFlowId: string,
   ) => {
-    console.log(flows);
-
     setState({
       active: true,
       flows,
