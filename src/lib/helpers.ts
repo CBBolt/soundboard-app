@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { useEventBus } from "../contexts/GlobalEventContext";
 
 export const clampVolume = (v: number) => Math.max(0, Math.min(1, v));
 
@@ -113,7 +112,6 @@ export async function checkVM() {
 
 export async function getDevices() {
   const api = window.electronAPI;
-  const bus = useEventBus();
   let vmInputs: AudioDevice[] = [];
   let vmOutputs: AudioDevice[] = [];
 
@@ -161,10 +159,6 @@ export async function getDevices() {
     }
   } catch (err) {
     console.error("Failed loading devices", err);
-    bus.emit("new-notification", {
-      status: "ERROR",
-      message: "Failed Loading Devices!",
-    });
   }
 
   return {

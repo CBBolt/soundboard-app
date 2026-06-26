@@ -41,7 +41,11 @@ const tagsPath = path.join(userDataPath, "tags.json");
 // VOICEMEETER BRIDGE
 // ======================================================
 
-const bridge = spawn("resources/voicemeeter-bridge.exe", [], {
+const bridgePath = app.isPackaged
+  ? path.join(process.resourcesPath, "voicemeeter-bridge.exe")
+  : path.join(process.cwd(), "resources", "voicemeeter-bridge.exe");
+
+const bridge = spawn(bridgePath, [], {
   stdio: "pipe",
 });
 

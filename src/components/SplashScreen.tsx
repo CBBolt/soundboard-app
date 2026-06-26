@@ -1,4 +1,5 @@
 import LoadingSpinner from "./LoadingSpinner";
+import logo from "/assets/icon.png";
 
 export default function Splashscreen() {
   return (
@@ -32,7 +33,7 @@ export default function Splashscreen() {
       `}</style>
 
       <div className="splash">
-        <img className="splash-logo" src="assets/icon.png" alt="Logo" />
+        <img className="splash-logo" src={logo} alt="Logo" />
         <LoadingSpinner />
       </div>
     </>

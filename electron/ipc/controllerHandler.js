@@ -1,4 +1,4 @@
-import { ipcMain, BrowserWindow } from "electron";
+import { app, ipcMain, BrowserWindow } from "electron";
 
 import path from "path";
 
@@ -63,14 +63,15 @@ function createcontrollerWindow() {
     width: 600,
     height: 400,
 
-    skipTaskbar: true,
+    skipTaskbar: false,
     frame: false,
     transparent: true,
 
-    // resizable: false,
     minimizable: false,
     maximizable: false,
     alwaysOnTop: true,
+
+    icon: path.join(__dirname, "../assets/icon.png"),
 
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
