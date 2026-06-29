@@ -1,3 +1,5 @@
+import { isAllowedDevice } from "../../lib/helpers";
+
 type VMDeviceProps = {
   currentDevice: string | undefined;
   devices: AudioDevice[];
@@ -20,6 +22,7 @@ export default function VMDeviceSelector({
       <option value="">-- Select Device --</option>
 
       {devices
+        .filter(isAllowedDevice)
         .sort((a, b) => a.label.localeCompare(b.label))
         .map((d) => (
           <option key={d.id} value={d.id}>

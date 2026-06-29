@@ -23,7 +23,10 @@ export default function YoutubeLinkModal({
   return (
     <Modal
       isOpen={show}
-      onClose={onClose}
+      onClose={() => {
+        onClose();
+        setURL("");
+      }}
       locked={{
         lockedCondition: loading,
         lockedMessage: "Audio is being downloaded",

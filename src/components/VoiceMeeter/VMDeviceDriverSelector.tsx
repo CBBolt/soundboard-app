@@ -1,5 +1,6 @@
 import { useState } from "react";
 import ArrowIcon from "../../icons/ArrowIcon";
+import { isAllowedDevice } from "../../lib/helpers";
 
 type VMDeviceProps = {
   currentDevice: VMAudioDevice | undefined;
@@ -35,6 +36,7 @@ export default function VMDeviceDriverSelector({
         <option value="">-- Select Device --</option>
 
         {devices
+          .filter(isAllowedDevice)
           .sort((a, b) => a.label.localeCompare(b.label))
           .map((d) => (
             <option key={d.id} value={d.id}>

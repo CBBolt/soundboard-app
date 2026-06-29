@@ -284,12 +284,12 @@ export default function VoiceMeeterPanel({
           {muteButton("inputChannel", "Strip[1]", "mic", true)}
           {aButton("inputChannel", "Strip[1]", true)}
         </div>
-        <span>{truncateText(config.currentInputDevice.name, 30)}</span>
+        <span>{truncateText(config.currentInputDevice.name, 17)}</span>
 
         <div className="flex-gap">
           {muteButton("outputChannel", "Bus[0]", "speaker", true)}
         </div>
-        <span>{truncateText(config.currentOuputDevice.name, 30)}</span>
+        <span>{truncateText(config.currentOuputDevice.name, 17)}</span>
         <div style={{ position: "absolute", top: "0", right: 0 }}>
           <button
             onClick={() => setConfig((prev) => ({ ...prev, expand: true }))}

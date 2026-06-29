@@ -2,8 +2,10 @@ import { useEffect, useState } from "react";
 
 export const clampVolume = (v: number) => Math.max(0, Math.min(1, v));
 
-export const truncateText = (s: string, c: number = 20) =>
-  s.length > c ? s.slice(0, c) + "..." : s;
+export const truncateText = (s: string, c: number = 20) => {
+  if (!s) return s;
+  return s.length > c ? s.slice(0, c) + "..." : s;
+};
 
 export function getContrastTextColor(color: string) {
   const hex = color.replace("#", "");
@@ -91,6 +93,7 @@ export function fuzzyMatchDevices(
 
     return {
       label: vmLabel,
+      deviceId: bestMatch!.deviceId,
       id: bestMatch ? getStableDeviceId(bestMatch) : "ERROR",
     };
   });
@@ -108,6 +111,14 @@ export async function checkVM() {
   }
 
   return VBDetected;
+}
+
+export function isAllowedDevice(device: AudioDevice) {
+  const blockedKeywords = ["cable", "voicemeeter"];
+  const label = device.label ? device.label.toLowerCase() : "";
+
+  // Returns true if NONE of the blocked keywords are found
+  return !blockedKeywords.some((blocked) => label.includes(blocked));
 }
 
 export async function getDevices() {
@@ -136,7 +147,11 @@ export async function getDevices() {
         outputs,
       );
     } else {
-      vmOutputs = outputs.map((o) => ({ id: o.deviceId, label: o.label }));
+      vmOutputs = outputs.map((o) => ({
+        id: o.deviceId,
+        label: o.label,
+        deviceId: o.deviceId,
+      }));
     }
 
     const inputs = devices.filter((d) => d.kind === "audioinput");
@@ -155,7 +170,11 @@ export async function getDevices() {
         inputs,
       );
     } else {
-      vmInputs = inputs.map((o) => ({ id: o.deviceId, label: o.label }));
+      vmInputs = inputs.map((i) => ({
+        id: i.deviceId,
+        label: i.label,
+        deviceId: i.deviceId,
+      }));
     }
   } catch (err) {
     console.error("Failed loading devices", err);

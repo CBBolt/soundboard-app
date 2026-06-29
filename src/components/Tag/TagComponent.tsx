@@ -25,6 +25,7 @@ export default function TagComponent({
   return (
     <div
       className={`${styles["tag-wrapper"]} grey`}
+      data-tooltip={mini ? tag.name : undefined}
       style={{
         gridTemplateColumns: editable ? "1fr 1fr" : "1fr",
       }}

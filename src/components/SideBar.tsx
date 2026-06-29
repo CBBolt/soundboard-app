@@ -6,6 +6,7 @@ import VMDeviceSelector from "./VoiceMeeter/VMDeviceSelector";
 
 import LoadIcon from "../icons/LoadIcon";
 import HeadphoneIcon from "../icons/HeadphoneIcon";
+import Marquee from "./Marquee/Marquee";
 
 type SidebarItem = {
   id: string;
@@ -126,10 +127,11 @@ export default function SideBar({
                   border: "2px solid white",
                   padding: 5,
                   borderRadius: 5,
+                  width: "75%",
                 }}
               >
                 <LoadIcon className="icon fill stroke" />
-                {loadedBoard.name}
+                <Marquee text={loadedBoard.name} />
               </div>
             )}
             <div className="flex-gap" data-tour="vm-panel">
@@ -165,13 +167,30 @@ export default function SideBar({
                   loadDevices={voiceMeeter.loadDevices}
                 />
               ) : (
-                <VMDeviceSelector
-                  currentDevice={voiceMeeter.currentLocalOutput}
-                  devices={voiceMeeter.outputDevices}
-                  onChange={(value: string) => voiceMeeter.onLocalChange(value)}
-                />
+                <div className="grid-gap">
+                  <VMDeviceSelector
+                    currentDevice={voiceMeeter.currentLocalOutput}
+                    devices={voiceMeeter.outputDevices}
+                    onChange={(value: string) =>
+                      voiceMeeter.onLocalChange(value)
+                    }
+                  />
+                </div>
               )}
             </div>
+            {voiceMeeter.toVoiceMeeter ? (
+              <div className="panel">
+                Set mic in apps to <strong>VoiceMeeter Out B1</strong>
+              </div>
+            ) : (
+              voiceMeeter.currentLocalOutput ===
+                voiceMeeter.currentOuput.id && (
+                <div className="panel warning" style={{ fontSize: "smaller" }}>
+                  You won't hear audio as this device is the same as the
+                  VoiceMeeter Output
+                </div>
+              )
+            )}
           </div>
         </>
       )}

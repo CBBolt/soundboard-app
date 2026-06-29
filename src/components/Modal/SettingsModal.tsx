@@ -112,12 +112,6 @@ export default function SettingsModal({
               <span>Set Default Mic</span>
             </>
           }
-          locked={{
-            lockedCondition: !inputDevices.some(
-              (d) => d.id === config.settings?.defaultInputDevice?.id,
-            ),
-            lockedMessage: "Device not selected",
-          }}
         >
           <VMDeviceDriverSelector
             currentDevice={config.settings.defaultInputDevice}
@@ -146,12 +140,6 @@ export default function SettingsModal({
               <span>Set Default Output</span>
             </>
           }
-          locked={{
-            lockedCondition: !outputDevices.some(
-              (d) => d.id === config.settings?.defaultOutputDevice?.id,
-            ),
-            lockedMessage: "Device not selected",
-          }}
         >
           <VMDeviceDriverSelector
             currentDevice={config.settings.defaultOutputDevice}
@@ -180,12 +168,6 @@ export default function SettingsModal({
               <span>Set Default Local Output</span>
             </>
           }
-          locked={{
-            lockedCondition: !outputDevices.some(
-              (d) => d.id === config.settings?.defaultLocalOutputDevice,
-            ),
-            lockedMessage: "Device not selected",
-          }}
         >
           <VMDeviceSelector
             currentDevice={config.settings.defaultLocalOutputDevice}

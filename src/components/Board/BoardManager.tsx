@@ -8,6 +8,7 @@ import Carousel from "../Carousel/Carousel";
 import PlusIcon from "../../icons/PlusIcon";
 import TrashIcon from "../../icons/TrashIcon";
 import LoadIcon from "../../icons/LoadIcon";
+import Marquee from "../Marquee/Marquee";
 
 type BoardProps = {
   boards: Board[];
@@ -101,20 +102,30 @@ export default function BoardManager({
           Confirm
         </button>
       </Modal>
-      <div className="grid-gap">
-        {loadedBoard && (
+      <div className="grid-gap" style={{ width: "100%" }}>
+        <div className="flex-gap" style={{ justifyContent: "center" }}>
+          {loadedBoard && (
+            <div
+              className="flex-gap"
+              style={{
+                border: "2px solid white",
+                padding: 5,
+                borderRadius: 5,
+                width: "25%",
+              }}
+            >
+              <LoadIcon className="icon fill stroke" />
+              <Marquee text={loadedBoard.name} />
+            </div>
+          )}
           <div
-            className="flex-gap"
-            style={{
-              border: "2px solid white",
-              padding: 5,
-              borderRadius: 5,
-            }}
+            className="panel"
+            style={{ fontSize: "smaller", marginTop: "-10px" }}
           >
-            <LoadIcon className="icon fill stroke" />
-            {loadedBoard.name}
+            Note: Make sure board is saved before loading to controller <br />
+            Note: Controller overlay works best with apps in windowed mode
           </div>
-        )}
+        </div>
         <div className="flex-gap">
           <Carousel
             items={boards}

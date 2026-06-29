@@ -39,6 +39,7 @@ declare global {
   type AudioDevice = {
     label: string;
     id: string;
+    deviceId: string;
   };
 
   type VMAudioDevice = {

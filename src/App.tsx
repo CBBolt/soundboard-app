@@ -40,9 +40,13 @@ import TagIcon from "./icons/TagIcon";
 
 /*
 
-CLEANUP:
- - Icon Picker
- - Component Cleanup
+TODO: Fix device ID issues again (sound output vs selector)
+
+REQUESTS:
+ - Custom Icons (SVG upload, / draw?)
+ - Multiple pop out boards
+ - Smaller text for board tiles
+
 */
 
 // #region Types
@@ -147,7 +151,7 @@ function App() {
       ...prev,
       ui: {
         ...prev.ui,
-        vb,
+        VBDetected: vb,
       },
     }));
 
@@ -206,13 +210,7 @@ function App() {
       ...prev,
       audio: {
         ...prev.audio,
-        outputDevices: outputs.filter((d) => {
-          const label = d.label.toLowerCase();
-
-          return !["cable", "voicemeeter"].some((blocked) =>
-            label.includes(blocked),
-          );
-        }),
+        outputDevices: outputs,
         inputDevices: inputs,
       },
     }));
@@ -293,7 +291,11 @@ function App() {
         ? settings.defaultLocalOutputDevice
         : outputs[0].id;
 
-    audioEngine.setDevice(localOutputDevice);
+    const localDeviceId = outputs.find(
+      (d) => d.id === localOutputDevice,
+    )!.deviceId;
+
+    audioEngine.setDevice(localDeviceId);
 
     if (vb.voicemeeter) {
       // Apply to VoiceMeeter
@@ -318,13 +320,7 @@ function App() {
       },
       audio: {
         ...prev.audio,
-        outputDevices: outputs.filter((d) => {
-          const label = d.label.toLowerCase();
-
-          return !["cable", "voicemeeter"].some((blocked) =>
-            label.includes(blocked),
-          );
-        }),
+        outputDevices: outputs,
         inputDevices: inputs,
         localOutputDevice,
         vmOutputDevice,
@@ -589,6 +585,22 @@ function App() {
             loadDevices: loadDevices,
             getVMConfig: getVMConfig,
             onToggle: async () => {
+              if (!config.ui.VBDetected.voicemeeter) {
+                bus.emit("new-notification", {
+                  status: "WARNING",
+                  message: "Voice Meeter Not Installed!",
+                });
+                return;
+              }
+
+              setConfig((prev) => ({
+                ...prev,
+                ui: {
+                  ...prev.ui,
+                  toVoiceMeeter: !prev.ui.toVoiceMeeter,
+                },
+              }));
+
               if (!config.ui.toVoiceMeeter) {
                 const { outputs } = await getDevices();
 
@@ -600,23 +612,19 @@ function App() {
                   console.warn("VB Cable Input not found");
                   bus.emit("new-notification", {
                     status: "WARNING",
-                    message: "Voice Meeter Not Installed!",
+                    message: "VB Cable Input Not Found",
                   });
                   return;
                 }
 
-                audioEngine.setDevice(vbCableInput.id);
+                audioEngine.setDevice(vbCableInput.deviceId);
               } else {
-                audioEngine.setDevice(config.audio.localOutputDevice);
+                const localDeviceId = config.audio.outputDevices.find(
+                  (d) => d.id === config.audio.localOutputDevice,
+                )!.deviceId;
+                console.log(localDeviceId);
+                audioEngine.setDevice(localDeviceId);
               }
-
-              setConfig((prev) => ({
-                ...prev,
-                ui: {
-                  ...prev.ui,
-                  toVoiceMeeter: !prev.ui.toVoiceMeeter,
-                },
-              }));
             },
             onVoiceMeeterChange: (data) => {
               const { currentInputDevice, currentOutputDevice } = data;
@@ -631,7 +639,12 @@ function App() {
               }));
             },
             onLocalChange: (value) => {
-              audioEngine.setDevice(value);
+              const localDeviceId = config.audio.outputDevices.find(
+                (d) => d.id === value,
+              )!.deviceId;
+              console.log(localDeviceId);
+
+              audioEngine.setDevice(localDeviceId);
 
               setConfig((prev) => ({
                 ...prev,
@@ -709,19 +722,24 @@ function App() {
           }
           onSave={async (url) => {
             try {
-              await window.electronAPI.saveYoutubeLink(url);
               setConfig((prev) => ({
                 ...prev,
-                modal: {
-                  ...prev.modal,
-                  youtubeEnabled: false,
+                ui: {
+                  ...prev.ui,
+                  youtubeProgress: 0,
                 },
               }));
+              await window.electronAPI.saveYoutubeLink(url);
+
+              bus.emit("new-notification", {
+                status: "INFO",
+                message: "Sound Added!",
+              });
             } catch (err) {
               console.error(err);
               bus.emit("new-notification", {
                 status: "ERROR",
-                message: "Error adding sound from link",
+                message: `Error adding sound from link: ${err}`,
               });
             } finally {
               setConfig((prev) => ({
@@ -729,6 +747,10 @@ function App() {
                 ui: {
                   ...prev.ui,
                   youtubeProgress: -1,
+                },
+                modal: {
+                  ...prev.modal,
+                  youtubeEnabled: false,
                 },
               }));
 

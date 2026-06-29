@@ -115,7 +115,9 @@ export function getYoutubeMetadata(url) {
 }
 
 function getYtDlpPath() {
-  const base = path.join(app.getAppPath(), "resources", "yt-dlp");
+  const base = app.isPackaged
+    ? path.join(process.resourcesPath, "yt-dlp")
+    : path.join(process.cwd(), "resources", "yt-dlp");
 
   let executable;
 

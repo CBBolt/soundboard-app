@@ -122,7 +122,7 @@ export default function InstructionModal({ VBDetected, show, onClose }: Props) {
                 </ol>
               </li>
               <li>Restart your computer</li>
-              {VBDetected.voicemeeter ? (
+              {!VBDetected.voicemeeter ? (
                 <li>Come back here after you restart to continue</li>
               ) : (
                 <li>
@@ -144,8 +144,7 @@ export default function InstructionModal({ VBDetected, show, onClose }: Props) {
                     <li>
                       In <strong>Recording</strong> tab disable all VoiceMeeter
                       Devices (right click &gt; disable) until just{" "}
-                      <strong>Voicemeeter Out A1</strong> and{" "}
-                      <strong>Voicemeeter Out B1</strong> are enabled
+                      <strong>Voicemeeter Out B1</strong> is enabled
                     </li>
                   </ol>
                 </li>

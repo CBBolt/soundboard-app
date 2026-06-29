@@ -72,7 +72,7 @@ export default function SoundLibraryItem({
           className="grid-gap grey"
           style={{
             gap: 2,
-            gridTemplateColumns: "repeat(auto-fit, minmax(40px, 1fr))",
+            gridTemplateColumns: "repeat(auto-fit, 40px)",
             padding: "0 10px",
             borderRadius: 5,
           }}

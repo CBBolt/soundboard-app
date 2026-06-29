@@ -105,18 +105,24 @@ app.whenReady().then(async () => {
       createWindow();
     }
   });
+
+  if (mainWindow) {
+    mainWindow.on("closed", () => {
+      globalShortcut.unregisterAll();
+
+      bridge.stdin.write(
+        JSON.stringify({
+          cmd: "logout",
+        }) + "\n",
+      );
+
+      app.quit();
+    });
+  }
 });
 
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") {
-    globalShortcut.unregisterAll();
-
-    bridge.stdin.write(
-      JSON.stringify({
-        cmd: "logout",
-      }) + "\n",
-    );
-
     app.quit();
   }
 });

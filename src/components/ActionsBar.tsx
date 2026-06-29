@@ -40,7 +40,7 @@ export default function ActionsBar({
     >
       <div>
         <h1 style={{ marginBottom: 0 }}>Soundboard</h1>
-        <span style={{ fontSize: "small" }}>V 2.0.0</span>
+        <span style={{ fontSize: "small" }}>V 2.0.2</span>
       </div>
       <div className="flex-gap">
         <button

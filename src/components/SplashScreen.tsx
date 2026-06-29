@@ -6,7 +6,7 @@ export default function Splashscreen() {
     <>
       <style>{`
         .splash {
-          margin-top: 25%;
+          margin-top: 15%;
           width: 100vw;
 
           display: flex;

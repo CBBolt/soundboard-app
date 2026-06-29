@@ -1,7 +1,7 @@
 {
   "name": "soundboard",
   "private": true,
-  "version": "2.0.0",
+  "version": "2.0.2",
   "type": "module",
   "main": "electron/main.js",
   "scripts": {
@@ -47,7 +47,8 @@
     "files": [
       "dist/renderer/**/*",
       "electron/**/*",
-      "package.json"
+      "package.json",
+      "resources/**/*"
     ],
     "directories": {
       "output": "release"
