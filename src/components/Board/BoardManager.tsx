@@ -9,6 +9,7 @@ import PlusIcon from "../../icons/PlusIcon";
 import TrashIcon from "../../icons/TrashIcon";
 import LoadIcon from "../../icons/LoadIcon";
 import Marquee from "../Marquee/Marquee";
+import SoundboardIcon from "../../icons/SoundboardIcon";
 
 type BoardProps = {
   boards: Board[];
@@ -159,48 +160,57 @@ export default function BoardManager({
         </div>
       </div>
 
-      {curBoard ? (
-        <BoardComponent
-          board={curBoard}
-          loadedBoard={loadedBoard}
-          sounds={sounds}
-          allTags={allTags}
-          playSound={playSound}
-          onSetBoard={(id) => {
-            window.electronAPI.sendData({
-              message: "board_data",
-              data: id > 0 ? curBoard : null,
-            });
+      {boards.length > 0 ? (
+        <>
+          {curBoard ? (
+            <BoardComponent
+              board={curBoard}
+              loadedBoard={loadedBoard}
+              sounds={sounds}
+              allTags={allTags}
+              playSound={playSound}
+              onSetBoard={(id) => {
+                window.electronAPI.sendData({
+                  message: "board_data",
+                  data: id > 0 ? curBoard : null,
+                });
 
-            bus.emit("new-notification", {
-              status: "INFO",
-              message: id > 0 ? "Board Loaded!" : "Board Unloaded!",
-            });
+                bus.emit("new-notification", {
+                  status: "INFO",
+                  message: id > 0 ? "Board Loaded!" : "Board Unloaded!",
+                });
 
-            onSetLoadedBoard(id);
-          }}
-          onSave={(board) => {
-            if (loadedBoard && loadedBoard.id === curBoard.id) {
-              window.electronAPI.sendData({
-                message: "board_data",
-                data: board,
-              });
-            }
+                onSetLoadedBoard(id);
+              }}
+              onSave={(board) => {
+                if (loadedBoard && loadedBoard.id === curBoard.id) {
+                  window.electronAPI.sendData({
+                    message: "board_data",
+                    data: board,
+                  });
+                }
 
-            bus.emit("new-notification", {
-              status: "INFO",
-              message: "Board Updated!",
-            });
+                bus.emit("new-notification", {
+                  status: "INFO",
+                  message: "Board Updated!",
+                });
 
-            window.electronAPI.updateBoard(board);
-            loadBoards();
-          }}
-          onDelete={(id) => {
-            setConfig((prev) => ({ ...prev, deleteId: id }));
-          }}
-        />
+                window.electronAPI.updateBoard(board);
+                loadBoards();
+              }}
+              onDelete={(id) => {
+                setConfig((prev) => ({ ...prev, deleteId: id }));
+              }}
+            />
+          ) : (
+            <span>No Board Selected</span>
+          )}
+        </>
       ) : (
-        <span>No Board Selected</span>
+        <div className="flex-gap" style={{ margin: "auto" }}>
+          <SoundboardIcon className="icon stroke" />
+          No Boards
+        </div>
       )}
     </div>
   );

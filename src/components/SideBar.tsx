@@ -179,7 +179,7 @@ export default function SideBar({
               )}
             </div>
             {voiceMeeter.toVoiceMeeter ? (
-              <div className="panel">
+              <div className="panel" style={{ fontSize: "smaller" }}>
                 Set mic in apps to <strong>VoiceMeeter Out B1</strong>
               </div>
             ) : (

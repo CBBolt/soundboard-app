@@ -9,6 +9,7 @@ import FolderIcon from "../../../icons/FolderIcon";
 import CircleIcon from "../../../icons/CircleIcon";
 import MagnifyGlassIcon from "../../../icons/MagnifyGlassIcon";
 import TagIcon from "../../../icons/TagIcon";
+import MusicNoteIcon from "../../../icons/MusicNoteIcon";
 
 type LibraryProps = {
   sounds: Sound[];
@@ -128,29 +129,37 @@ export default function SoundLibrary({
           )}
         </div>
       </div>
-      <div
-        className="flex-gap"
-        style={{
-          flex: "1",
-          flexDirection: "column",
-          overflowY: "auto",
-          textAlign: "start",
-          alignItems: "start",
-          padding: 5,
-        }}
-      >
-        {filteredSounds.map((s) => (
-          <SoundLibraryItem
-            key={s.id}
-            sound={s}
-            playSound={playSound}
-            onEdit={onEdit}
-            onDelete={onDelete}
-            onClick={onClick}
-            full={full}
-          />
-        ))}
-      </div>
+
+      {sounds.length > 0 ? (
+        <div
+          className="flex-gap"
+          style={{
+            flex: "1",
+            flexDirection: "column",
+            overflowY: "auto",
+            textAlign: "start",
+            alignItems: "start",
+            padding: 5,
+          }}
+        >
+          {filteredSounds.map((s) => (
+            <SoundLibraryItem
+              key={s.id}
+              sound={s}
+              playSound={playSound}
+              onEdit={onEdit}
+              onDelete={onDelete}
+              onClick={onClick}
+              full={full}
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="flex-gap" style={{ margin: "auto" }}>
+          <MusicNoteIcon className="icon fill" />
+          No Sounds
+        </div>
+      )}
     </>
   );
 }

@@ -508,6 +508,10 @@ function App() {
   useEffect(() => {
     const update = async () => {
       console.log("Device change detected → reloading audio devices");
+      bus.emit("new-notification", {
+        status: "WARNING",
+        message: "Reloading Audio Devices",
+      });
       await loadDevices();
     };
 
@@ -642,7 +646,6 @@ function App() {
               const localDeviceId = config.audio.outputDevices.find(
                 (d) => d.id === value,
               )!.deviceId;
-              console.log(localDeviceId);
 
               audioEngine.setDevice(localDeviceId);
 

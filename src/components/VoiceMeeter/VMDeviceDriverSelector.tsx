@@ -6,12 +6,14 @@ type VMDeviceProps = {
   currentDevice: VMAudioDevice | undefined;
   devices: AudioDevice[];
   onChange: (device: VMAudioDevice) => void;
+  vmPanel?: boolean;
 };
 
 export default function VMDeviceDriverSelector({
   currentDevice,
   devices,
   onChange,
+  vmPanel = false,
 }: VMDeviceProps) {
   const [device, setDevice] = useState<VMAudioDevice>(
     currentDevice ?? {
@@ -51,10 +53,14 @@ export default function VMDeviceDriverSelector({
             driver: prev.driver === "WDM" ? "MME" : "WDM",
           }));
         }}
+        data-tooltip="Change Device Driver Type"
       >
         {device.driver}
       </button>
-      <button onClick={() => onChange(device)}>
+      <button
+        onClick={() => onChange(device)}
+        data-tooltip={vmPanel ? "Update VoiceMeeter Device" : undefined}
+      >
         <ArrowIcon className="icon stroke" />
       </button>
     </div>

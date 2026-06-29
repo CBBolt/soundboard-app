@@ -201,38 +201,43 @@ export default function SoundEditor({
             </>
           }
         >
-          <div
-            className="grid-gap"
-            style={{
-              gridTemplateColumns: "repeat(auto-fit, minmax(100px, 1fr))",
-            }}
-          >
-            {allTags.map((t) => (
-              <button
-                key={t.id}
-                style={{
-                  background: config.settings.tags?.some(
-                    (tag) => t.id === tag.id,
-                  )
-                    ? "red"
-                    : "",
-                }}
-                onClick={() =>
-                  setConfig((prev) => ({
-                    ...prev,
-                    settings: {
-                      ...prev.settings,
-                      tags: prev.settings.tags?.some((tag) => tag.id === t.id)
-                        ? prev.settings.tags?.filter((tag) => t.id !== tag.id)
-                        : [...prev.settings.tags!, t],
-                    },
-                  }))
-                }
-              >
-                <TagComponent key={t.id} tag={t} editable={false} />
-              </button>
-            ))}
-          </div>
+          {allTags.length > 0 ? (
+            <div
+              className="grid-gap"
+              style={{
+                gridTemplateColumns: "repeat(auto-fit, minmax(100px, 1fr))",
+              }}
+            >
+              {allTags.map((t) => (
+                <button
+                  key={t.id}
+                  style={{
+                    border: config.settings.tags?.some((tag) => t.id === tag.id)
+                      ? "1px solid white"
+                      : "",
+                  }}
+                  onClick={() =>
+                    setConfig((prev) => ({
+                      ...prev,
+                      settings: {
+                        ...prev.settings,
+                        tags: prev.settings.tags?.some((tag) => tag.id === t.id)
+                          ? prev.settings.tags?.filter((tag) => t.id !== tag.id)
+                          : [...prev.settings.tags!, t],
+                      },
+                    }))
+                  }
+                >
+                  <TagComponent key={t.id} tag={t} editable={false} />
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div className="flex-gap" style={{ marginLeft: "25%" }}>
+              <TagIcon className="icon stroke" />
+              No Tags
+            </div>
+          )}
           <div
             className="icon-btn"
             style={{ position: "absolute", top: 10, right: 50 }}
@@ -288,21 +293,24 @@ export default function SoundEditor({
         />
       </div>
 
-      <div className="seperator" />
-
-      <SoundClipEditor
-        show={config.editSound}
-        blob={blob}
-        sound={sound}
-        playSound={playSound}
-        stopSound={stopSound}
-        onChange={(data) =>
-          setConfig((prev) => ({
-            ...prev,
-            settings: { ...prev.settings, ...data },
-          }))
-        }
-      />
+      {config.editSound && (
+        <>
+          <div className="seperator" />
+          <SoundClipEditor
+            show={config.editSound}
+            blob={blob}
+            sound={sound}
+            playSound={playSound}
+            stopSound={stopSound}
+            onChange={(data) =>
+              setConfig((prev) => ({
+                ...prev,
+                settings: { ...prev.settings, ...data },
+              }))
+            }
+          />
+        </>
+      )}
 
       <div
         className="flex-gap"

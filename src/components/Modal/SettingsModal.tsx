@@ -440,7 +440,11 @@ export default function SettingsModal({
                 ...prev,
                 settings: {
                   ...prev.settings,
-                  controllerToggleHotkey: { key: "a", ctrl: true } as Hotkey,
+                  controllerToggleHotkey: {
+                    key: "a",
+                    ctrl: true,
+                    shift: true,
+                  } as Hotkey,
                 } as Settings,
               }))
             }

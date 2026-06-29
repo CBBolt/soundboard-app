@@ -9,6 +9,7 @@ import SaveIcon from "../../icons/SaveIcon";
 import PencilIcon from "../../icons/PencilIcon";
 import TrashIcon from "../../icons/TrashIcon";
 import MagnifyGlassIcon from "../../icons/MagnifyGlassIcon";
+import TagIcon from "../../icons/TagIcon";
 
 type TagProps = {
   tags: Tag[];
@@ -196,22 +197,31 @@ export default function TagManager({ tags, loadTags }: TagProps) {
         </button>
       </div>
 
-      <div style={{ flex: 1, width: "100%", overflowY: "auto" }}>
-        {tags
-          .filter((t) =>
-            t.name.toLowerCase().includes(config.filter.toLowerCase()),
-          )
-          .map((b, i) => (
-            <TagComponent
-              key={i}
-              tag={b}
-              onEdit={(tag) => setConfig((prev) => ({ ...prev, editTag: tag }))}
-              onDelete={(id) =>
-                setConfig((prev) => ({ ...prev, deleteId: id }))
-              }
-            />
-          ))}
-      </div>
+      {tags.length > 0 ? (
+        <div style={{ flex: 1, width: "100%", overflowY: "auto" }}>
+          {tags
+            .filter((t) =>
+              t.name.toLowerCase().includes(config.filter.toLowerCase()),
+            )
+            .map((b, i) => (
+              <TagComponent
+                key={i}
+                tag={b}
+                onEdit={(tag) =>
+                  setConfig((prev) => ({ ...prev, editTag: tag }))
+                }
+                onDelete={(id) =>
+                  setConfig((prev) => ({ ...prev, deleteId: id }))
+                }
+              />
+            ))}
+        </div>
+      ) : (
+        <div className="flex-gap" style={{ margin: "auto" }}>
+          <TagIcon className="icon stroke" />
+          No Tags
+        </div>
+      )}
     </>
   );
 }

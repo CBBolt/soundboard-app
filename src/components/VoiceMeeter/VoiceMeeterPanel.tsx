@@ -376,6 +376,7 @@ export default function VoiceMeeterPanel({
                       defaultInputDevice: device,
                     });
                   }}
+                  vmPanel={true}
                 />
                 <VolumeSlider
                   min={-10}
@@ -424,6 +425,7 @@ export default function VoiceMeeterPanel({
                       defaultOutputDevice: device,
                     });
                   }}
+                  vmPanel={true}
                 />
                 <VolumeSlider
                   min={-10}

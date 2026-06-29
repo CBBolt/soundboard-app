@@ -7,6 +7,8 @@ import TriangeIcon from "../../icons/TriangleIcon";
 import SaveIcon from "../../icons/SaveIcon";
 import RefreshIcon from "../../icons/RefreshIcon";
 import MicIcon from "../../icons/MicIcon";
+import { isAllowedDevice } from "../../lib/helpers";
+import { audioEngine } from "../../audio/AudioEngine";
 
 type RecorderProps = {
   devices: AudioDevice[];
@@ -61,7 +63,7 @@ export default function Recorder({
   useEffect(() => {
     setConfig((prev) => ({
       ...prev,
-      devices,
+      devices: devices.filter(isAllowedDevice),
       selectedDevice: defaultInputDevice,
     }));
   }, [devices, defaultInputDevice]);
@@ -305,44 +307,37 @@ export default function Recorder({
   const playRecording = async () => {
     if (!config.recordedBlob) return;
 
-    stopPlayback();
+    // stopPlayback();
 
-    const url = URL.createObjectURL(config.recordedBlob);
+    try {
+      const audio = await audioEngine.playBlob(config.recordedBlob, {
+        duration: config.recordedDuration,
+      });
 
-    const audio = new Audio(url);
+      playbackRef.current = audio;
 
-    playbackRef.current = audio;
+      setConfig((prev) => ({
+        ...prev,
+        playing: true,
+      }));
 
-    audio.onended = () => {
+      audio.onended = () => {
+        playbackRef.current = null;
+
+        setConfig((prev) => ({
+          ...prev,
+          playing: false,
+        }));
+      };
+    } catch {
       setConfig((prev) => ({
         ...prev,
         playing: false,
       }));
-
-      URL.revokeObjectURL(url);
-
-      playbackRef.current = null;
-    };
-
-    await audio.play();
-
-    setConfig((prev) => ({
-      ...prev,
-      playing: true,
-    }));
+    }
   };
 
   const stopPlayback = () => {
-    const audio = playbackRef.current;
-
-    if (!audio) return;
-
-    audio.pause();
-
-    audio.currentTime = 0;
-
-    playbackRef.current = null;
-
     setConfig((prev) => ({
       ...prev,
       playing: false,

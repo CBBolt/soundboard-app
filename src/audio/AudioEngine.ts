@@ -17,6 +17,82 @@ class AudioEngine {
     this.rebindAll();
   }
 
+  async playBlob(
+    blob: Blob,
+    options?: {
+      duration?: number;
+      gain?: number;
+      startTime?: number;
+      endTime?: number;
+      fadeIn?: number;
+      fadeOut?: number;
+    },
+  ) {
+    const url = URL.createObjectURL(blob);
+
+    const audio = new Audio();
+    audio.preload = "auto";
+    audio.src = url;
+
+    this.active.add(audio);
+
+    const controller = new AbortController();
+    let cleaned = false;
+
+    const cleanup = () => {
+      if (cleaned) return;
+      cleaned = true;
+
+      controller.abort();
+
+      this.active.delete(audio);
+
+      audio.pause();
+      audio.removeAttribute("src");
+
+      URL.revokeObjectURL(url);
+    };
+
+    audio.onended = cleanup;
+    audio.onerror = cleanup;
+
+    if (this.deviceId && "setSinkId" in audio) {
+      await this.safeSetSink(audio, this.deviceId);
+    }
+
+    audio.currentTime = options?.startTime ?? 0;
+
+    const gain = options?.gain ?? 1;
+    const fadeIn = options?.fadeIn ?? 0;
+
+    audio.volume = fadeIn > 0 ? 0 : gain;
+
+    await audio.play();
+
+    if (fadeIn > 0) {
+      this.fadeAudio(audio, {
+        from: 0,
+        to: gain,
+        duration: fadeIn * 1000,
+        signal: controller.signal,
+      });
+    }
+
+    this.schedulePlayback(
+      audio,
+      {
+        duration: options?.duration,
+        startTime: options?.startTime,
+        endTime: options?.endTime,
+        fadeOut: options?.fadeOut,
+      },
+      controller,
+      cleanup,
+    );
+
+    return audio;
+  }
+
   async play(sound: Sound) {
     const filePath = await api.getSoundPath(sound.fileName);
     const buffer = await api.readSound(filePath);
@@ -34,131 +110,18 @@ class AudioEngine {
               ? "audio/webm"
               : "application/octet-stream";
 
-    const blob = new Blob([buffer as BlobPart], { type: mime });
-    const url = URL.createObjectURL(blob);
+    const blob = new Blob([buffer as BlobPart], {
+      type: mime,
+    });
 
-    const audio = new Audio();
-    audio.preload = "auto";
-    audio.src = url;
-
-    this.active.add(audio);
-
-    let cleaned = false;
-    const controller = new AbortController();
-
-    const cleanup = () => {
-      if (cleaned) return;
-      cleaned = true;
-
-      controller.abort(); // 🚨 kills fades instantly
-
-      this.active.delete(audio);
-
-      audio.pause();
-      audio.src = "";
-      audio.load();
-
-      URL.revokeObjectURL(url);
-    };
-
-    audio.onended = cleanup;
-    audio.onerror = cleanup;
-
-    try {
-      // -----------------------------------
-      // Wait for metadata (not canplaythrough)
-      // -----------------------------------
-      await new Promise<void>((resolve, reject) => {
-        const cleanup = () => {
-          audio.removeEventListener("canplay", onReady);
-          audio.removeEventListener("error", onError);
-        };
-
-        const onReady = () => {
-          cleanup();
-          resolve();
-        };
-
-        const onError = () => {
-          cleanup();
-          reject(new Error("Audio failed to load"));
-        };
-
-        audio.addEventListener("canplay", onReady, { once: true });
-        audio.addEventListener("error", onError, { once: true });
-      });
-
-      // -----------------------------------
-      // Device routing
-      // -----------------------------------
-      if (this.deviceId && "setSinkId" in audio) {
-        await this.safeSetSink(audio, this.deviceId);
-      }
-
-      // -----------------------------------
-      // Seek
-      // -----------------------------------
-      audio.currentTime = sound.startTime ?? 0;
-
-      const gain = sound.gain ?? 1;
-      const fadeIn = sound.fadeIn ?? 0;
-      const fadeOut = sound.fadeOut ?? 0;
-
-      const targetVolume = gain;
-
-      const playPromise = audio.play();
-      if (playPromise) await playPromise;
-
-      // -----------------------------------
-      // Fade IN (non-blocking)
-      // -----------------------------------
-      if (fadeIn > 0) {
-        audio.volume = 0;
-
-        this.fadeAudio(audio, {
-          from: 0,
-          to: targetVolume,
-          duration: fadeIn * 1000,
-          signal: controller.signal,
-        });
-      } else {
-        audio.volume = targetVolume;
-      }
-
-      // -----------------------------------
-      // Fade OUT (timed, async)
-      // -----------------------------------
-      const realDuration = await this.getFiniteDuration(audio);
-      const duration = (sound.endTime ?? realDuration) - (sound.startTime ?? 0);
-
-      if (fadeOut > 0) {
-        const fadeStart = Math.max(0, duration - fadeOut) * 1000;
-
-        setTimeout(() => {
-          this.fadeAudio(audio, {
-            from: audio.volume,
-            to: 0,
-            duration: fadeOut * 1000,
-            signal: controller.signal,
-          }).then(() => {
-            audio.pause();
-            cleanup();
-          });
-        }, fadeStart);
-      }
-
-      // -----------------------------------
-      // Safety cleanup fallback
-      // -----------------------------------
-      setTimeout(() => {
-        cleanup();
-      }, duration * 1000);
-
-      return audio;
-    } catch (err) {
-      cleanup();
-      throw err;
-    }
+    return this.playBlob(blob, {
+      duration: sound.duration,
+      gain: sound.gain,
+      startTime: sound.startTime,
+      endTime: sound.endTime,
+      fadeIn: sound.fadeIn,
+      fadeOut: sound.fadeOut,
+    });
   }
 
   stopAll() {
@@ -172,29 +135,6 @@ class AudioEngine {
     this.active.clear();
   }
 
-  private async getFiniteDuration(audio: HTMLAudioElement) {
-    if (Number.isFinite(audio.duration)) {
-      return audio.duration;
-    }
-
-    return new Promise<number>((resolve, reject) => {
-      const timeout = setTimeout(() => {
-        reject(new Error("Could not determine audio duration"));
-      }, 3000);
-
-      const check = () => {
-        if (Number.isFinite(audio.duration)) {
-          clearTimeout(timeout);
-          resolve(audio.duration);
-        } else {
-          requestAnimationFrame(check);
-        }
-      };
-
-      check();
-    });
-  }
-
   private async rebindAll() {
     for (const audio of this.active) {
       try {
@@ -203,6 +143,52 @@ class AudioEngine {
         }
       } catch {}
     }
+  }
+
+  private schedulePlayback(
+    audio: HTMLAudioElement,
+    options: {
+      duration?: number;
+      startTime?: number;
+      endTime?: number;
+      fadeOut?: number;
+    },
+    controller: AbortController,
+    cleanup: () => void,
+  ) {
+    const duration = options.duration;
+
+    if (!duration) {
+      return;
+    }
+
+    const startTime = options.startTime ?? 0;
+
+    const endTime = options.endTime ?? duration;
+
+    const playbackDuration = Math.max(0, endTime - startTime);
+
+    const fadeOut = options.fadeOut ?? 0;
+
+    // No fade, just stop at the end
+    if (fadeOut <= 0) {
+      window.setTimeout(cleanup, playbackDuration * 1000);
+      return;
+    }
+
+    const fadeStart = Math.max(0, playbackDuration - fadeOut) * 1000;
+
+    window.setTimeout(() => {
+      this.fadeAudio(audio, {
+        from: audio.volume,
+        to: 0,
+        duration: fadeOut * 1000,
+        signal: controller.signal,
+      }).then(cleanup);
+    }, fadeStart);
+
+    // Safety stop in case fade timing is interrupted
+    window.setTimeout(cleanup, playbackDuration * 1000 + 100);
   }
 
   private fadeAudio(
